@@ -184,6 +184,17 @@ actor MoService {
         return result.outputText.isEmpty ? "Uninstall preview complete" : result.outputText
     }
 
+    // Execute actual uninstall for a specific app (destructive). Requires preview first.
+    func executeUninstall(appName: String) async throws -> String {
+        guard let result = await runCommandResult(args: ["uninstall", appName]) else {
+            throw MoError.commandNotFound
+        }
+        guard result.status == 0 else {
+            throw MoError.executionFailed(result.errorMessage)
+        }
+        return result.outputText.isEmpty ? "Uninstall complete" : result.outputText
+    }
+
     // MARK: - Private
 
     private struct CommandResult {

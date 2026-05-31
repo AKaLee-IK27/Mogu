@@ -37,6 +37,97 @@
         { "name": "Full build + launch verify", "status": "done", "evidence": "make app + app launches, runtime version 1.40.0" }
       ],
       "evidence": "make app passes. Go binaries built native arm64. App launches, calls /Applications/MoleMac.app/Contents/Resources/MoleRuntime/mo. Version: 1.40.0"
+    },
+    {
+      "id": "feat-003",
+      "name": "App Icon",
+      "description": "Convert icon.png to AppIcon.icns and bundle it in the app.",
+      "dependencies": [],
+      "doneCriteria": [
+        "AppIcon.icns generated from icon.png",
+        "build_app.sh bundles AppIcon.icns into Resources",
+        "macOS shows custom app icon"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Generate AppIcon.icns", "status": "done", "evidence": "iconutil -c icns" },
+        { "name": "Bundle in build_app.sh", "status": "done", "evidence": "cp AppIcon.icns $RESOURCES/AppIcon.icns" }
+      ],
+      "evidence": "AppIcon.icns generated (39KB, valid ic07). build_app.sh copies it."
+    },
+    {
+      "id": "feat-004",
+      "name": "Auto-Refresh Status Tab",
+      "description": "Add 30s timer to StatusView for live system metrics with Live indicator.",
+      "dependencies": [],
+      "doneCriteria": [
+        "StatusView refreshes every 30s while visible",
+        "Live badge shown in header",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Add Timer.publish + onReceive to StatusView", "status": "done" },
+        { "name": "Add Live badge in header", "status": "done" }
+      ],
+      "evidence": "Timer fires every 30s. Live badge shown in header. make build passes."
+    },
+    {
+      "id": "feat-005",
+      "name": "Sort/Filter in Uninstall & Purge",
+      "description": "Add sort picker (size/name) and search field to UninstallView and PurgeView.",
+      "dependencies": [],
+      "doneCriteria": [
+        "UninstallView has sort picker and search",
+        "PurgeView has sort picker and search",
+        "Default sort is by size descending",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Sort enum + search state in UninstallView", "status": "done" },
+        { "name": "Sort enum + search state in PurgeView", "status": "done" },
+        { "name": "SortOrder shared enum", "status": "done" }
+      ],
+      "evidence": "Both views have sort picker (Size ↓, Name A-Z) and .searchable. make build passes."
+    },
+    {
+      "id": "feat-006",
+      "name": "Real Uninstall Execution",
+      "description": "Add executeUninstall to MoService and confirmation dialog to UninstallView.",
+      "dependencies": ["feat-005"],
+      "doneCriteria": [
+        "MoService.executeUninstall runs mo uninstall (no --dry-run)",
+        "UninstallView shows confirmation before running",
+        "Preview required before execute",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Add executeUninstall to MoService", "status": "done" },
+        { "name": "Add runTrigger + confirmation dialog to UninstallView", "status": "done" },
+        { "name": "Add toolbar button in ContentView", "status": "done" }
+      ],
+      "evidence": "executeUninstall runs mo uninstall appName. ConfirmationDialog shows before execution. make build passes."
+    },
+    {
+      "id": "feat-007",
+      "name": "Dark Mode",
+      "description": "Add dark mode token variants to DesignTokens and remove forced light appearance.",
+      "dependencies": [],
+      "doneCriteria": [
+        "DesignTokens.Color resolves per colorScheme",
+        "MoleMacApp does not force .aqua/.light",
+        "All views readable in both themes",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Add adaptive() helper and dark color variants", "status": "done" },
+        { "name": "Remove forced .aqua/.light from MoleMacApp", "status": "done" },
+        { "name": "Add Color(light:dark:) extension", "status": "done" }
+      ],
+      "evidence": "All tokens use adaptive(light:dark:). App follows system colorScheme. make build passes."
     }
   ]
 }

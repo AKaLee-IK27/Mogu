@@ -46,6 +46,7 @@ struct ContentView: View {
     @State private var cleanRefresh = UUID()
     @State private var cleanRun = UUID()
     @State private var uninstallRefresh = UUID()
+    @State private var uninstallRun = UUID()
     @State private var analyzeRefresh = UUID()
     @State private var optimizePreview = UUID()
     @State private var optimizeRun = UUID()
@@ -95,60 +96,71 @@ struct ContentView: View {
     // Single toolbar source — only items for the active tab are rendered
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
+        ToolbarItem(id: "primary.refresh", placement: .primaryAction) {
+            refreshButton
+        }
+        ToolbarItem(id: "primary.action", placement: .primaryAction) {
+            actionButton
+        }
+    }
+
+    @ViewBuilder
+    private var refreshButton: some View {
         switch selectedItem {
         case .status:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { statusRefresh = UUID() }) {
-                    Image(systemName: "arrow.clockwise")
-                }.help("Refresh").disabled(statusLoading)
-            }
+            Button(action: { statusRefresh = UUID() }) {
+                Image(systemName: "arrow.clockwise")
+            }.help("Refresh").disabled(statusLoading)
         case .clean:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { cleanRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(cleanLoading || cleanRunning)
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { cleanRun = UUID() }) {
-                    Label("Clean All", systemImage: "sparkles")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .disabled(cleanLoading || cleanRunning || !cleanHasData)
-            }
+            Button(action: { cleanRefresh = UUID() }) {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }.disabled(cleanLoading || cleanRunning)
         case .uninstall:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { uninstallRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(uninstallLoading)
-            }
+            Button(action: { uninstallRefresh = UUID() }) {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }.disabled(uninstallLoading)
         case .analyze:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { analyzeRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(analyzeLoading)
-            }
+            Button(action: { analyzeRefresh = UUID() }) {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }.disabled(analyzeLoading)
         case .optimize:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { optimizePreview = UUID() }) {
-                    Label("Preview", systemImage: "eye")
-                }.disabled(optimizeRunning || optimizeComplete)
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { optimizeRun = UUID() }) {
-                    Label("Run", systemImage: "bolt.horizontal.circle.fill")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .tint(SwiftUI.Color(hex: "ff9f0a"))
-                .disabled(optimizeRunning || optimizeComplete)
-            }
+            Button(action: { optimizePreview = UUID() }) {
+                Label("Preview", systemImage: "eye")
+            }.disabled(optimizeRunning || optimizeComplete)
         case .purge:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { purgeRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(purgeLoading)
+            Button(action: { purgeRefresh = UUID() }) {
+                Label("Refresh", systemImage: "arrow.clockwise")
+            }.disabled(purgeLoading)
+        }
+    }
+
+    @ViewBuilder
+    private var actionButton: some View {
+        switch selectedItem {
+        case .status, .analyze, .purge:
+            EmptyView()
+        case .clean:
+            Button(action: { cleanRun = UUID() }) {
+                Label("Clean All", systemImage: "sparkles")
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .disabled(cleanLoading || cleanRunning || !cleanHasData)
+        case .uninstall:
+            Button(action: { uninstallRun = UUID() }) {
+                Label("Uninstall", systemImage: "trash.fill")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .disabled(uninstallLoading)
+        case .optimize:
+            Button(action: { optimizeRun = UUID() }) {
+                Label("Run", systemImage: "bolt.horizontal.circle.fill")
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .tint(SwiftUI.Color(hex: "ff9f0a"))
+            .disabled(optimizeRunning || optimizeComplete)
         }
     }
 
@@ -191,6 +203,7 @@ struct ContentView: View {
                 UninstallView(
                     service: moService,
                     refreshTrigger: $uninstallRefresh,
+                    runTrigger: $uninstallRun,
                     isLoading: $uninstallLoading
                 )
             }

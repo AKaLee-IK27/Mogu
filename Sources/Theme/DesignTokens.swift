@@ -1,7 +1,7 @@
 import SwiftUI
 
 // MARK: - Design Tokens
-// Light-mode system for MoleMac, forced by MoleMacApp.
+// Adaptive light/dark mode. Follows system colorScheme.
 
 enum DesignTokens {
 
@@ -35,40 +35,45 @@ enum DesignTokens {
         static let code = SwiftUI.Font.system(size: 13, weight: .regular, design: .monospaced)
     }
 
+    // Helper: create adaptive color from light/dark hex values
+    static func adaptive(light: String, dark: String) -> SwiftUI.Color {
+        SwiftUI.Color(light: SwiftUI.Color(hex: light), dark: SwiftUI.Color(hex: dark))
+    }
+
     enum Color {
         // Surfaces
-        static let sidebar = SwiftUI.Color(hex: "ececed")
-        static let pageBackground = SwiftUI.Color(hex: "f5f5f7")
-        static let cardBackground = SwiftUI.Color.white
-        static let separator = SwiftUI.Color(hex: "d1d1d6")
-        static let separatorLight = SwiftUI.Color(hex: "e5e5ea")
+        static let sidebar = adaptive(light: "ececed", dark: "1e1e20")
+        static let pageBackground = adaptive(light: "f5f5f7", dark: "121214")
+        static let cardBackground = adaptive(light: "ffffff", dark: "1c1c1e")
+        static let separator = adaptive(light: "d1d1d6", dark: "38383a")
+        static let separatorLight = adaptive(light: "e5e5ea", dark: "2c2c2e")
 
-        // Text, tuned for light surfaces
-        static let primary = SwiftUI.Color(hex: "1d1d1f")
-        static let secondary = SwiftUI.Color(hex: "515154")
-        static let tertiary = SwiftUI.Color(hex: "77777c")
-        static let placeholder = SwiftUI.Color(hex: "aeaeb2")
+        // Text, tuned for respective surfaces
+        static let primary = adaptive(light: "1d1d1f", dark: "f5f5f7")
+        static let secondary = adaptive(light: "515154", dark: "a1a1a6")
+        static let tertiary = adaptive(light: "77777c", dark: "6e6e73")
+        static let placeholder = adaptive(light: "aeaeb2", dark: "48484a")
 
         // Accent
-        static let accent = SwiftUI.Color(hex: "007aff")
-        static let accentSecondary = SwiftUI.Color(hex: "5ac8fa")
-        static let accentSoft = SwiftUI.Color(hex: "e5f1ff")
-        static let accentTint = SwiftUI.Color(hex: "0055d4")
+        static let accent = adaptive(light: "007aff", dark: "0a84ff")
+        static let accentSecondary = adaptive(light: "5ac8fa", dark: "64d2ff")
+        static let accentSoft = adaptive(light: "e5f1ff", dark: "1a3a5c")
+        static let accentTint = adaptive(light: "0055d4", dark: "409cff")
 
         // Status
-        static let success = SwiftUI.Color(hex: "34c759")
-        static let successText = SwiftUI.Color(hex: "1b7a2e")
-        static let successSoft = SwiftUI.Color(hex: "e8f9ec")
-        static let warning = SwiftUI.Color(hex: "ff9500")
-        static let warningText = SwiftUI.Color(hex: "a05a00")
-        static let warningSoft = SwiftUI.Color(hex: "fff5e0")
-        static let danger = SwiftUI.Color(hex: "ff3b30")
-        static let dangerText = SwiftUI.Color(hex: "c42118")
-        static let dangerSoft = SwiftUI.Color(hex: "ffe8e6")
+        static let success = adaptive(light: "34c759", dark: "30d158")
+        static let successText = adaptive(light: "1b7a2e", dark: "3dd560")
+        static let successSoft = adaptive(light: "e8f9ec", dark: "0d2e12")
+        static let warning = adaptive(light: "ff9500", dark: "ff9f0a")
+        static let warningText = adaptive(light: "a05a00", dark: "ffd426")
+        static let warningSoft = adaptive(light: "fff5e0", dark: "2e1f00")
+        static let danger = adaptive(light: "ff3b30", dark: "ff453a")
+        static let dangerText = adaptive(light: "c42118", dark: "ff6961")
+        static let dangerSoft = adaptive(light: "ffe8e6", dark: "3d0a07")
 
         // Utility
-        static let codeBg = SwiftUI.Color(hex: "f0f0f2")
-        static let hoverOverlay = SwiftUI.Color.black.opacity(0.04)
+        static let codeBg = adaptive(light: "f0f0f2", dark: "2c2c2e")
+        static let hoverOverlay = adaptive(light: "ececee", dark: "2a2a2c")
     }
 
     static func healthColor(score: Int) -> SwiftUI.Color {
@@ -102,7 +107,7 @@ enum DesignTokens {
     }
 
     enum Shadow {
-        static let card = SwiftUI.Color.black.opacity(0.06)
+        static let card = adaptive(light: "0000000a", dark: "0000004d") // ~4% light, ~30% dark
         static let cardRadius: CGFloat = 3
         static let cardY: CGFloat = 1
     }
@@ -121,4 +126,23 @@ extension SwiftUI.Color {
         }
         self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: Double(a) / 255)
     }
+
+    /// Create adaptive color that resolves differently per colorScheme
+    init(light: Self, dark: Self) {
+        #if canImport(AppKit)
+        self.init(nsColor: NSColor(name: nil) { appearance in
+            if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+                NSColor(dark)
+            } else {
+                NSColor(light)
+            }
+        })
+        #else
+        self.init(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+        #endif
+    }
+
+
 }

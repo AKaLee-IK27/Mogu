@@ -1,12 +1,23 @@
 import SwiftUI
 
+enum SortOrder: String, CaseIterable {
+    case sizeDesc = "Size ↓"
+    case nameAsc = "Name A-Z"
+}
+
 struct UninstallView: View {
     let service: MoService
     @Binding var refreshTrigger: UUID
+    @Binding var runTrigger: UUID
     @Binding var isLoading: Bool
     @State private var apps: [AppInfo] = []
     @State private var error: String?
     @State private var appear = false
+    @State private var sortOrder: SortOrder = .sizeDesc
+    @State private var searchText = ""
+    @State private var selectedApp: AppInfo?
+    @State private var showUninstallConfirm = false
+    @State private var uninstallResult: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,11 +31,34 @@ struct UninstallView: View {
                 else { content }
             }
             .background(DesignTokens.Color.pageBackground)
+            .searchable(text: $searchText, prompt: "Search apps")
         }
         .task { await loadApps() }
         .onChange(of: refreshTrigger) { oldValue, newValue in
             guard oldValue != newValue else { return }
             Task { await loadApps() }
+        }
+        .onChange(of: runTrigger) { oldValue, newValue in
+            guard oldValue != newValue else { return }
+            // Select the first (largest) app for uninstall
+            if !displayedApps.isEmpty {
+                selectedApp = displayedApps[0]
+                showUninstallConfirm = true
+            }
+        }
+        .confirmationDialog(
+            "Uninstall \(selectedApp?.name ?? "")?",
+            isPresented: $showUninstallConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Uninstall", role: .destructive) {
+                if let app = selectedApp {
+                    Task { await runUninstall(app: app) }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove \(selectedApp?.name ?? "") and all related files. This action cannot be undone.")
         }
     }
 
@@ -40,6 +74,13 @@ struct UninstallView: View {
             }
             Spacer()
             if !apps.isEmpty {
+                Picker("Sort", selection: $sortOrder) {
+                    ForEach(SortOrder.allCases, id: \.self) { order in
+                        Text(order.rawValue).tag(order)
+                    }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
                 HStack(spacing: 6) {
                     Image(systemName: "internaldrive.fill").font(.system(size: 10))
                     Text(totalAppsSize)
@@ -59,7 +100,7 @@ struct UninstallView: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Installed Apps", subtitle: "\(apps.count) found")
+            sectionHeader("Installed Apps", subtitle: "\(displayedApps.count) of \(apps.count) found")
                 .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 12)
 
             uninstallNote
@@ -73,7 +114,7 @@ struct UninstallView: View {
             }.padding(.bottom, 8)
 
             VStack(spacing: 0) {
-                ForEach(Array(apps.enumerated()), id: \.element.id) { i, app in
+                ForEach(Array(displayedApps.enumerated()), id: \.element.id) { i, app in
                     appRow(app)
                         .opacity(appear ? 1 : 0)
                         .offset(x: appear ? 0 : -8)
@@ -85,6 +126,12 @@ struct UninstallView: View {
                 }
             }
             .padding(.horizontal, 16)
+
+            if let uninstallResult {
+                resultBanner(message: uninstallResult)
+                    .padding(.horizontal, 32)
+                    .padding(.top, 20)
+            }
         }
         .padding(.bottom, 32)
         .onAppear { withAnimation(DesignTokens.spring) { appear = true } }
@@ -136,7 +183,17 @@ struct UninstallView: View {
     }
 
     private var totalAppsSize: String {
-        apps.reduce(0) { $0 + $1.size }.humanReadable
+        displayedApps.reduce(0) { $0 + $1.size }.humanReadable
+    }
+
+    private var displayedApps: [AppInfo] {
+        let filtered = searchText.isEmpty ? apps : apps.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+        return filtered.sorted { lhs, rhs in
+            switch sortOrder {
+            case .sizeDesc: return lhs.size > rhs.size
+            case .nameAsc: return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+        }
     }
 
     private var emptyState: some View {
@@ -163,6 +220,20 @@ struct UninstallView: View {
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    private func resultBanner(message: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignTokens.Color.successText)
+            Text(message).font(DesignTokens.Font.bodyStrong)
+            Spacer()
+            Button("Done") {
+                uninstallResult = nil
+            }
+        }
+        .padding(12)
+        .background(DesignTokens.Color.successSoft)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+    }
+
     private func errorView(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.circle").font(.system(size: 24)).foregroundStyle(DesignTokens.Color.danger)
@@ -183,5 +254,18 @@ struct UninstallView: View {
             self.error = error.localizedDescription
         }
         isLoading = false
+    }
+
+    private func runUninstall(app: AppInfo) async {
+        error = nil
+        do {
+            let name = app.uninstallName ?? app.name
+            let output = try await service.executeUninstall(appName: name)
+            uninstallResult = output
+            // Remove the uninstalled app from the list
+            apps.removeAll { $0.id == app.id }
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 }

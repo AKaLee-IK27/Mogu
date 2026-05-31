@@ -68,6 +68,11 @@ PLIST
 
 cp "$BINARY" "$MACOS/MoleMac"
 
+# Bundle app icon
+if [[ -f "AppIcon.icns" ]]; then
+    cp "AppIcon.icns" "$RESOURCES/AppIcon.icns"
+fi
+
 # Copy only the runtime artifacts (not .git, source, docs, tests)
 mkdir -p "$RUNTIME_DST/bin" "$RUNTIME_DST/lib"
 cp "$RUNTIME_SRC/mo" "$RUNTIME_DST/mo"

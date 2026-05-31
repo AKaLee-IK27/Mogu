@@ -8,6 +8,7 @@ struct StatusView: View {
     @State private var error: String?
     @State private var lastUpdated: Date?
     @State private var appear = false
+    @State private var refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,6 +47,7 @@ struct StatusView: View {
         .background(DesignTokens.Color.pageBackground)
         .task { await refresh() }
         .onAppear { withAnimation(DesignTokens.spring) { appear = true } }
+        .onReceive(refreshTimer) { _ in Task { await refresh() } }
         .onChange(of: refreshTrigger) { oldValue, newValue in
             guard oldValue != newValue else { return }
             Task { await refresh() }
@@ -63,6 +65,7 @@ struct StatusView: View {
                     .foregroundStyle(DesignTokens.Color.tertiary)
             }
             Spacer()
+            liveBadge
             healthBadge(score: status.healthScore)
             if let lastUpdated {
                 Text(lastUpdated.formatted(date: .omitted, time: .shortened))
@@ -72,6 +75,19 @@ struct StatusView: View {
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 20)
+    }
+
+    private var liveBadge: some View {
+        HStack(spacing: 4) {
+            Circle().fill(DesignTokens.Color.success).frame(width: 6, height: 6)
+            Text("Live")
+                .font(DesignTokens.Font.label)
+                .foregroundStyle(DesignTokens.Color.successText)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(DesignTokens.Color.successSoft)
+        .clipShape(Capsule())
     }
 
     private func healthBadge(score: Int) -> some View {
