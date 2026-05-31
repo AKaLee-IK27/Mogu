@@ -93,72 +93,82 @@ struct ContentView: View {
         .toolbar { toolbarItems }
     }
 
-    // Single toolbar source — only items for the active tab are rendered
+    // Toolbar items
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
+        ToolbarItem(id: "toolbar.refresh", placement: .primaryAction) {
+            Button(action: { refreshAction() }) {
+                Image(systemName: "arrow.clockwise")
+            }.help("Refresh").disabled(refreshDisabled)
+        }
+        if showAction {
+            ToolbarItem(id: "toolbar.action", placement: .primaryAction) {
+                Button(action: { actionAction() }) {
+                    Label(actionLabel, systemImage: actionIcon)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
+                .disabled(actionDisabled)
+            }
+        }
+    }
+
+    private var refreshDisabled: Bool {
         switch selectedItem {
-        case .status:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { statusRefresh = UUID() }) {
-                    Image(systemName: "arrow.clockwise")
-                }.help("Refresh").disabled(statusLoading)
-            }
-        case .clean:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { cleanRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(cleanLoading || cleanRunning)
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { cleanRun = UUID() }) {
-                    Label("Clean All", systemImage: "sparkles")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .disabled(cleanLoading || cleanRunning || !cleanHasData)
-            }
-        case .uninstall:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { uninstallRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(uninstallLoading)
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { uninstallRun = UUID() }) {
-                    Label("Uninstall", systemImage: "trash.fill")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .tint(SwiftUI.Color.red)
-                .disabled(uninstallLoading)
-            }
-        case .analyze:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { analyzeRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(analyzeLoading)
-            }
-        case .optimize:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { optimizePreview = UUID() }) {
-                    Label("Preview", systemImage: "eye")
-                }.disabled(optimizeRunning || optimizeComplete)
-            }
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { optimizeRun = UUID() }) {
-                    Label("Run", systemImage: "bolt.horizontal.circle.fill")
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .tint(SwiftUI.Color(hex: "ff9f0a"))
-                .disabled(optimizeRunning || optimizeComplete)
-            }
-        case .purge:
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: { purgeRefresh = UUID() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }.disabled(purgeLoading)
-            }
+        case .status: return statusLoading
+        case .clean: return cleanLoading || cleanRunning
+        case .uninstall: return uninstallLoading
+        case .analyze: return analyzeLoading
+        case .optimize: return optimizeRunning || optimizeComplete
+        case .purge: return purgeLoading
+        }
+    }
+    private func refreshAction() {
+        switch selectedItem {
+        case .status: statusRefresh = UUID()
+        case .clean: cleanRefresh = UUID()
+        case .uninstall: uninstallRefresh = UUID()
+        case .analyze: analyzeRefresh = UUID()
+        case .optimize: optimizePreview = UUID()
+        case .purge: purgeRefresh = UUID()
+        }
+    }
+    private var showAction: Bool {
+        switch selectedItem {
+        case .status, .analyze, .purge: return false
+        default: return true
+        }
+    }
+    private var actionLabel: String {
+        switch selectedItem {
+        case .clean: return "Clean All"
+        case .uninstall: return "Uninstall"
+        case .optimize: return "Run"
+        default: return ""
+        }
+    }
+    private var actionIcon: String {
+        switch selectedItem {
+        case .clean: return "sparkles"
+        case .uninstall: return "trash.fill"
+        case .optimize: return "bolt.horizontal.circle.fill"
+        default: return "circle"
+        }
+    }
+    private var actionDisabled: Bool {
+        switch selectedItem {
+        case .clean: return cleanLoading || cleanRunning || !cleanHasData
+        case .uninstall: return uninstallLoading
+        case .optimize: return optimizeRunning || optimizeComplete
+        default: return false
+        }
+    }
+    private func actionAction() {
+        switch selectedItem {
+        case .clean: cleanRun = UUID()
+        case .uninstall: uninstallRun = UUID()
+        case .optimize: optimizeRun = UUID()
+        default: break
         }
     }
 
