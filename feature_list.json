@@ -128,6 +128,26 @@
         { "name": "Add Color(light:dark:) extension", "status": "done" }
       ],
       "evidence": "All tokens use adaptive(light:dark:). App follows system colorScheme. make build passes."
+    },
+    {
+      "id": "feat-008",
+      "name": "Permissions / Full Disk Access Finish",
+      "description": "Finish the existing Permissions feature by surfacing the Analyze preflight banner and refreshing tracking artifacts. FDA probe intentionally left unchanged pending controller runtime verification.",
+      "dependencies": [],
+      "doneCriteria": [
+        "AnalyzeView shows the same PreflightBanner pattern as CleanView and OptimizeView",
+        "ContentView passes the shared PermissionsService into AnalyzeView",
+        "feature_list.json and session-handoff.md reflect the Permissions feature state",
+        "swift build passes",
+        "Controller runtime-verified the Analyze preflight banner renders (screenshot); FDA not-granted branch deferred to a documented manual check"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Add Analyze preflight banner", "status": "done", "evidence": "Sources/Views/AnalyzeView.swift adds @ObservedObject permissions and PreflightBanner(item: .analyze, permissions: permissions). Sources/ContentView.swift passes permissions into AnalyzeView." },
+        { "name": "FDA probe not-granted branch", "status": "manual-check", "evidence": "Cannot be exercised from an FDA-enabled environment (probe reads Granted). Documented as a manual check in session-handoff.md: revoke Full Disk Access for MoleMac, relaunch, expect Permissions card + preflight banners to read 'Not granted'. If still 'Granted', repoint probe from ~/Library/.../TCC.db to /Library/Application Support/com.apple.TCC/TCC.db. PermissionsService.probeFullDiskAccess intentionally unchanged until that check runs." },
+        { "name": "Refresh tracking artifacts", "status": "done", "evidence": "feature_list.json entry added; session-handoff.md refreshed for feat-008." }
+      ],
+      "evidence": "Scope: Analyze banner wiring + tracking only (4 files; no Status files or PermissionsService touched). swift build passes. Controller runtime-verified: Analyze tab renders the PreflightBanner showing 'Full Disk Access', no crash. Pre-existing analyze-data decode error observed (unrelated to this feature; reported separately). FDA not-granted branch is a documented manual check (see session-handoff.md)."
     }
   ]
 }

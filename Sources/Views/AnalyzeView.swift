@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AnalyzeView: View {
     let service: MoService
+    @ObservedObject var permissions: PermissionsService
     @Binding var refreshTrigger: UUID
     @Binding var isLoading: Bool
     @State private var result: AnalysisResult?
@@ -12,6 +13,10 @@ struct AnalyzeView: View {
         VStack(spacing: 0) {
             headerBar
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
+
+            PreflightBanner(item: .analyze, permissions: permissions)
+                .padding(.horizontal, 32)
+                .padding(.top, 12)
 
             ScrollView {
                 if isLoading { loadingView }

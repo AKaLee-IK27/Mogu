@@ -2,35 +2,74 @@
 
 ## Last Session
 
-**Date:** 2026-05-31
-**Feature:** feat-003 through feat-007 — All 5 features + crash fix
-**Status:** Completed — `make build` and `make test` pass, no crash on launch
+**Date:** 2026-06-01
+**Feature:** feat-008 — Permissions / Full Disk Access Finish
+**Status:** Implementation complete + controller runtime-verified (Analyze banner). FDA not-granted branch deferred to a documented manual check.
 
 ## Current State
 
-- All 5 features implemented and verified
-- macOS 26.5 toolbar crash resolved (EmptyView → switch-based pattern)
-- `make build` passes, `make test` passes
-- **Working tree NOT clean** — 4 uncommitted modifications (see Files Changed)
+- Analyze now receives the shared `PermissionsService` and renders `PreflightBanner(item: .analyze, permissions: permissions)` below its header, matching Clean and Optimize.
+- `ContentView.swift` was changed only at the `.analyze` `AnalyzeView(...)` constructor to pass `permissions: permissions`.
+- `feature_list.json` has a `feat-008` entry tracking the Permissions finish work.
+- `PermissionsService.probeFullDiskAccess` was intentionally left unchanged pending the controller's no-FDA runtime test.
+
+## Verification State
+
+- `swift build` passes (implementer + controller).
+- Controller runtime verification (built `.app` from this branch, launched to Analyze):
+  1. ✅ Analyze preflight banner renders ("Uses: Full Disk Access"), matching Clean/Optimize. No crash.
+  2. ⏳ **MANUAL CHECK (deferred to maintainer):** FDA not-granted branch — see below.
+  3. ✅ No launch or tab-switch crash observed.
+
+### MANUAL CHECK — FDA "Not granted" branch
+
+The probe cannot be exercised from an FDA-enabled environment (it reads "Granted"). Run once:
+1. System Settings → Privacy & Security → Full Disk Access → toggle **MoleMac OFF** (or remove it).
+2. Relaunch MoleMac → open the **Permissions** tab.
+3. Expected: Full Disk Access card reads **"Not granted"** (amber); Clean/Optimize/Analyze preflight
+   banners show the FDA pill with a warning dot.
+4. If it still reads **"Granted"** → probe is a false-positive: repoint
+   `PermissionsService.probeFullDiskAccess` from `~/Library/Application Support/com.apple.TCC/TCC.db`
+   to the system path `/Library/Application Support/com.apple.TCC/TCC.db`, rebuild, re-test.
+5. Re-enable FDA afterward.
+
+## Separate finding (NOT this feature — pre-existing, unfixed)
+
+- The **Analyze data path** shows a decode error at runtime ("The data couldn't be read because it is
+  missing") — a Codable failure in the analyze result. This feature never touched `AnalysisResult` or
+  `MoService.getAnalysis`, so it is pre-existing. Reported, not fixed. Worth a separate `/hunt`.
 
 ## Blockers
 
-- None. The uncommitted changes below are unreviewed/uncommitted work from the prior session, not a blocker — review and commit or discard before starting new work.
+- None in implementation scope.
+- FDA probe path must not change unless the manual check above reports a false-positive "Granted".
 
-## Files Changed (uncommitted)
+## Build note (controller, temporary)
 
-- `Sources/MoleMacApp.swift`
-- `Sources/Views/PurgeView.swift`
-- `Sources/Views/UninstallView.swift`
-- `build_app.sh`
+- To build this worktree's `.app`, `Vendor/Mole` was symlinked to the main checkout's built submodule
+  (worktrees don't auto-populate submodules). **Remove that symlink before committing** so the
+  submodule gitlink is not replaced — the diff should stay at the 4 source/tracking files only.
 
-## Key Finding
+## Files Changed This Session
 
-**macOS 26.5 bug:** `EmptyView()` inside a `ToolbarItem` causes `SIGTRAP` in `[NSToolbar _insertNewItemWithItemIdentifier:]` during initial layout. Always use explicit content, never `EmptyView()` in toolbar items.
+- `Sources/Views/AnalyzeView.swift`
+- `Sources/ContentView.swift`
+- `feature_list.json`
+- `session-handoff.md`
 
-## Next Session — Recommended Next Step
+## Guardrails Preserved
 
-1. Review the 4 uncommitted files (`git diff`) and decide: commit with evidence or discard.
-2. Monitor for any runtime issues in the new features.
-3. Consider adding dark mode toggle (currently follows system only).
-4. App icon could use a higher-res source for better scaling.
+- No `.toolbar`, `ToolbarItem`, `ToolbarItemGroup`, or `.searchable` added.
+- No Clean step-UI added.
+- No Status files changed.
+- No hardcoded colors added; banner uses existing `PreflightBanner` and design tokens.
+
+## Next Step
+
+1. Maintainer runs the FDA not-granted manual check above.
+2. Reorganize history: the local base commit `e96bb8c` mixes Status + Permissions. Split into clean
+   commits before any push; merge `feat/permissions-finish` into `main` (no `ContentView` conflict
+   expected — this branch only adds the `AnalyzeView` constructor arg).
+3. Optional Status hardening: let a completed status decode assign even if the poll task was cancelled
+   (StatusView lines ~513/521), to remove the first-launch "Reading system data…" edge on focus-steal.
+4. Separate `/hunt` for the pre-existing Analyze decode error.
