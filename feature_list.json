@@ -1,0 +1,17 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "Project Verification Baseline",
+      "description": "Confirm make build and make test pass from a clean checkout",
+      "dependencies": [],
+      "doneCriteria": [
+        "make build succeeds",
+        "make test succeeds"
+      ],
+      "status": "not-started",
+      "subTasks": [],
+      "evidence": ""
+    }
+  ]
+}
