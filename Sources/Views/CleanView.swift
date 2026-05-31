@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CleanView: View {
     let service: MoService
+    @ObservedObject var permissions: PermissionsService
     @Binding var refreshTrigger: UUID
     @Binding var runTrigger: UUID
     @Binding var isLoading: Bool
@@ -11,11 +12,16 @@ struct CleanView: View {
     @State private var error: String?
     @State private var resultMessage: String?
     @State private var appear = false
+    @State private var activity: [String] = []
 
     var body: some View {
         VStack(spacing: 0) {
             headerBar
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
+
+            PreflightBanner(item: .clean, permissions: permissions)
+                .padding(.horizontal, 32)
+                .padding(.top, 12)
 
             ScrollView {
                 if isLoading {
@@ -64,6 +70,15 @@ struct CleanView: View {
                 .padding(.vertical, 6)
                 .background(DesignTokens.Color.accentSoft)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+            }
+            HeaderIconButton(systemName: "arrow.clockwise", help: "Re-scan", disabled: isLoading || isRunning) {
+                Task { await loadPreview() }
+            }
+            // Clean All stays disabled until a preview has loaded — enforces the
+            // app's preview-before-delete invariant.
+            HeaderActionButton(label: "Clean All", systemName: "sparkles",
+                               disabled: isLoading || isRunning || !hasData) {
+                Task { await runClean() }
             }
         }
         .padding(.horizontal, 32)
@@ -152,7 +167,11 @@ struct CleanView: View {
         VStack(spacing: 16) {
             ProgressView().scaleEffect(1.3)
             Text("Cleaning in progress...").font(DesignTokens.Font.bodyStrong).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity).padding(.vertical, 80)
+            if !activity.isEmpty {
+                ActivityFeed(lines: activity)
+                    .padding(.horizontal, 32)
+            }
+        }.frame(maxWidth: .infinity).padding(.vertical, 60)
     }
 
     private var resultBanner: some View {
@@ -167,10 +186,14 @@ struct CleanView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             ProgressView().scaleEffect(1.2)
             Text("Scanning for cleanable data...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+            if !activity.isEmpty {
+                ActivityFeed(lines: activity)
+                    .padding(.horizontal, 32)
+            }
+        }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.vertical, 40)
     }
 
     private func errorView(message: String) -> some View {
@@ -207,28 +230,64 @@ struct CleanView: View {
         resultMessage = nil
         appear = false
         categories.removeAll()
-        do {
-            let result = try await service.getCleanPreview()
-            categories = result.categories
-            hasData = !categories.isEmpty
-            withAnimation(DesignTokens.spring) { appear = true }
-        } catch {
-            self.error = error.localizedDescription
+        activity.removeAll()
+        hasData = false
+        await service.resetCleanPreview()
+        for await event in service.stream(args: ["clean", "--dry-run"]) {
+            switch event {
+            case .line(let l):
+                let t = l.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty {
+                    activity.append(t)
+                    if activity.count > 80 { activity.removeFirst(activity.count - 80) }
+                }
+            case .finished(let code):
+                if code == 0 {
+                    let result = await service.finalizeCleanPreview()
+                    categories = result.categories
+                    hasData = !categories.isEmpty
+                } else {
+                    error = "Cleanup preview failed (exit \(code))."
+                }
+            case .error(let m):
+                error = m
+            }
         }
+        withAnimation(DesignTokens.spring) { appear = true }
         isLoading = false
     }
 
+    // Destructive cleanup, run with administrator privileges (system caches need
+    // sudo) and streamed live into the activity feed.
     private func runClean() async {
+        // Preview-before-delete: refuse to run without a completed preview.
+        guard await service.cleanPreviewIsReady() else {
+            error = "Run a cleanup preview before cleaning."
+            return
+        }
         isRunning = true
         error = nil
         resultMessage = nil
-        do {
-            let output = try await service.executeClean()
-            resultMessage = output.isEmpty ? "Cleanup completed" : output
-            categories.removeAll()
-            hasData = false
-        } catch {
-            self.error = error.localizedDescription
+        activity.removeAll()
+        for await event in service.streamElevated(args: ["clean"]) {
+            switch event {
+            case .line(let l):
+                let t = l.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty {
+                    activity.append(t)
+                    if activity.count > 200 { activity.removeFirst(activity.count - 200) }
+                }
+            case .finished(let code):
+                if code == 0 {
+                    resultMessage = "Cleanup completed"
+                    categories.removeAll()
+                    hasData = false
+                } else if error == nil {
+                    error = "Cleanup failed (exit \(code))."
+                }
+            case .error(let m):
+                error = m
+            }
         }
         isRunning = false
     }

@@ -22,7 +22,6 @@ struct UninstallView: View {
                 else { content }
             }
             .background(DesignTokens.Color.pageBackground)
-            .searchable(text: $searchText, prompt: "Search apps")
         }
         .task { await loadApps() }
         .onChange(of: refreshTrigger) { oldValue, newValue in
@@ -43,6 +42,8 @@ struct UninstallView: View {
             }
             Spacer()
             if !apps.isEmpty {
+                InlineSearchField(text: $searchText, prompt: "Search apps")
+                    .frame(width: 200)
                 HStack(spacing: 6) {
                     Image(systemName: "internaldrive.fill").font(.system(size: 10))
                     Text(totalAppsSize)
@@ -55,14 +56,25 @@ struct UninstallView: View {
                 .background(DesignTokens.Color.accentSoft)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
+            HeaderIconButton(systemName: "arrow.clockwise", help: "Re-scan", disabled: isLoading) {
+                Task { await loadApps() }
+            }
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 20)
     }
 
+    private var filteredApps: [AppInfo] {
+        guard !searchText.isEmpty else { return apps }
+        return apps.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText)
+                || ($0.bundleID?.localizedCaseInsensitiveContains(searchText) ?? false)
+        }
+    }
+
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Installed Apps", subtitle: "\(apps.count) found")
+            sectionHeader("Installed Apps", subtitle: "\(filteredApps.count) found")
                 .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 12)
 
             uninstallNote
@@ -76,13 +88,13 @@ struct UninstallView: View {
             }.padding(.bottom, 8)
 
             VStack(spacing: 0) {
-                ForEach(Array(apps.enumerated()), id: \.element.id) { i, app in
+                ForEach(Array(filteredApps.enumerated()), id: \.element.id) { i, app in
                     appRow(app)
                         .opacity(appear ? 1 : 0)
                         .offset(x: appear ? 0 : -8)
                         .animation(DesignTokens.stagger(i), value: appear)
 
-                    if i < apps.count - 1 {
+                    if i < filteredApps.count - 1 {
                         Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 52)
                     }
                 }
@@ -144,7 +156,7 @@ struct UninstallView: View {
 
     private var emptyState: some View {
         VStack(spacing: 12) {
-            Image(systemName: "app.badge.xmark")
+            Image(systemName: "xmark.app.fill")
                 .font(.system(size: 28))
                 .foregroundStyle(DesignTokens.Color.tertiary)
             Text("No apps found")

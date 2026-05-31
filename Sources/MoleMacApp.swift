@@ -7,7 +7,7 @@ struct MoleMacApp: App {
             ContentView()
                 .frame(minWidth: 920, minHeight: 620)
         }
-        .windowToolbarStyle(.unifiedCompact)
+
         .commands {
             CommandGroup(replacing: .newItem) {}
         }

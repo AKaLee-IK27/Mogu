@@ -62,6 +62,11 @@ cat > "$CONTENTS/Info.plist" << PLIST
     <string></string>
     <key>CFBundleSignature</key>
     <string>????</string>
+    <!-- Privacy usage descriptions for macOS 14+ -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>MoleMac needs to analyze application data to provide system cleanup and optimization insights.</string>
+    <key>NSSystemAdministrationUsageDescription</key>
+    <string>MoleMac needs system administration access to manage application data and system caches.</string>
 </dict>
 </plist>
 PLIST
@@ -92,18 +97,41 @@ ENTITLEMENTS="MoleMac.entitlements"
 codesign --remove-signature "$RUNTIME_DST/bin/status-go" 2>/dev/null || true
 codesign --remove-signature "$RUNTIME_DST/bin/analyze-go" 2>/dev/null || true
 
-# Step 2: Re-sign Go binaries with the same bundle identifier as the main app.
+# Step 2: Re-sign Go binaries with the SAME bundle identifier as the main app.
 # This makes them part of the same code signature domain so TCC permissions
-# are shared between parent app and child processes.
+# (Full Disk Access) are shared between parent app and child processes.
 codesign --force --sign - \
-    --identifier "${BUNDLE_ID}.status-go" \
+    --identifier "${BUNDLE_ID}" \
     --options runtime \
     "$RUNTIME_DST/bin/status-go"
 
 codesign --force --sign - \
-    --identifier "${BUNDLE_ID}.analyze-go" \
+    --identifier "${BUNDLE_ID}" \
     --options runtime \
     "$RUNTIME_DST/bin/analyze-go"
+
+# Step 2b: Sign the shell scripts (mo, mole) with the same identifier.
+# macOS 26.5 TCC requires all child processes to share the parent's code
+# signature domain to inherit Full Disk Access permissions.
+codesign --force --sign - \
+    --identifier "${BUNDLE_ID}" \
+    --options runtime \
+    "$RUNTIME_DST/mo"
+
+codesign --force --sign - \
+    --identifier "${BUNDLE_ID}" \
+    --options runtime \
+    "$RUNTIME_DST/mole"
+
+# Sign all shell scripts in bin/
+for script in "$RUNTIME_DST"/bin/*.sh; do
+    if [[ -f "$script" ]]; then
+        codesign --force --sign - \
+            --identifier "${BUNDLE_ID}" \
+            --options runtime \
+            "$script"
+    fi
+done
 
 # Step 3: Sign the main executable (replaces SwiftPM's ad-hoc signature)
 codesign --force --sign - \

@@ -7,6 +7,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case analyze = "Analyze"
     case optimize = "Optimize"
     case purge = "Purge"
+    case permissions = "Permissions"
 
     var id: String { rawValue }
     var label: String { rawValue }
@@ -15,10 +16,11 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .status: return "gauge.medium"
         case .clean: return "sparkles"
-        case .uninstall: return "app.badge.xmark"
+        case .uninstall: return "xmark.app.fill"
         case .analyze: return "chart.bar.fill"
         case .optimize: return "bolt.horizontal.circle.fill"
         case .purge: return "trash.fill"
+        case .permissions: return "lock.shield"
         }
     }
 
@@ -30,6 +32,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .optimize: return DesignTokens.Color.warning
         case .analyze: return SwiftUI.Color(hex: "5856d6")
         case .purge: return DesignTokens.Color.secondary
+        case .permissions: return DesignTokens.Color.accent
         }
     }
 }
@@ -37,6 +40,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 struct ContentView: View {
     @State private var selectedItem: SidebarItem
     @State private var moService = MoService()
+    @StateObject private var permissions = PermissionsService()
     @State private var isAvailable = false
     @State private var sidebarHover: SidebarItem?
     @State private var loadedTabs: Set<String> = []
@@ -120,6 +124,7 @@ struct ContentView: View {
             StickyTab(key: item.id, loadedTabs: $loadedTabs) {
                 CleanView(
                     service: moService,
+                    permissions: permissions,
                     refreshTrigger: $cleanRefresh,
                     runTrigger: $cleanRun,
                     isLoading: $cleanLoading,
@@ -148,6 +153,7 @@ struct ContentView: View {
             StickyTab(key: item.id, loadedTabs: $loadedTabs) {
                 OptimizeView(
                     service: moService,
+                    permissions: permissions,
                     previewTrigger: $optimizePreview,
                     runTrigger: $optimizeRun,
                     isRunning: $optimizeRunning,
@@ -161,6 +167,10 @@ struct ContentView: View {
                     refreshTrigger: $purgeRefresh,
                     isLoading: $purgeLoading
                 )
+            }
+        case .permissions:
+            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+                PermissionsView(permissions: permissions)
             }
         }
     }
@@ -239,6 +249,106 @@ struct StickyTab<Content: View>: View {
                 if loadedTabs.contains(key) { return }
                 loadedTabs.insert(key)
             }
+    }
+}
+
+// Header action buttons. Live in the normal view hierarchy (NOT a window
+// .toolbar, which crashes on macOS 26.5) so per-screen Refresh / Run actions
+// are reachable. Replaces the removed toolbar from commit d3a2635.
+struct HeaderIconButton: View {
+    let systemName: String
+    let help: String
+    var disabled: Bool = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(disabled ? DesignTokens.Color.tertiary : DesignTokens.Color.secondary)
+                .frame(width: 30, height: 28)
+                .background(DesignTokens.Color.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+                .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .help(help)
+    }
+}
+
+struct HeaderActionButton: View {
+    let label: String
+    let systemName: String
+    var tint: SwiftUI.Color = DesignTokens.Color.accent
+    var disabled: Bool = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label(label, systemImage: systemName)
+                .font(DesignTokens.Font.bodyStrong)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(tint)
+        .controlSize(.large)
+        .disabled(disabled)
+    }
+}
+
+// In-view search field. Replaces SwiftUI `.searchable`, which installs an
+// NSSearchToolbarItem into the window's NSToolbar and triggers the macOS 26.5
+// NSToolbar SIGTRAP crash (same root cause as the removed `.toolbar`).
+struct InlineSearchField: View {
+    @Binding var text: String
+    let prompt: String
+
+    var body: some View {
+        HStack(spacing: 7) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(DesignTokens.Color.tertiary)
+            TextField(prompt, text: $text)
+                .textFieldStyle(.plain)
+                .font(DesignTokens.Font.body)
+                .foregroundStyle(DesignTokens.Color.primary)
+            if !text.isEmpty {
+                Button { text = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+    }
+}
+
+// Live, terminal-style feed of the most recent streamed output lines. Used by
+// scan operations (Clean/Purge) to show what's happening during a long scan.
+struct ActivityFeed: View {
+    let lines: [String]
+    var visible: Int = 8
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(Array(lines.suffix(visible).enumerated()), id: \.offset) { _, line in
+                Text(line)
+                    .font(DesignTokens.Font.mono)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.codeBg)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
     }
 }
 

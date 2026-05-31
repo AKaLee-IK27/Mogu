@@ -1,15 +1,23 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # MoleMac
 
-macOS GUI for [Mole CLI](https://github.com/tw93/Mole).
+SwiftUI macOS GUI for [Mole CLI](https://github.com/tw93/Mole). Requires macOS 14+, Swift 6.3+, and Go 1.21+ (to build the bundled runtime).
 
 ## Commands
 
 ```bash
-make build      # Compile the Swift executable
-make app        # Build MoleMac.app with bundled Mole runtime
-make test       # Build + verify
+make build      # Compile the Swift executable (swift build)
+make app        # Build MoleMac.app with bundled Mole runtime (runs build_app.sh)
+make test       # Build + verify — NOTE: build-only, there is no unit-test suite
 make clean      # Remove build artifacts
 ```
+
+There is no lint step and no test target. `make test` only confirms the build
+compiles. Real verification is **build + launch the app** (see Gotchas) — a
+compile pass does not catch the runtime issues this codebase is prone to.
 
 ## Safety
 
@@ -29,6 +37,61 @@ make app
 # Rebuild Mole Go binaries after updating submodule
 cd Vendor/Mole && make build
 ```
+
+## Code Architecture
+
+The app is a thin SwiftUI shell over the bundled `mo` CLI. Three layers matter:
+
+**`Services/MoService.swift` — an `actor` that shells out to `mo`.** All CLI
+calls funnel through `runCommandResult` (sets `NO_COLOR`/`TERM=dumb`/`LANG=C`,
+captures stdout/stderr via temp files). The key non-obvious fact: **Mole 1.40.0
+only exposes `--json` for `status`, `uninstall --list`, and `analyze`.** Clean,
+purge, and optimize have **no JSON**, so their results are produced by *parsing
+human-readable text output* (`parseCleanPreview`, `parsePurgePreview`,
+`parseOptimizePreview`) keyed on glyph markers (`===`, `━━━`, `➤`). Clean's
+preview is read from the side file `~/.config/mole/clean-list.txt`, not stdout.
+If `mo`'s output format changes, these parsers silently return empty results.
+The `cleanPreviewReady` flag enforces preview-before-delete: `executeClean()`
+refuses to run unless a preview was generated first.
+
+**Runtime resolution** (`MoService.resolveMoPath`): bundled
+`Contents/Resources/MoleRuntime/mo` → `MOLEMAC_MO_PATH` env override → (DEBUG
+only) Homebrew `mo` → nonexistent-path sentinel. `make app` builds the runtime
+from the `Vendor/Mole` submodule; packaged builds never use Homebrew Mole.
+
+**`ContentView.swift` — the navigation + action wiring.** All six screens live
+**simultaneously** in a `ZStack` (`StickyTab`), toggled by opacity — so **every
+view's `.task` fires at launch** (six `mo` calls run on startup). ContentView
+declares per-screen `UUID` "trigger" bindings and loading-state bindings that
+it threads into each view. Each view's destructive/refresh actions are
+**in-view header buttons** (`HeaderIconButton` / `HeaderActionButton`), wired
+directly to the view's own async methods (`loadPreview`, `runClean`, etc.).
+There is **no window `.toolbar`** — see Gotchas. (The trigger UUID bindings are
+now vestigial leftovers from the removed toolbar; harmless, not load-bearing.)
+
+`Theme/DesignTokens.swift` centralizes all fonts/colors/spacing as adaptive
+light/dark values — never hardcode colors in views.
+
+## Critical Gotchas
+
+- **NEVER use SwiftUI `.toolbar` (or `ToolbarItem`/`ToolbarItemGroup`).** On
+  macOS 26.5 every `.toolbar` usage triggers `SIGTRAP` in
+  `[NSToolbar _insertNewItemWithItemIdentifier:]` during initial layout — an
+  immediate launch crash. Put actions in the view body as ordinary `Button`s.
+- **Preview operations are slow, not hung.** `clean --dry-run` takes ~35–40s and
+  `optimize --dry-run` ~5s. Always show a loading spinner while a preview runs;
+  a disabled action button with no spinner reads as broken.
+- **`MOLEMAC_SCREEN=<status|clean|uninstall|analyze|optimize|purge>`** launches
+  straight to one tab (set in `ContentView.init`) — useful for verification
+  screenshots. **`open` does NOT propagate env vars**, so to use it run the
+  bundle executable directly:
+  `MOLEMAC_SCREEN=clean /Applications/MoleMac.app/Contents/MacOS/MoleMac`.
+- **TCC / Full Disk Access depends on code signing.** `build_app.sh` signs every
+  child binary (`mo`, `mole`, Go binaries, shell scripts) with the **same**
+  bundle identifier as the parent so they share one signature domain and inherit
+  Full Disk Access. Changing identifiers per-binary breaks permission inheritance.
+- For UI verification, launch the **`.app` bundle** (`open MoleMac.app`); a bare
+  `swift build` debug binary won't activate or raise its window properly.
 
 ## Agent Workflow: Plan → Build → Check
 

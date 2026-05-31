@@ -5,3 +5,4 @@ MoleMac.app/
 Package.resolved
 .DS_Store
 .remember/
+.claude/settings.local.json

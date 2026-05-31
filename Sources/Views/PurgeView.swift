@@ -8,6 +8,7 @@ struct PurgeView: View {
     @State private var error: String?
     @State private var appear = false
     @State private var searchText = ""
+    @State private var activity: [String] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,7 +22,6 @@ struct PurgeView: View {
                 else { content }
             }
             .background(DesignTokens.Color.pageBackground)
-            .searchable(text: $searchText, prompt: "Search projects")
         }
         .task { await loadProjects() }
         .onChange(of: refreshTrigger) { oldValue, newValue in
@@ -42,6 +42,8 @@ struct PurgeView: View {
             }
             Spacer()
             if !projects.isEmpty {
+                InlineSearchField(text: $searchText, prompt: "Search projects")
+                    .frame(width: 200)
                 HStack(spacing: 6) {
                     Image(systemName: "folder.fill.badge.minus").font(.system(size: 10))
                     Text(totalArtifactsSize)
@@ -54,14 +56,25 @@ struct PurgeView: View {
                 .background(DesignTokens.Color.accentSoft)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
+            HeaderIconButton(systemName: "arrow.clockwise", help: "Re-scan", disabled: isLoading) {
+                Task { await loadProjects() }
+            }
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 20)
     }
 
+    private var filteredProjects: [PurgeProject] {
+        guard !searchText.isEmpty else { return projects }
+        return projects.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText)
+                || $0.type.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Projects", subtitle: "\(projects.count) found")
+            sectionHeader("Projects", subtitle: "\(filteredProjects.count) found")
                 .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 12)
 
             purgeNote
@@ -69,13 +82,13 @@ struct PurgeView: View {
                 .padding(.bottom, 12)
 
             VStack(spacing: 0) {
-                ForEach(Array(projects.enumerated()), id: \.element.id) { i, project in
+                ForEach(Array(filteredProjects.enumerated()), id: \.element.id) { i, project in
                     projectRow(project)
                         .opacity(appear ? 1 : 0)
                         .offset(x: appear ? 0 : -8)
                         .animation(DesignTokens.stagger(i), value: appear)
 
-                    if i < projects.count - 1 {
+                    if i < filteredProjects.count - 1 {
                         Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 52)
                     }
                 }
@@ -152,10 +165,14 @@ struct PurgeView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             ProgressView().scaleEffect(1.2)
             Text("Scanning project directories...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+            if !activity.isEmpty {
+                ActivityFeed(lines: activity)
+                    .padding(.horizontal, 32)
+            }
+        }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.vertical, 40)
     }
 
     private func errorView(message: String) -> some View {
@@ -170,13 +187,26 @@ struct PurgeView: View {
         error = nil
         appear = false
         projects.removeAll()
-        do {
-            let result = try await service.getPurgeList()
-            projects = result.projects
-            withAnimation(DesignTokens.spring) { appear = true }
-        } catch {
-            self.error = error.localizedDescription
+        activity.removeAll()
+        var collected = ""
+        for await event in service.stream(args: ["purge", "--dry-run", "--include-empty"]) {
+            switch event {
+            case .line(let l):
+                collected += l + "\n"
+                let t = l.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty {
+                    activity.append(t)
+                    if activity.count > 80 { activity.removeFirst(activity.count - 80) }
+                }
+            case .finished:
+                // purge exits non-zero when nothing is found; treat as empty.
+                let result = await service.purgeResult(fromText: collected)
+                projects = result.projects
+            case .error(let m):
+                error = m
+            }
         }
+        withAnimation(DesignTokens.spring) { appear = true }
         isLoading = false
     }
 }

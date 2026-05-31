@@ -51,6 +51,9 @@ struct AnalyzeView: View {
                 .background(DesignTokens.Color.accentSoft)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
+            HeaderIconButton(systemName: "arrow.clockwise", help: "Re-analyze", disabled: isLoading) {
+                Task { await loadAnalysis() }
+            }
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 20)
