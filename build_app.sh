@@ -78,24 +78,8 @@ if [[ -f "$RUNTIME_SRC/VERSION" ]]; then cp "$RUNTIME_SRC/VERSION" "$RUNTIME_DST
 if [[ -f "$RUNTIME_SRC/LICENSE" ]]; then cp "$RUNTIME_SRC/LICENSE" "$RUNTIME_DST/LICENSE"; fi
 chmod +x "$RUNTIME_DST/mo" "$RUNTIME_DST/mole" "$RUNTIME_DST"/bin/*
 
-# Create entitlements (outside the app bundle — codesign can't seal files it signs)
+# Entitlements file lives in repo root
 ENTITLEMENTS="MoleMac.entitlements"
-cat > "$ENTITLEMENTS" << 'ENT'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.app-sandbox</key>
-    <false/>
-    <key>com.apple.security.get-task-allow</key>
-    <true/>
-    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
-    <true/>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
-</dict>
-</plist>
-ENT
 
 # Step 1: Remove Go's default linker signature so our ad-hoc sign takes effect.
 # Go linker embeds a signature with Identifier=a.out, which causes macOS TCC

@@ -27,7 +27,7 @@ Applied from Taste Skill:
 
 - **No emojis** in code or UI - clean SVG primitives only
 - **Off-black** instead of pure black for text
-- **Single accent color** (electric blue `#2563eb`) - no purple AI glow
+- **Single accent color** (system blue `#007aff`) - no purple AI glow
 - **Spacious, editorial layout** inspired by Linear/Notion
 - **Monospace for data** - sizes, percentages, paths
 - **Proper spacing scale** - 4/8/16/24/32/48px
@@ -71,7 +71,7 @@ Sources/
 
 All destructive operations (clean, uninstall, purge) preview data first using `--dry-run` before execution. The app never runs destructive commands without showing what will be affected.
 
-MoleMac uses the pinned runtime under `Vendor/MoleRuntime` and bundles it into `MoleMac.app/Contents/Resources/MoleRuntime`, so Homebrew Mole updates do not change app behavior.
+MoleMac builds Mole from the `Vendor/Mole` git submodule and bundles it into `MoleMac.app/Contents/Resources/MoleRuntime`, so Homebrew Mole updates do not change app behavior.
 
 ## License
 

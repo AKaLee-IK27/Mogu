@@ -209,7 +209,7 @@ struct CleanResult: Codable {
 
 // MARK: - App Uninstall
 
-struct AppInfo: Identifiable {
+struct AppInfo: Codable, Identifiable {
     var id: String { name }
     let name: String
     let size: UInt64
@@ -237,7 +237,7 @@ struct RawAppInfo: Codable {
     }
 }
 
-struct UninstallResult {
+struct UninstallResult: Codable {
     let apps: [AppInfo]
     let totalSize: UInt64?
 
@@ -280,7 +280,7 @@ struct AnalysisResult: Codable {
 
 // MARK: - Purge
 
-struct PurgeProject: Identifiable {
+struct PurgeProject: Codable, Identifiable {
     var id: String { name }
     let name: String
     let size: UInt64
@@ -289,7 +289,7 @@ struct PurgeProject: Identifiable {
     let selected: Bool?
 }
 
-struct PurgeResult {
+struct PurgeResult: Codable {
     let projects: [PurgeProject]
     let totalSize: UInt64?
 

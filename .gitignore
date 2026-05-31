@@ -4,3 +4,4 @@ MoleMac.app/
 .swiftpm/
 Package.resolved
 .DS_Store
+.remember/

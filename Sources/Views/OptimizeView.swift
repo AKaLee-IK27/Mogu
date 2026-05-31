@@ -31,6 +31,7 @@ struct OptimizeView: View {
             guard oldValue != newValue else { return }
             Task { await runOptimizeRun() }
         }
+        .task { await runOptimizePreview() }
     }
 
     private var headerBar: some View {
