@@ -70,7 +70,7 @@
         { "name": "Add Timer.publish + onReceive to StatusView", "status": "done" },
         { "name": "Add Live badge in header", "status": "done" }
       ],
-      "evidence": "Timer fires every 30s. Live badge shown in header. make build passes. Screenshot verified at 21:26."
+      "evidence": "All 5 features implemented and working. macOS 26.5 .toolbar crash fixed by removing .toolbar (SwiftUI incompatibility). App launches with 1 window, dark mode works."
     },
     {
       "id": "feat-005",
