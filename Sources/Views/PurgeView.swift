@@ -7,7 +7,6 @@ struct PurgeView: View {
     @State private var projects: [PurgeProject] = []
     @State private var error: String?
     @State private var appear = false
-    @State private var sortOrder: SortOrder = .sizeDesc
     @State private var searchText = ""
 
     var body: some View {
@@ -43,13 +42,6 @@ struct PurgeView: View {
             }
             Spacer()
             if !projects.isEmpty {
-                Picker("Sort", selection: $sortOrder) {
-                    ForEach(SortOrder.allCases, id: \.self) { order in
-                        Text(order.rawValue).tag(order)
-                    }
-                }
-                .pickerStyle(.menu)
-                .labelsHidden()
                 HStack(spacing: 6) {
                     Image(systemName: "folder.fill.badge.minus").font(.system(size: 10))
                     Text(totalArtifactsSize)
@@ -69,7 +61,7 @@ struct PurgeView: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Projects", subtitle: "\(displayedProjects.count) of \(projects.count) found")
+            sectionHeader("Projects", subtitle: "\(projects.count) found")
                 .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 12)
 
             purgeNote
@@ -77,7 +69,7 @@ struct PurgeView: View {
                 .padding(.bottom, 12)
 
             VStack(spacing: 0) {
-                ForEach(Array(displayedProjects.enumerated()), id: \.element.id) { i, project in
+                ForEach(Array(projects.enumerated()), id: \.element.id) { i, project in
                     projectRow(project)
                         .opacity(appear ? 1 : 0)
                         .offset(x: appear ? 0 : -8)
@@ -139,17 +131,7 @@ struct PurgeView: View {
     }
 
     private var totalArtifactsSize: String {
-        displayedProjects.reduce(0) { $0 + $1.size }.humanReadable
-    }
-
-    private var displayedProjects: [PurgeProject] {
-        let filtered = searchText.isEmpty ? projects : projects.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
-        return filtered.sorted { lhs, rhs in
-            switch sortOrder {
-            case .sizeDesc: return lhs.size > rhs.size
-            case .nameAsc: return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
-            }
-        }
+        projects.reduce(0) { $0 + $1.size }.humanReadable
     }
 
     private var emptyState: some View {

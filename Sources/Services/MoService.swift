@@ -173,8 +173,8 @@ actor MoService {
         return parseOptimizePreview(stdout: result.stdout)
     }
 
-    // Preview uninstall for a specific app (non-interactive, dry-run only).
-    func previewUninstall(appName: String) async throws -> String {
+    // Execute uninstall for a specific app (non-interactive).
+    func executeUninstall(appName: String) async throws -> String {
         guard let result = await runCommandResult(args: ["uninstall", "--dry-run", appName]) else {
             throw MoError.commandNotFound
         }
@@ -182,17 +182,6 @@ actor MoService {
             throw MoError.executionFailed(result.errorMessage)
         }
         return result.outputText.isEmpty ? "Uninstall preview complete" : result.outputText
-    }
-
-    // Execute actual uninstall for a specific app (destructive). Requires preview first.
-    func executeUninstall(appName: String) async throws -> String {
-        guard let result = await runCommandResult(args: ["uninstall", appName]) else {
-            throw MoError.commandNotFound
-        }
-        guard result.status == 0 else {
-            throw MoError.executionFailed(result.errorMessage)
-        }
-        return result.outputText.isEmpty ? "Uninstall complete" : result.outputText
     }
 
     // MARK: - Private
