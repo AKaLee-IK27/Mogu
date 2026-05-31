@@ -3,17 +3,22 @@
 ## Last Session
 
 **Date:** 2026-05-31
-**Feature:** Application Audit & Improvements (T1–T8)
-**Status:** Completed — `make build` and `make test` pass
+**Feature:** feat-003 through feat-007 — All 5 features + crash fix
+**Status:** Completed — `make build` and `make test` pass, no crash on launch
 
 ## Current State
 
-- All 8 audit sub-tasks implemented and verified
-- Clean working tree after commit
+- All 5 features implemented and verified
+- macOS 26.5 toolbar crash resolved (EmptyView → switch-based pattern)
+- Clean working tree, pushed to main
 - `make build` passes, `make test` passes
+
+## Key Finding
+
+**macOS 26.5 bug:** `EmptyView()` inside a `ToolbarItem` causes `SIGTRAP` in `[NSToolbar _insertNewItemWithItemIdentifier:]` during initial layout. Always use explicit content, never `EmptyView()` in toolbar items.
 
 ## Next Steps
 
-1. Pick next unfinished feature from `feature_list.json`
-2. Run `/think` to plan before writing code
-3. Verify with `make test` before claiming done
+1. Monitor for any runtime issues in the new features
+2. Consider adding dark mode toggle (currently follows system only)
+3. App icon could use a higher-res source for better scaling
