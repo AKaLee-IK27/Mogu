@@ -5,7 +5,7 @@ APP="MoleMac.app"
 CONTENTS="$APP/Contents"
 MACOS="$CONTENTS/MacOS"
 RESOURCES="$CONTENTS/Resources"
-RUNTIME_SRC="Vendor/MoleRuntime"
+RUNTIME_SRC="Vendor/Mole"
 RUNTIME_DST="$RESOURCES/MoleRuntime"
 BUNDLE_ID="com.mole.molemac"
 
@@ -18,13 +18,17 @@ if [[ ! -x "$BINARY" ]]; then
     exit 1
 fi
 
-if [[ ! -x "$RUNTIME_SRC/mo" ]]; then
-    echo "Bundled Mole runtime missing at $RUNTIME_SRC" >&2
+if [[ ! -d "$RUNTIME_SRC" ]]; then
+    echo "Mole submodule not initialized. Run: git submodule update --init --recursive" >&2
     exit 1
 fi
 
+# Build Go helper binaries from source (native performance)
+echo "=== Building Mole Go binaries from source ==="
+(cd "$RUNTIME_SRC" && make build)
+
 if [[ ! -x "$RUNTIME_SRC/bin/status-go" || ! -x "$RUNTIME_SRC/bin/analyze-go" ]]; then
-    echo "Bundled Mole runtime is incomplete: status-go/analyze-go are required" >&2
+    echo "Mole build failed: status-go/analyze-go are required" >&2
     exit 1
 fi
 
@@ -63,7 +67,15 @@ cat > "$CONTENTS/Info.plist" << PLIST
 PLIST
 
 cp "$BINARY" "$MACOS/MoleMac"
-cp -R "$RUNTIME_SRC" "$RUNTIME_DST"
+
+# Copy only the runtime artifacts (not .git, source, docs, tests)
+mkdir -p "$RUNTIME_DST/bin" "$RUNTIME_DST/lib"
+cp "$RUNTIME_SRC/mo" "$RUNTIME_DST/mo"
+cp "$RUNTIME_SRC/mole" "$RUNTIME_DST/mole"
+cp -R "$RUNTIME_SRC/bin" "$RUNTIME_DST/"
+cp -R "$RUNTIME_SRC/lib" "$RUNTIME_DST/"
+if [[ -f "$RUNTIME_SRC/VERSION" ]]; then cp "$RUNTIME_SRC/VERSION" "$RUNTIME_DST/VERSION"; fi
+if [[ -f "$RUNTIME_SRC/LICENSE" ]]; then cp "$RUNTIME_SRC/LICENSE" "$RUNTIME_DST/LICENSE"; fi
 chmod +x "$RUNTIME_DST/mo" "$RUNTIME_DST/mole" "$RUNTIME_DST"/bin/*
 
 # Create entitlements (outside the app bundle — codesign can't seal files it signs)
@@ -121,6 +133,8 @@ codesign --force --deep --sign - \
 RUNTIME_VERSION="unknown"
 if [[ -f "$RUNTIME_DST/VERSION" ]]; then
     RUNTIME_VERSION="$(tr -d '\n' < "$RUNTIME_DST/VERSION")"
+elif [[ -f "$RUNTIME_DST/mole" ]]; then
+    RUNTIME_VERSION="$(grep '^VERSION="' "$RUNTIME_DST/mole" | head -1 | sed 's/VERSION="\(.*\)"/\1/')"
 fi
 
 # Verify

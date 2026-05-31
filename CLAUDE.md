@@ -13,7 +13,22 @@ make clean      # Remove build artifacts
 
 ## Safety
 
-Never run destructive `mo` commands without `--dry-run` first. The app follows this invariant: preview before delete. The app uses the pinned bundled runtime in `Vendor/MoleRuntime`, not Homebrew Mole, for packaged builds.
+Never run destructive `mo` commands without `--dry-run` first. The app follows this invariant: preview before delete. The app builds the Mole runtime from source in `Vendor/Mole` (git submodule), not Homebrew Mole, for packaged builds.
+
+## Build
+
+The app bundles the Mole runtime from source during `make app`. This requires Go 1.21+ installed.
+
+```bash
+# Initialize submodule (first clone only)
+git submodule update --init --recursive
+
+# Build the app bundle (compiles Mole Go binaries + Swift app)
+make app
+
+# Rebuild Mole Go binaries after updating submodule
+cd Vendor/Mole && make build
+```
 
 ## Agent Workflow: Plan → Build → Check
 

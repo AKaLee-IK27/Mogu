@@ -3,6 +3,12 @@ set -e
 
 echo "=== MoleMac Initialization ==="
 
+echo "=== Checking submodules ==="
+if [[ ! -f "Vendor/Mole/mole" ]]; then
+    echo "Mole submodule not found. Run: git submodule update --init --recursive"
+    exit 1
+fi
+
 echo "=== Building ==="
 make build
 

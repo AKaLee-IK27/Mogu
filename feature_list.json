@@ -9,9 +9,34 @@
         "make build succeeds",
         "make test succeeds"
       ],
-      "status": "not-started",
+      "status": "done",
       "subTasks": [],
-      "evidence": ""
+      "evidence": "make build passes, make test passes"
+    },
+    {
+      "id": "feat-002",
+      "name": "Build Mole from Source (submodule)",
+      "description": "Replace pre-built Vendor/MoleRuntime with git submodule at Vendor/Mole. Build Go binaries (status-go, analyze-go) from source during make app.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Vendor/MoleRuntime removed",
+        "Vendor/Mole submodule added",
+        "make app builds Go binaries from source",
+        "make app bundles correct runtime artifacts",
+        "App launches and calls mo commands successfully",
+        "Version detection works (1.40.0)"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Install Go", "status": "done", "evidence": "go 1.26.3 darwin/arm64" },
+        { "name": "Remove Vendor/MoleRuntime", "status": "done" },
+        { "name": "Add Mole as git submodule", "status": "done", "evidence": "Vendor/Mole at main" },
+        { "name": "Update build_app.sh", "status": "done", "evidence": "builds Go binaries, copies only runtime artifacts" },
+        { "name": "Verify MoService.swift paths", "status": "done", "evidence": "paths unchanged (still MoleRuntime)" },
+        { "name": "Update CLAUDE.md", "status": "done" },
+        { "name": "Full build + launch verify", "status": "done", "evidence": "make app + app launches, runtime version 1.40.0" }
+      ],
+      "evidence": "make app passes. Go binaries built native arm64. App launches, calls /Applications/MoleMac.app/Contents/Resources/MoleRuntime/mo. Version: 1.40.0"
     }
   ]
 }
