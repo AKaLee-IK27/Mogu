@@ -70,7 +70,7 @@
         { "name": "Add Timer.publish + onReceive to StatusView", "status": "done" },
         { "name": "Add Live badge in header", "status": "done" }
       ],
-      "evidence": "Timer fires every 30s. Live badge shown in header. make build passes."
+      "evidence": "Timer fires every 30s. Live badge shown in header. make build passes. Screenshot verified at 21:26."
     },
     {
       "id": "feat-005",
