@@ -16,6 +16,8 @@ struct SystemStatus: Codable {
     let thermal: ThermalInfo?
     let proxy: ProxyInfo?
     let diskIO: DiskIO?
+    let collectedAt: String?
+    let procs: Int?
 
     enum CodingKeys: String, CodingKey {
         case host
@@ -27,6 +29,8 @@ struct SystemStatus: Codable {
         case thermal
         case proxy
         case diskIO = "disk_io"
+        case collectedAt = "collected_at"
+        case procs
     }
 }
 
@@ -250,7 +254,7 @@ struct UninstallResult: Codable {
 // MARK: - Disk Analysis
 
 struct DiskEntry: Codable, Identifiable {
-    var id: UUID { UUID() }
+    var id: String { path }
     let name: String
     let path: String
     let size: UInt64
@@ -296,31 +300,6 @@ struct PurgeResult: Codable {
     enum CodingKeys: String, CodingKey {
         case projects
         case totalSize = "total_size"
-    }
-}
-
-// MARK: - Optimize
-
-struct OptimizeStep: Codable, Identifiable {
-    var id: UUID { UUID() }
-    let description: String
-    let completed: Bool
-    let error: String?
-}
-
-struct OptimizeResult: Codable {
-    let steps: [OptimizeStep]
-    let ramTotal: UInt64?
-    let ramUsed: UInt64?
-    let diskTotal: UInt64?
-    let diskUsed: UInt64?
-
-    enum CodingKeys: String, CodingKey {
-        case steps
-        case ramTotal = "ram_total"
-        case ramUsed = "ram_used"
-        case diskTotal = "disk_total"
-        case diskUsed = "disk_used"
     }
 }
 

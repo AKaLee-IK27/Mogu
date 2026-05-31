@@ -116,6 +116,7 @@ struct ContentView: View {
             StickyTab(key: item.id, loadedTabs: $loadedTabs) {
                 StatusView(
                     service: moService,
+                    isActive: selectedItem == .status,
                     refreshTrigger: $statusRefresh,
                     isLoading: $statusLoading
                 )
