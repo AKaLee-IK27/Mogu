@@ -90,88 +90,9 @@ struct ContentView: View {
         }
         .frame(minWidth: 960, minHeight: 640)
         .task { isAvailable = await moService.isAvailable() }
-        .toolbar { toolbarItems }
     }
 
     // Toolbar items
-    @ToolbarContentBuilder
-    private var toolbarItems: some ToolbarContent {
-        ToolbarItem(id: "toolbar.refresh", placement: .primaryAction) {
-            Button(action: { refreshAction() }) {
-                Image(systemName: "arrow.clockwise")
-            }.help("Refresh").disabled(refreshDisabled)
-        }
-        if showAction {
-            ToolbarItem(id: "toolbar.action", placement: .primaryAction) {
-                Button(action: { actionAction() }) {
-                    Label(actionLabel, systemImage: actionIcon)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .disabled(actionDisabled)
-            }
-        }
-    }
-
-    private var refreshDisabled: Bool {
-        switch selectedItem {
-        case .status: return statusLoading
-        case .clean: return cleanLoading || cleanRunning
-        case .uninstall: return uninstallLoading
-        case .analyze: return analyzeLoading
-        case .optimize: return optimizeRunning || optimizeComplete
-        case .purge: return purgeLoading
-        }
-    }
-    private func refreshAction() {
-        switch selectedItem {
-        case .status: statusRefresh = UUID()
-        case .clean: cleanRefresh = UUID()
-        case .uninstall: uninstallRefresh = UUID()
-        case .analyze: analyzeRefresh = UUID()
-        case .optimize: optimizePreview = UUID()
-        case .purge: purgeRefresh = UUID()
-        }
-    }
-    private var showAction: Bool {
-        switch selectedItem {
-        case .status, .analyze, .purge: return false
-        default: return true
-        }
-    }
-    private var actionLabel: String {
-        switch selectedItem {
-        case .clean: return "Clean All"
-        case .uninstall: return "Uninstall"
-        case .optimize: return "Run"
-        default: return ""
-        }
-    }
-    private var actionIcon: String {
-        switch selectedItem {
-        case .clean: return "sparkles"
-        case .uninstall: return "trash.fill"
-        case .optimize: return "bolt.horizontal.circle.fill"
-        default: return "circle"
-        }
-    }
-    private var actionDisabled: Bool {
-        switch selectedItem {
-        case .clean: return cleanLoading || cleanRunning || !cleanHasData
-        case .uninstall: return uninstallLoading
-        case .optimize: return optimizeRunning || optimizeComplete
-        default: return false
-        }
-    }
-    private func actionAction() {
-        switch selectedItem {
-        case .clean: cleanRun = UUID()
-        case .uninstall: uninstallRun = UUID()
-        case .optimize: optimizeRun = UUID()
-        default: break
-        }
-    }
-
     @ViewBuilder
     private var tabContainer: some View {
         ZStack {
