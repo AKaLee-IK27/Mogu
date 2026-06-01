@@ -11,6 +11,12 @@ let package = Package(
         .executableTarget(
             name: "Drilbur",
             path: "Sources"
+        ),
+        .testTarget(
+            name: "DrilburTests",
+            dependencies: ["Drilbur"],
+            path: "Tests/DrilburTests",
+            resources: [.copy("Fixtures")]
         )
     ]
 )

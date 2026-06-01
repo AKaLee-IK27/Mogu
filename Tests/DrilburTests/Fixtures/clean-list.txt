@@ -1,0 +1,78 @@
+# Mole Cleanup Preview - 2026-06-01 17:12:51
+#
+# How to protect files:
+# 1. Copy any path below to ~/.config/mole/whitelist
+# 2. Run: mo clean --whitelist
+#
+# Example:
+#   /Users/*/Library/Caches/com.example.app
+#
+
+
+=== User essentials ===
+/Users/rowlet/Library/Caches  # 1.19GB, 10 items
+/Users/rowlet/Library/Logs  # 104KB, 4 items
+
+=== App caches ===
+/Users/rowlet/Library/Suggestions  # 2.4MB, 16 items
+/Users/rowlet/Library/Containers/com.apple.wallpaper.agent/Data/Library/Caches/com.apple.wallpaper.caches  # 49.6MB
+/Users/rowlet/Library/Containers/com.apple.mediaanalysisd/Data/Library/Caches/com.apple.mediaanalysisd  # 365.6MB
+/Users/rowlet/Library/Containers/com.apple.mediaanalysisd/Data/tmp/Pissarro  # 7.5MB
+/Users/rowlet/Library/Containers/com.apple.geod/Data/tmp  # 627KB, 2 items
+/Users/rowlet/Library/Caches/com.apple.helpd  # 30.5MB, 8 items
+/Users/rowlet/Library/Caches/GeoServices  # 52.2MB, 6 items
+/Users/rowlet/Library/Caches/com.apple.AppleMediaServices  # 1.8MB, 5 items
+/Users/rowlet/Library/Caches/com.apple.parsecd  # 17.1MB, 14 items
+/Users/rowlet/Library/Caches/com.apple.python/Applications  # 5.1MB
+/Users/rowlet/Library/Caches/com.apple.e5rt.e5bundlecache/25F71  # 29.5MB
+
+=== Browsers ===
+/Users/rowlet/Library/Caches/Google/Chrome/Default  # 36.4MB
+/Users/rowlet/Library/Application Support/Google/GoogleUpdater/crx_cache/metadata.json  # 1KB
+/Users/rowlet/Library/Caches/BraveSoftware/Brave-Browser/Default  # 661.9MB
+
+=== Cloud & Office ===
+
+=== Developer tools ===
+/Users/rowlet/.npm/_cacache  # 1.9MB, 2 items
+/Users/rowlet/.npm/_npx  # 277.5MB, 3 items
+/Users/rowlet/.npm/_logs  # 24KB, 14 items
+/Users/rowlet/.cargo/registry/cache/index.crates.io-1949cf8c6b5b557f  # 6.2MB
+/Users/rowlet/Library/Caches/org.swift.swiftpm  # 283KB, 3 items
+/Users/rowlet/Library/Application Support/Claude/Cache/Cache_Data  # 3.0MB
+/Users/rowlet/Library/Application Support/Claude/Code Cache/js  # 12KB
+/Users/rowlet/Library/Application Support/Claude/sentry  # 15KB, 2 items
+/Users/rowlet/.codex/cache  # 21.6MB, 3 items
+/Users/rowlet/.codex/.tmp  # 48.0MB, 3 items
+/Users/rowlet/Library/Application Support/Code/logs/20260531T200319  # 111KB
+/Users/rowlet/Library/Application Support/Code/Cache/Cache_Data  # 324KB
+/Users/rowlet/Library/Application Support/Code/CachedData/8761a5560cfd65fdd19ce7e2bd18dab5c0a4d84e  # 11.9MB
+/Users/rowlet/Library/Caches/Homebrew  # 273.4MB, 3 items
+
+=== Applications ===
+/Users/rowlet/.zcompdump  # 51KB
+
+=== Virtualization ===
+
+=== Application Support ===
+
+=== App leftovers ===
+
+=== Apple Silicon updates ===
+
+=== Device backups & firmware ===
+
+=== Time Machine ===
+
+=== Large files ===
+
+=== System Data clues ===
+
+=== Project artifacts ===
+
+# ============================================
+# Summary
+# ============================================
+# Potential cleanup: 3.12GB
+# Items: 310
+# Categories: 37

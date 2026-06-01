@@ -1,0 +1,17 @@
+→ DRY RUN MODE, No project artifacts will be removed
+
+Purge Project Artifacts
+
+━━━ Node.js ━━━
+/Users/example/Repos/web-app/node_modules  # 245.3MB
+/Users/example/Repos/api-server/node_modules  # 88.1MB
+
+━━━ Rust ━━━
+/Users/example/Repos/engine/target  # 1.2GB
+
+━━━ Swift ━━━
+/Users/example/Repos/mac-app/.build  # 512MB
+
+======================================================================
+Dry run complete - no changes made
+======================================================================

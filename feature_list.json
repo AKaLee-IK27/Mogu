@@ -205,13 +205,13 @@
         "Mutating a glyph marker (===, the box rule, the arrow) or the skip string in a fixture makes the test fail",
         "Test runs via make test (or a documented command if a test target must be added)"
       ],
-      "status": "pending",
+      "status": "done",
       "subTasks": [
-        { "name": "Capture golden fixtures from mo 1.40.0", "status": "pending" },
-        { "name": "Add parser test against fixtures", "status": "pending" },
-        { "name": "Verify drift (mutated fixture) fails the test", "status": "pending" }
+        { "name": "Capture golden fixtures from mo 1.40.0", "status": "done", "evidence": "Tests/DrilburTests/Fixtures: clean-list.txt (REAL, 15 === sections / 46 # size lines from mo clean --dry-run), optimize.txt (REAL, 22 ➤ steps from mo optimize --dry-run). purge.txt is format-verified (━━━ confirmed at Vendor/Mole/bin/purge.sh:40; size-line convention shared with clean) because this machine had no purgeable artifacts — provenance documented in Fixtures/README.md." },
+        { "name": "Add parser test against fixtures", "status": "done", "evidence": "Extracted pure parsers into Sources/Services/MoOutputParser.swift (parseCleanList, parsePurgeText, parseByteSize, purgeCategoryToType, systemCleanupSkipMarker/detectsSystemCleanupSkip); MoService + CleanView delegate. New DrilburTests XCTest target (Package.swift), 8 tests, all pass via `make parser-test` (swift test). Asserts non-empty structured results for clean/purge, StepStreamParser over real optimize (22 steps terminal), admin-skip detection, and the exact skip-marker literal." },
+        { "name": "Verify drift (mutated fixture) fails the test", "status": "done", "evidence": "Two in-suite drift tests (=== -> ###, ━━━ -> ===) assert empty results. Also proven empirically: sed-mutating clean-list.txt === markers made testCleanListParsesRealFixture FAIL (got 0 categories, all 3 asserts fired); restoring the fixture made it pass." }
       ],
-      "evidence": ""
+      "evidence": "XCTest target chosen (user decision). Pure parsers extracted to MoOutputParser.swift; MoService/CleanView delegate; single source of truth for the system-skip literal. 8 tests pass (`make parser-test`); make build + make app unaffected. Drift detection proven by live fixture mutation. CLAUDE.md + Makefile updated (the 'no test target' principle is now scoped: one parser-only test target, UI/runtime still verified by build+launch)."
     },
     {
       "id": "feat-012",

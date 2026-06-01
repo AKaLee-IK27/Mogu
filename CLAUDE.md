@@ -9,15 +9,19 @@ SwiftUI macOS GUI for [Mole CLI](https://github.com/tw93/Mole). Requires macOS 1
 ## Commands
 
 ```bash
-make build      # Compile the Swift executable (swift build)
-make app        # Build Drilbur.app with bundled Mole runtime (runs build_app.sh)
-make test       # Build + verify — NOTE: build-only, there is no unit-test suite
-make clean      # Remove build artifacts
+make build       # Compile the Swift executable (swift build)
+make app         # Build Drilbur.app with bundled Mole runtime (runs build_app.sh)
+make test        # Build + verify — build-only, confirms the app compiles
+make parser-test # swift test: regression guard for the fragile text parsers
+make clean       # Remove build artifacts
 ```
 
-There is no lint step and no test target. `make test` only confirms the build
-compiles. Real verification is **build + launch the app** (see Gotchas) — a
-compile pass does not catch the runtime issues this codebase is prone to.
+There is no lint step. `make test` only confirms the build compiles. The **one**
+test target is `DrilburTests` (`make parser-test`), which guards the fragile
+`MoOutputParser` text parsers against golden fixtures — it does **not** cover UI
+or runtime behavior. Real verification is still **build + launch the app** (see
+Gotchas); a compile pass does not catch the runtime issues this codebase is
+prone to.
 
 ## Safety
 
@@ -47,10 +51,14 @@ calls funnel through `runCommandResult` (sets `NO_COLOR`/`TERM=dumb`/`LANG=C`,
 captures stdout/stderr via temp files). The key non-obvious fact: **Mole 1.40.0
 only exposes `--json` for `status`, `uninstall --list`, and `analyze`.** Clean,
 purge, and optimize have **no JSON**, so their results are produced by *parsing
-human-readable text output* (`parseCleanPreview`, `parsePurgePreview`,
-`parseOptimizePreview`) keyed on glyph markers (`===`, `━━━`, `➤`). Clean's
-preview is read from the side file `~/.config/mole/clean-list.txt`, not stdout.
-If `mo`'s output format changes, these parsers silently return empty results.
+human-readable text output* keyed on glyph markers (`===`, `━━━`, `➤`/`→`). The
+pure parsing logic now lives in **`Services/MoOutputParser.swift`** (extracted
+out of the `MoService` actor so it is unit-testable); `MoService` reads the
+bytes and delegates. Clean's preview is read from the side file
+`~/.config/mole/clean-list.txt`, not stdout. If `mo`'s output format changes,
+these parsers silently return empty results — which is exactly what
+`make parser-test` (golden fixtures in `Tests/DrilburTests/Fixtures`) exists to
+catch. The optimize stream parser is `StepStreamParser` (`ProcessStep.swift`).
 The `cleanPreviewReady` flag enforces preview-before-delete: `executeClean()`
 refuses to run unless a preview was generated first.
 

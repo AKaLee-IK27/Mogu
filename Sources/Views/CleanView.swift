@@ -353,12 +353,11 @@ struct CleanView: View {
         activity.removeAll()
         resetSystemCleanEscalation()
         var skippedSystemCleanup = false
-        let skipMarker = "System-level cleanup skipped, requires sudo"
         for await event in service.stream(args: ["clean"]) {
             switch event {
             case .line(let l):
                 appendActivity(l)
-                if l.contains(skipMarker) { skippedSystemCleanup = true }
+                if MoOutputParser.detectsSystemCleanupSkip(in: l) { skippedSystemCleanup = true }
             case .finished(let code):
                 if code == 0 {
                     systemCleanAvailable = skippedSystemCleanup
