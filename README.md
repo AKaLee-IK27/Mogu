@@ -1,8 +1,29 @@
-# Mogu
+<div align="center">
+  <img src="icon.png" width="128" alt="Mogu" />
+  <h1>Mogu</h1>
+  <p><em>A friendly mole that digs through your Mac to clean it — a native macOS GUI for Mole.</em></p>
+  <p>
+    <img src="https://img.shields.io/badge/macOS-14%2B-111?style=flat-square&logo=apple" alt="macOS 14+" />
+    <img src="https://img.shields.io/badge/Swift-6.3-orange?style=flat-square&logo=swift" alt="Swift 6.3" />
+    <img src="https://img.shields.io/badge/license-MIT-3a4ea8?style=flat-square" alt="MIT" />
+  </p>
+</div>
 
-A minimal macOS GUI for [Mole](https://github.com/tw93/Mole) — the open-source system cleaner. Mogu is a friendly mole that digs through your Mac to clean caches, uninstall apps, and reclaim disk space, wrapping the `mo` CLI in a native SwiftUI app.
+> **Built on [Mole](https://github.com/tw93/Mole) by [@tw93](https://github.com/tw93).**
+> Mogu is inspired by — and built directly on top of — Mole, the open-source Mac
+> system cleaner. It bundles Mole's CLI runtime and wraps it in SwiftUI. All the
+> cleaning power is Mole's; Mogu is just a friendly face for it. Mogu is an
+> independent, unofficial GUI and is not affiliated with the Mole author.
 
-Built with SwiftUI for macOS, with a navy/indigo accent, adaptive light/dark theming, and a preview-before-delete safety model.
+## ❤️ Support Mole
+
+Mogu wouldn't exist without Mole — please support the original project:
+
+- 💎 **Want a polished, fully-supported native app?** Buy [**Mole for Mac**](https://mole.fit) — the official paid app by Mole's author, with visual cleanup review, app updates, uninstall, maintenance, disk maps, live status, and a menu-bar HUD. One license covers 2 Macs with lifetime updates.
+- ⭐ **Star** [Mole on GitHub](https://github.com/tw93/Mole) and share it with friends.
+- 🥩 **Sponsor** the author [here](https://cats.tw93.fun?name=Mole).
+
+The Mole CLI itself is free and open source — Mogu builds on that.
 
 ## Requirements
 
@@ -92,6 +113,11 @@ Sources/
 
 The app icon and sidebar brand mark are generated from `icon-source.png` by
 `scripts/make_icon.sh`.
+
+## Credits
+
+- [**Mole**](https://github.com/tw93/Mole) by [@tw93](https://github.com/tw93) — the engine Mogu is built on (MIT).
+- Mogu — the SwiftUI GUI shell (MIT).
 
 ## License
 
