@@ -21,6 +21,7 @@ struct OptimizeView: View {
             PreflightBanner(item: .optimize, permissions: permissions)
                 .padding(.horizontal, 32)
                 .padding(.top, 12)
+                .padding(.bottom, 16)
 
             ScrollView {
                 VStack(spacing: 20) {
@@ -44,7 +45,8 @@ struct OptimizeView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 40)
+                .padding(.top, 24)
+                .padding(.bottom, 40)
             }
             .background(DesignTokens.Color.pageBackground)
         }

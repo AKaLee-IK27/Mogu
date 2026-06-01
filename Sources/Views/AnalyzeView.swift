@@ -19,6 +19,7 @@ struct AnalyzeView: View {
                 fullDiskAccessHint
                     .padding(.horizontal, 32)
                     .padding(.top, 12)
+                    .padding(.bottom, 16)
             }
 
             ScrollView {
