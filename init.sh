@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== MoleMac Initialization ==="
+echo "=== Drilbur Initialization ==="
 
 echo "=== Checking submodules ==="
 if [[ ! -f "Vendor/Mole/mole" ]]; then

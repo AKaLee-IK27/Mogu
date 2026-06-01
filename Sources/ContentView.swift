@@ -68,7 +68,7 @@ struct ContentView: View {
     @State private var purgeLoading = true
 
     init() {
-        let requestedScreen = Foundation.ProcessInfo.processInfo.environment["MOLEMAC_SCREEN"]?.lowercased()
+        let requestedScreen = Foundation.ProcessInfo.processInfo.environment["DRILBUR_SCREEN"]?.lowercased()
         let initialItem = SidebarItem.allCases.first { $0.rawValue.lowercased() == requestedScreen } ?? .status
         _selectedItem = State(initialValue: initialItem)
     }
@@ -187,7 +187,7 @@ struct ContentView: View {
                         .frame(width: 26, height: 26)
                         .background(DesignTokens.Color.accent)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
-                    Text("Mole")
+                    Text("Drilbur")
                         .font(DesignTokens.Font.sidebarTitle)
                         .foregroundStyle(DesignTokens.Color.primary)
                     Spacer()

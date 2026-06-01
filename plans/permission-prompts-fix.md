@@ -41,7 +41,7 @@ after (sticky), so re-switching does not reload.
 - `Sources/ContentView.swift`, `tabView(for:)`: pass `isActive: selectedItem == item` to **all six**
   `StickyTab(...)` call sites (status/clean/uninstall/analyze/optimize/purge/permissions — note
   there are 7 cases incl. permissions).
-- Result: at launch only the default-selected tab (Status, or `MOLEMAC_SCREEN`) runs its `mo`
+- Result: at launch only the default-selected tab (Status, or `DRILBUR_SCREEN`) runs its `mo`
   call. Other tabs render `Color.clear` until first opened. No home-dir scan / no prompt storm
   at startup. (This also retires the "six `mo` calls at launch" gotcha.)
 - Do NOT remove the StatusView `isActive` polling gate — it stays; StickyTab's `isActive` is the

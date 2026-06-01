@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Dedicated screen explaining MoleMac's minimal, progressive permission model.
+// Dedicated screen explaining Drilbur's minimal, progressive permission model.
 struct PermissionsView: View {
     @ObservedObject var permissions: PermissionsService
     @Environment(\.openURL) private var openURL
@@ -70,7 +70,7 @@ struct PermissionsView: View {
                 adminBadge
             }
 
-            Text("Administrator access is optional. MoleMac asks for your password only when you choose to preview and clean system-level items. Nothing is stored; nothing runs in the background.")
+            Text("Administrator access is optional. Drilbur asks for your password only when you choose to preview and clean system-level items. Nothing is stored; nothing runs in the background.")
                 .font(DesignTokens.Font.body)
                 .foregroundStyle(DesignTokens.Color.secondary)
                 .fixedSize(horizontal: false, vertical: true)

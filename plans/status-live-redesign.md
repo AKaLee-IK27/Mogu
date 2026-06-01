@@ -131,7 +131,7 @@ Top processes (stable order, live %)
 ## Verification (runtime — anti-pattern #20; compile is NOT sufficient)
 
 1. `make app`
-2. `MOLEMAC_SCREEN=status /Applications/MoleMac.app/Contents/MacOS/MoleMac`
+2. `DRILBUR_SCREEN=status /Applications/Drilbur.app/Contents/MacOS/Drilbur`
 3. Numbers/bars update on ~3s cadence; sparklines accumulate a trend. **Screenshot.**
 4. Switch to another tab → Activity Monitor shows `status-go` **stops** spawning (proves
    gating). Background the app → same.

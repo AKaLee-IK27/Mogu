@@ -1,20 +1,20 @@
 #!/bin/bash
 set -euo pipefail
 
-APP="MoleMac.app"
+APP="Drilbur.app"
 CONTENTS="$APP/Contents"
 MACOS="$CONTENTS/MacOS"
 RESOURCES="$CONTENTS/Resources"
 RUNTIME_SRC="Vendor/Mole"
 RUNTIME_DST="$RESOURCES/MoleRuntime"
-BUNDLE_ID="com.mole.molemac"
+BUNDLE_ID="co.greenpassport.drilbur"
 
 swift build
 BIN_DIR="$(swift build --show-bin-path)"
-BINARY="$BIN_DIR/MoleMac"
+BINARY="$BIN_DIR/Drilbur"
 
 if [[ ! -x "$BINARY" ]]; then
-    echo "MoleMac binary not found at $BINARY" >&2
+    echo "Drilbur binary not found at $BINARY" >&2
     exit 1
 fi
 
@@ -41,13 +41,13 @@ cat > "$CONTENTS/Info.plist" << PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>MoleMac</string>
+    <string>Drilbur</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>${BUNDLE_ID}</string>
     <key>CFBundleName</key>
-    <string>MoleMac</string>
+    <string>Drilbur</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -64,16 +64,16 @@ cat > "$CONTENTS/Info.plist" << PLIST
     <string>????</string>
     <!-- Privacy usage descriptions for macOS 14+ -->
     <key>NSAppleEventsUsageDescription</key>
-    <string>MoleMac needs to analyze application data to provide system cleanup and optimization insights.</string>
+    <string>Drilbur needs to analyze application data to provide system cleanup and optimization insights.</string>
     <key>NSSystemAdministrationUsageDescription</key>
-    <string>MoleMac needs system administration access to manage application data and system caches.</string>
+    <string>Drilbur needs system administration access to manage application data and system caches.</string>
     <key>NSFaceIDUsageDescription</key>
-    <string>MoleMac uses Touch ID to confirm system-level cleanup before asking for your administrator password.</string>
+    <string>Drilbur uses Touch ID to confirm system-level cleanup before asking for your administrator password.</string>
 </dict>
 </plist>
 PLIST
 
-cp "$BINARY" "$MACOS/MoleMac"
+cp "$BINARY" "$MACOS/Drilbur"
 
 # Bundle app icon
 if [[ -f "AppIcon.icns" ]]; then
@@ -91,7 +91,7 @@ if [[ -f "$RUNTIME_SRC/LICENSE" ]]; then cp "$RUNTIME_SRC/LICENSE" "$RUNTIME_DST
 chmod +x "$RUNTIME_DST/mo" "$RUNTIME_DST/mole" "$RUNTIME_DST"/bin/*
 
 # Entitlements file lives in repo root
-ENTITLEMENTS="MoleMac.entitlements"
+ENTITLEMENTS="Drilbur.entitlements"
 
 # Step 1: Remove Go's default linker signature so our ad-hoc sign takes effect.
 # Go linker embeds a signature with Identifier=a.out, which causes macOS TCC
@@ -141,7 +141,7 @@ codesign --force --sign - \
     --identifier "${BUNDLE_ID}" \
     --entitlements "$ENTITLEMENTS" \
     --options runtime \
-    "$MACOS/MoleMac"
+    "$MACOS/Drilbur"
 
 # Step 4: Deep-sign the entire bundle to seal Resources and include nested binaries
 # in the Sealed Resources list. --deep handles mo, mole, and shell scripts.
@@ -168,13 +168,13 @@ echo "Bundled Mole runtime: $RUNTIME_VERSION"
 INSTALL_DIR="/Applications"
 if [[ -d "$INSTALL_DIR" ]]; then
     # Kill running instance
-    pkill -f "${APP}/Contents/MacOS/MoleMac" 2>/dev/null || true
+    pkill -f "${APP}/Contents/MacOS/Drilbur" 2>/dev/null || true
     sleep 1
 
     rm -rf "$INSTALL_DIR/$APP"
     cp -R "$APP" "$INSTALL_DIR/"
     echo "Installed to $INSTALL_DIR/$APP"
     echo ""
-    echo "MoleMac needs no permissions to start. It asks for your administrator"
+    echo "Drilbur needs no permissions to start. It asks for your administrator"
     echo "password only when you choose to clean or optimize system-level items."
 fi

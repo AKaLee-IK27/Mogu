@@ -10,4 +10,4 @@ test: build
 	@echo "Build passed"
 
 clean:
-	rm -rf .build MoleMac.app
+	rm -rf .build Drilbur.app

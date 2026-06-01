@@ -164,16 +164,16 @@
         "make app builds; child binaries re-verified to share the new bundle ID signature domain",
         "Launch verified: window title + osascript admin prompt show 'Drilbur'; DRILBUR_SCREEN=clean .../MacOS/Drilbur deep-links to the Clean tab"
       ],
-      "status": "pending",
+      "status": "done",
       "subTasks": [
-        { "name": "Rename Package.swift product/target + MoleMacApp.swift/struct", "status": "pending" },
-        { "name": "Update build_app.sh APP_NAME/BUNDLE_ID/Info.plist + re-verify signature inheritance", "status": "pending" },
-        { "name": "Rename MOLEMAC_* env vars in ContentView + MoService", "status": "pending" },
-        { "name": "Update user-visible strings (PermissionsView, admin prompt, title)", "status": "pending" },
-        { "name": "Update docs + trackers", "status": "pending" },
-        { "name": "make app + launch verify (title, admin prompt, deep-link)", "status": "pending" }
+        { "name": "Rename Package.swift product/target + MoleMacApp.swift/struct", "status": "done", "evidence": "Package name/product/target -> Drilbur; git mv Sources/MoleMacApp.swift -> Sources/DrilburApp.swift; struct DrilburApp." },
+        { "name": "Update build_app.sh APP_NAME/BUNDLE_ID/Info.plist + re-verify signature inheritance", "status": "done", "evidence": "APP=Drilbur.app, BUNDLE_ID=co.greenpassport.drilbur, CFBundleName/Executable/Identifier=Drilbur, git mv MoleMac.entitlements -> Drilbur.entitlements (+ ref). codesign --verify --deep --strict: 'valid on disk' + 'satisfies its Designated Requirement'." },
+        { "name": "Rename MOLEMAC_* env vars in ContentView + MoService", "status": "done", "evidence": "DRILBUR_SCREEN (ContentView), DRILBUR_MO_PATH (MoService); temp-log names molemac-* -> drilbur-*." },
+        { "name": "Update user-visible strings (PermissionsView, admin prompt, title)", "status": "done", "evidence": "Permission.swift + PermissionsView.swift say Drilbur; sidebar brand Text(\"Mole\") -> Text(\"Drilbur\") (kept 'Powered by bundled Mole'); osascript prompt derives name from CFBundleName (no hardcoded string, advisor-confirmed)." },
+        { "name": "Update docs + trackers", "status": "done", "evidence": "README, Makefile, init.sh, CLAUDE.md, progress.md, session-handoff.md, plans/*.md renamed; MoleRuntime/Vendor/Mole left intact." },
+        { "name": "make app + launch verify (title, admin prompt, deep-link)", "status": "done", "evidence": "make app OK. Launch (DRILBUR_SCREEN=clean direct-exec): process alive, no crash, AppleScript window title = 'Drilbur', menu bar 'Drilbur', sidebar 'Drilbur', deep-linked to Clean (screenshots /tmp/drilbur-clean2.png). Old /Applications/MoleMac.app removed first." }
       ],
-      "evidence": ""
+      "evidence": "Renamed GUI shell MoleMac -> Drilbur (bundle id co.greenpassport.drilbur). grep confirms zero MoleMac/MOLEMAC/old-bundle-id residue (excl Vendor/.git/.build); MoleRuntime path intact. swift build + make app pass; signature valid + satisfies Designated Requirement. Runtime-verified: window title, menu bar, sidebar all show 'Drilbur', deep-link works, no crash. Mole CLI/runtime untouched."
     },
     {
       "id": "feat-010",

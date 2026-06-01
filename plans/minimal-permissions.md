@@ -86,7 +86,7 @@ No `.toolbar` / `ToolbarItem` / `ToolbarItemGroup`, no `.searchable`. Use `Desig
 ## Verify early (Pi, before claiming build-done)
 - Confirm `NONINTERACTIVE=1` unprivileged execute does NOT hang on `clean.sh:943`'s interactive
   "Enter/Space" prompt — i.e. `stream(["clean"])` completes and skips the system section. Test:
-  `NONINTERACTIVE=1 LC_ALL=C /Applications/MoleMac.app/Contents/Resources/MoleRuntime/mo clean --dry-run`
+  `NONINTERACTIVE=1 LC_ALL=C /Applications/Drilbur.app/Contents/Resources/MoleRuntime/mo clean --dry-run`
   as the normal user (dry-run is safe) and confirm it returns and prints the skip marker.
 - Confirm the skip-marker string matches verbatim (string match; fragile to Mole output changes, same
   class as existing text parsers).

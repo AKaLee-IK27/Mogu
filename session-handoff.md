@@ -24,8 +24,8 @@
 ### MANUAL CHECK — FDA "Not granted" branch
 
 The probe cannot be exercised from an FDA-enabled environment (it reads "Granted"). Run once:
-1. System Settings → Privacy & Security → Full Disk Access → toggle **MoleMac OFF** (or remove it).
-2. Relaunch MoleMac → open the **Permissions** tab.
+1. System Settings → Privacy & Security → Full Disk Access → toggle **Drilbur OFF** (or remove it).
+2. Relaunch Drilbur → open the **Permissions** tab.
 3. Expected: Full Disk Access card reads **"Not granted"** (amber); Clean/Optimize/Analyze preflight
    banners show the FDA pill with a warning dot.
 4. If it still reads **"Granted"** → probe is a false-positive: repoint

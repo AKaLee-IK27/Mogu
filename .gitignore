@@ -1,6 +1,6 @@
 .build/
 *.dSYM/
-MoleMac.app/
+Drilbur.app/
 .swiftpm/
 Package.resolved
 .DS_Store

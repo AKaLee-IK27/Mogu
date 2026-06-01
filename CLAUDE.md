@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# MoleMac
+# Drilbur
 
 SwiftUI macOS GUI for [Mole CLI](https://github.com/tw93/Mole). Requires macOS 14+, Swift 6.3+, and Go 1.21+ (to build the bundled runtime).
 
@@ -10,7 +10,7 @@ SwiftUI macOS GUI for [Mole CLI](https://github.com/tw93/Mole). Requires macOS 1
 
 ```bash
 make build      # Compile the Swift executable (swift build)
-make app        # Build MoleMac.app with bundled Mole runtime (runs build_app.sh)
+make app        # Build Drilbur.app with bundled Mole runtime (runs build_app.sh)
 make test       # Build + verify — NOTE: build-only, there is no unit-test suite
 make clean      # Remove build artifacts
 ```
@@ -78,7 +78,7 @@ parsers above; Optimize uses the structured `StepStreamParser` `.skipped` +
 an inherited TTY stdin would hang the unprivileged execute on `read_key`.
 
 **Runtime resolution** (`MoService.resolveMoPath`): bundled
-`Contents/Resources/MoleRuntime/mo` → `MOLEMAC_MO_PATH` env override → (DEBUG
+`Contents/Resources/MoleRuntime/mo` → `DRILBUR_MO_PATH` env override → (DEBUG
 only) Homebrew `mo` → nonexistent-path sentinel. `make app` builds the runtime
 from the `Vendor/Mole` submodule; packaged builds never use Homebrew Mole.
 
@@ -105,11 +105,11 @@ light/dark values — never hardcode colors in views.
 - **Preview operations are slow, not hung.** `clean --dry-run` takes ~35–40s and
   `optimize --dry-run` ~5s. Always show a loading spinner while a preview runs;
   a disabled action button with no spinner reads as broken.
-- **`MOLEMAC_SCREEN=<status|clean|uninstall|analyze|optimize|purge>`** launches
+- **`DRILBUR_SCREEN=<status|clean|uninstall|analyze|optimize|purge>`** launches
   straight to one tab (set in `ContentView.init`) — useful for verification
   screenshots. **`open` does NOT propagate env vars**, so to use it run the
   bundle executable directly:
-  `MOLEMAC_SCREEN=clean /Applications/MoleMac.app/Contents/MacOS/MoleMac`.
+  `DRILBUR_SCREEN=clean /Applications/Drilbur.app/Contents/MacOS/Drilbur`.
 - **Full Disk Access is optional, not required.** It is surfaced as a quiet-scan
   convenience for Analyze/home-dir scans and probed by reading the system TCC DB;
   Administrator remains optional and only for user-chosen elevation. The signing
@@ -117,7 +117,7 @@ light/dark values — never hardcode colors in views.
   (`mo`, `mole`, Go binaries, shell scripts) with the **same** bundle identifier as
   the parent so they share one signature domain; changing identifiers per-binary
   breaks that inheritance.
-- For UI verification, launch the **`.app` bundle** (`open MoleMac.app`); a bare
+- For UI verification, launch the **`.app` bundle** (`open Drilbur.app`); a bare
   `swift build` debug binary won't activate or raise its window properly.
 
 ## Agent Workflow: Plan → Build → Check

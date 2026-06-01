@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct MoleMacApp: App {
+struct DrilburApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

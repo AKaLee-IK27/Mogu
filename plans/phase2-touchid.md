@@ -59,7 +59,7 @@ A small `LocalAuthentication` helper:
 - `build_app.sh` builds `Info.plist` via a heredoc (around line 38, alongside the existing
   `NSAppleEventsUsageDescription` / `NSSystemAdministrationUsageDescription` keys). Add:
   `<key>NSFaceIDUsageDescription</key>`
-  `<string>MoleMac uses Touch ID to confirm system-level cleanup before asking for your administrator password.</string>`
+  `<string>Drilbur uses Touch ID to confirm system-level cleanup before asking for your administrator password.</string>`
   (Touch ID on Macs is gated by this Face ID usage key.)
 
 ## NON-SCOPE

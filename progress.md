@@ -32,7 +32,7 @@
 - `Sources/Views/StatusView.swift` — Timer.publish auto-refresh, Live badge
 - `Sources/Views/UninstallView.swift` — SortOrder, .searchable, runTrigger, confirmation dialog
 - `Sources/Views/PurgeView.swift` — SortOrder, .searchable
-- `Sources/MoleMacApp.swift` — Removed forced .aqua/.light
+- `Sources/DrilburApp.swift` — Removed forced .aqua/.light
 - `build_app.sh` — Bundle AppIcon.icns
 - `AppIcon.icns` — Generated from icon.png
 
@@ -42,4 +42,4 @@
 |---|---|---|
 | Swift build | `make build` | ✓ |
 | Test | `make test` | ✓ |
-| App launch | `open /Applications/MoleMac.app` | ✓ No crash, dark mode confirmed via screenshot |
+| App launch | `open /Applications/Drilbur.app` | ✓ No crash, dark mode confirmed via screenshot |

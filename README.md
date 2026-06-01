@@ -1,4 +1,4 @@
-# MoleMac
+# Drilbur
 
 A minimal macOS GUI application for [Mole](https://github.com/tw93/Mole) - the open-source system cleaner.
 
@@ -8,7 +8,7 @@ Built with SwiftUI and designed following [Taste Skill](https://github.com/leonx
 
 - macOS 14.0 (Sonoma) or later
 - Swift 6.3+ (for building from source)
-- No separate Mole CLI install required; MoleMac bundles a pinned Mole runtime.
+- No separate Mole CLI install required; Drilbur bundles a pinned Mole runtime.
 
 ## Features
 
@@ -43,14 +43,14 @@ make build
 # Build the app bundle with the pinned Mole runtime
 make app
 
-open MoleMac.app
+open Drilbur.app
 ```
 
 ## Architecture
 
 ```
 Sources/
-  MoleMacApp.swift          # App entry point
+  DrilburApp.swift          # App entry point
   ContentView.swift          # Main layout with sidebar navigation
   Models/
     SystemStatus.swift       # Data models for all mo command outputs
@@ -71,7 +71,7 @@ Sources/
 
 All destructive operations (clean, uninstall, purge) preview data first using `--dry-run` before execution. The app never runs destructive commands without showing what will be affected.
 
-MoleMac builds Mole from the `Vendor/Mole` git submodule and bundles it into `MoleMac.app/Contents/Resources/MoleRuntime`, so Homebrew Mole updates do not change app behavior.
+Drilbur builds Mole from the `Vendor/Mole` git submodule and bundles it into `Drilbur.app/Contents/Resources/MoleRuntime`, so Homebrew Mole updates do not change app behavior.
 
 ## License
 

@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "MoleMac",
+    name: "Drilbur",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "MoleMac", targets: ["MoleMac"])
+        .executable(name: "Drilbur", targets: ["Drilbur"])
     ],
     targets: [
         .executableTarget(
-            name: "MoleMac",
+            name: "Drilbur",
             path: "Sources"
         )
     ]
