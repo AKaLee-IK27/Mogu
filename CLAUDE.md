@@ -119,9 +119,16 @@ light/dark values — never hardcode colors in views.
   a disabled action button with no spinner reads as broken.
 - **`DRILBUR_SCREEN=<status|clean|uninstall|analyze|optimize|purge>`** launches
   straight to one tab (set in `ContentView.init`) — useful for verification
-  screenshots. **`open` does NOT propagate env vars**, so to use it run the
-  bundle executable directly:
-  `DRILBUR_SCREEN=clean /Applications/Drilbur.app/Contents/MacOS/Drilbur`.
+  screenshots. Plain `open` does not propagate env vars, but **`open --env`
+  does**: `open --env DRILBUR_SCREEN=clean /Applications/Drilbur.app`. Prefer
+  this over direct-exec'ing the `MacOS/Drilbur` binary — see the FDA gotcha below.
+- **Verify FDA state with `open`, never by direct-exec'ing the binary.** macOS
+  TCC attributes a permission check to the *responsible process*. Launching
+  `…/MacOS/Drilbur` from a terminal that has Full Disk Access makes Drilbur
+  inherit the terminal's FDA, so `probeFullDiskAccess` reads a **false
+  "Granted"**. Launch via `open` (LaunchServices) so Drilbur is its own
+  responsible process and the probe reports truthfully. The probe reads the
+  system `/Library/Application Support/com.apple.TCC/TCC.db`.
 - **Full Disk Access is optional, not required.** It is surfaced as a quiet-scan
   convenience for Analyze/home-dir scans and probed by reading the system TCC DB;
   Administrator remains optional and only for user-chosen elevation. The signing
