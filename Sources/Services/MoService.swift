@@ -30,6 +30,7 @@ enum MoStreamEvent: Sendable {
 actor MoService {
     private let moPath: String
     private var cleanPreviewReady = false
+    private var uninstallPreviewReady = false
 
     init(moPath: String? = nil) {
         self.moPath = moPath ?? Self.resolveMoPath()
@@ -101,11 +102,50 @@ actor MoService {
                 bundleID: app.bundleID,
                 status: nil,
                 relatedFiles: nil,
-                uninstallName: app.uninstallName
+                uninstallName: app.uninstallName,
+                source: app.source,
+                path: app.path,
+                requiresAdmin: Self.bundleRequiresAdmin(path: app.path, source: app.source)
             )
         }
         let total = apps.reduce(UInt64(0)) { $0 + $1.size }
         return UninstallResult(apps: apps, totalSize: total)
+    }
+
+    // Mirror of Mole's `needs_sudo` check (bin/uninstall.sh): an app needs admin
+    // if its bundle is root-owned, owned by another user, or sits in a directory
+    // the user can't write — plus Homebrew casks (their sudo session can't be
+    // satisfied through our non-interactive piped stdin). In-app uninstall runs
+    // unprivileged, and one admin-required app aborts Mole's whole batch, so the
+    // UI flags these non-selectable. Unknown path → false (let the run attempt;
+    // it aborts harmlessly removing nothing if admin turns out to be required).
+    nonisolated static func bundleRequiresAdmin(path: String?, source: String?) -> Bool {
+        if source?.caseInsensitiveCompare("Homebrew") == .orderedSame { return true }
+        guard let path, !path.isEmpty else { return false }
+        let fileManager = FileManager.default
+        if let attrs = try? fileManager.attributesOfItem(atPath: path),
+           let owner = attrs[.ownerAccountName] as? String {
+            if owner == "root" || owner != NSUserName() { return true }
+        }
+        let parent = (path as NSString).deletingLastPathComponent
+        if !parent.isEmpty, !fileManager.isWritableFile(atPath: parent) { return true }
+        return false
+    }
+
+    // MARK: - Uninstall preview-before-delete guard
+    // The destructive `executeUninstall` run must only proceed after a dry-run
+    // preview set this flag (mirrors cleanPreviewReady). The view also resets it
+    // before each preview and re-checks it before executing.
+    func uninstallPreviewIsReady() -> Bool { uninstallPreviewReady }
+    func resetUninstallPreview() { uninstallPreviewReady = false }
+
+    // Parse the accumulated `uninstall <names…> --dry-run` text into a structured
+    // preview and mark preview-before-delete satisfied. Empty preview does NOT
+    // arm the guard, so a parse miss can never green-light a delete.
+    func finalizeUninstallPreview(text: String) -> UninstallPreview {
+        let preview = MoOutputParser.parseUninstallPreview(text: text)
+        uninstallPreviewReady = !preview.isEmpty
+        return preview
     }
 
     // Get disk analysis
@@ -223,6 +263,69 @@ actor MoService {
 
                 // Read with availableData so each burst flushes immediately —
                 // FileHandle.bytes buffers and would delay live progress.
+                let handle = pipe.fileHandleForReading
+                var buffer = Data()
+                while true {
+                    let chunk = handle.availableData
+                    if chunk.isEmpty { break } // EOF
+                    buffer.append(chunk)
+                    while let nl = buffer.firstIndex(of: 0x0A) {
+                        let lineData = buffer.subdata(in: buffer.startIndex..<nl)
+                        buffer.removeSubrange(buffer.startIndex...nl)
+                        continuation.yield(.line(String(decoding: lineData, as: UTF8.self)))
+                    }
+                }
+                if !buffer.isEmpty {
+                    continuation.yield(.line(String(decoding: buffer, as: UTF8.self)))
+                }
+
+                process.waitUntilExit()
+                continuation.yield(.finished(process.terminationStatus))
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in work.cancel() }
+        }
+    }
+
+    // Like `stream`, but feeds `input` to the child's stdin then closes it (EOF).
+    // Used ONLY for `uninstall <names…>`: Mole's uninstall prompts twice —
+    // `Proceed? [y/N]` (needs an explicit "y") and `Enter confirm` (proceeds on
+    // EOF) — so feeding "y\n" once drives the whole flow. The bytes stay buffered
+    // in the pipe until Mole reads them after its (~seconds-long) app scan; we
+    // write+close immediately so the read loop starts draining stdout right away.
+    // Deliberately separate from `stream`/`streamElevated`, which keep
+    // `nullDevice` stdin — feeding them would break their `[[ -t 0 ]]` guard.
+    nonisolated func streamFeeding(args: [String], input: String) -> AsyncStream<MoStreamEvent> {
+        let path = moPath
+        return AsyncStream { continuation in
+            let work = Task.detached {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: path)
+                process.arguments = args
+                process.currentDirectoryURL = URL(fileURLWithPath: NSHomeDirectory())
+                process.environment = Self.makeEnvironment()
+
+                let pipe = Pipe()
+                let inputPipe = Pipe()
+                process.standardInput = inputPipe
+                process.standardOutput = pipe
+                process.standardError = pipe
+
+                do {
+                    try process.run()
+                } catch {
+                    continuation.yield(.error(error.localizedDescription))
+                    continuation.finish()
+                    return
+                }
+
+                // Feed the confirmation then close (EOF). 2 bytes never blocks.
+                let writeHandle = inputPipe.fileHandleForWriting
+                if let data = input.data(using: .utf8) {
+                    try? writeHandle.write(contentsOf: data)
+                }
+                try? writeHandle.close()
+
                 let handle = pipe.fileHandleForReading
                 var buffer = Data()
                 while true {

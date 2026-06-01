@@ -233,6 +233,14 @@ struct AppInfo: Codable, Identifiable {
     let status: String?
     let relatedFiles: Int?
     let uninstallName: String?
+    // From `uninstall --list`: "App" or "Homebrew", and the on-disk bundle path.
+    var source: String?
+    var path: String?
+    // Computed at list time (MoService.getUninstallList) from the bundle's owner
+    // and parent-dir writability + Homebrew source — mirrors Mole's own
+    // `needs_sudo` check. In-app uninstall is unprivileged, and an admin-required
+    // app aborts the whole batch in Mole, so these are flagged non-selectable.
+    var requiresAdmin: Bool = false
 }
 
 // Raw JSON format from `mo uninstall --list`
@@ -261,6 +269,24 @@ struct UninstallResult: Codable {
         case apps
         case totalSize = "total_size"
     }
+}
+
+// One app in a parsed `uninstall --dry-run` preview: the bundle plus the exact
+// leftover paths Mole would remove, and the true total (bundle + leftovers,
+// which is larger than the list size that counts only the bundle).
+struct UninstallPreviewApp: Identifiable, Equatable {
+    var id: String { name }
+    let name: String
+    let size: UInt64
+    let paths: [String]
+}
+
+// Result of parsing a `uninstall <names…> --dry-run` preview. Built by
+// MoOutputParser.parseUninstallPreview; shown in the confirmation sheet.
+struct UninstallPreview: Equatable {
+    let apps: [UninstallPreviewApp]
+    let totalSize: UInt64
+    var isEmpty: Bool { apps.isEmpty }
 }
 
 // MARK: - Disk Analysis

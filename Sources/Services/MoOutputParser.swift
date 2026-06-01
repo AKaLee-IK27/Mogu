@@ -158,6 +158,108 @@ enum MoOutputParser {
         return PurgeResult(projects: projects, totalSize: total)
     }
 
+    // Uninstall dry-run preview (no JSON; driven by `uninstall <names…> --dry-run`
+    // with a fed `y` confirmation). Format, verified live on Mole 1.40.0:
+    //
+    //   Files to be removed:
+    //
+    //   ◎ IINA , 235.5MB
+    //     ✓ /Applications/IINA.app
+    //     ✓ ~/Library/Application Support/com.colliderli.iina
+    //   ◎ Bruno , 471.7MB
+    //     ✓ /Applications/Bruno.app
+    //
+    //   ➤ Remove 2 apps, 707.3MB  Enter confirm, ESC cancel:
+    //
+    // Parsing is glyph-agnostic on purpose (Mole's exact icons may change): a
+    // file line is one whose text after the leading marker is an absolute or
+    // `~/` path; a group header is `<marker> <name> , <size>`; the terminator is
+    // `<marker> Remove N app(s), <total>`. Everything before "Files to be
+    // removed:" (including the `◎ Matched N app(s):` summary) is ignored, as is
+    // ANSI/cursor control noise from the scan spinner (stderr is merged in).
+    // On format drift this returns an empty preview — the golden-fixture test
+    // (Tests/MoguTests) fails loudly so the drift is caught.
+    static func parseUninstallPreview(text: String) -> UninstallPreview {
+        var inSection = false
+        var apps: [UninstallPreviewApp] = []
+        var grandTotal: UInt64?
+        var currentName: String?
+        var currentSize: UInt64 = 0
+        var currentPaths: [String] = []
+
+        func flush() {
+            guard let name = currentName else { return }
+            apps.append(UninstallPreviewApp(name: name, size: currentSize, paths: currentPaths))
+            currentName = nil
+            currentSize = 0
+            currentPaths = []
+        }
+
+        for rawLine in text.components(separatedBy: .newlines) {
+            let line = stripControlSequences(rawLine).trimmingCharacters(in: .whitespaces)
+            guard !line.isEmpty else { continue }
+
+            if !inSection {
+                if line.contains("Files to be removed") { inSection = true }
+                continue
+            }
+
+            // Split off the leading marker glyph (e.g. ◎ / ✓ / ➤) from the rest.
+            let remainder = dropLeadingMarker(line)
+
+            // File path line: the marker is followed by an absolute or ~ path.
+            if remainder.hasPrefix("/") || remainder.hasPrefix("~/") {
+                if currentName != nil { currentPaths.append(remainder) }
+                continue
+            }
+
+            // Terminator: `Remove N app(s), <total>` — capture the grand total and stop.
+            if remainder.hasPrefix("Remove "), remainder.contains("app") {
+                grandTotal = parseByteSize(remainder)
+                break
+            }
+
+            // Group header: `<name> , <size>` (space-comma-space distinguishes it
+            // from the terminator's `apps,`). Starts a new app group.
+            if let comma = remainder.range(of: " , "), let size = parseByteSize(String(remainder[comma.upperBound...])) {
+                flush()
+                currentName = String(remainder[..<comma.lowerBound]).trimmingCharacters(in: .whitespaces)
+                currentSize = size
+                currentPaths = []
+            }
+        }
+        flush()
+
+        let total = grandTotal ?? apps.reduce(UInt64(0)) { $0 + $1.size }
+        return UninstallPreview(apps: apps, totalSize: total)
+    }
+
+    // Drop a single leading non-path "marker" token (the bullet/check/arrow glyph
+    // Mole prints) plus its trailing space. If the first token already looks like
+    // a path, leave the line untouched.
+    private static func dropLeadingMarker(_ line: String) -> String {
+        guard let space = line.firstIndex(of: " ") else { return line }
+        let marker = line[..<space]
+        // A real path or a normal word stays put; only strip a short symbol token.
+        if marker.hasPrefix("/") || marker.hasPrefix("~") { return line }
+        if marker.count <= 2 {
+            return String(line[line.index(after: space)...]).trimmingCharacters(in: .whitespaces)
+        }
+        return line
+    }
+
+    // Strip ANSI/VT100 control sequences (cursor moves, clears, colors) and bare
+    // ESC/CR bytes that the scan spinner emits to stderr (merged into the stream).
+    static func stripControlSequences(_ s: String) -> String {
+        var result = s
+        if let regex = try? NSRegularExpression(pattern: "\u{1B}\\[[0-9;?]*[ -/]*[@-~]", options: []) {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            result = regex.stringByReplacingMatches(in: result, options: [], range: range, withTemplate: "")
+        }
+        return result.replacingOccurrences(of: "\u{1B}", with: "")
+            .replacingOccurrences(of: "\r", with: "")
+    }
+
     static func purgeCategoryToType(_ category: String) -> String {
         switch category.lowercased() {
         case let s where s.contains("node") || s.contains("npm") || s.contains("yarn") || s.contains("pnpm"): return "Node.js"

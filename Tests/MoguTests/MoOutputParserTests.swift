@@ -156,4 +156,93 @@ final class MoOutputParserTests: XCTestCase {
         XCTAssertEqual(parser.steps.first?.state, .skipped)
         XCTAssertEqual(parser.steps.first?.requiresAdmin, true)
     }
+
+    // MARK: - Uninstall preview (Files to be removed / ◎ name,size / ✓ path / ➤ total)
+
+    func testUninstallPreviewParsesRealFixture() throws {
+        let preview = MoOutputParser.parseUninstallPreview(text: try fixture("uninstall-preview"))
+        XCTAssertEqual(preview.apps.map(\.name), ["IINA", "Bruno"],
+            "Two app groups in encounter order; the leading '◎ Matched 2 app(s):' summary must NOT become an app")
+        let iina = try XCTUnwrap(preview.apps.first { $0.name == "IINA" })
+        XCTAssertTrue(iina.paths.contains("/Applications/IINA.app"),
+            "The bundle path must be among the items to remove")
+        XCTAssertGreaterThan(iina.paths.count, 3,
+            "Leftovers (caches, prefs, containers) must be captured, not just the bundle")
+        XCTAssertTrue(iina.paths.contains { $0.hasPrefix("~/Library/") },
+            "User-library leftovers are ~-relative in Mole's output and must be kept")
+        // Grand total comes from the `➤ Remove N apps, <total>` line (707.3MB,
+        // 1024-based), which is larger than the bundle-only list size — the
+        // reason we parse the dry-run instead of summarizing the JSON list.
+        XCTAssertEqual(preview.totalSize, MoOutputParser.parseByteSize("707.3MB"))
+    }
+
+    func testUninstallPreviewStripsControlSequencesAndNoise() {
+        // Mirrors production: ANSI clear/cursor escapes and a scan-spinner line
+        // are merged into the stream; the matched-summary precedes the section.
+        let text = "\u{1B}[2J\u{1B}[H◎ Matched 1 app(s):\n"
+            + "1. IINA  207.8MB  |  Last: 1w ago\n"
+            + "\rScanning applications... 3/12\u{1B}[K\n"
+            + "Files to be removed:\n\n"
+            + "◎ IINA , 235.5MB\n"
+            + "  ✓ /Applications/IINA.app\n"
+            + "  ✓ ~/Library/Caches/com.colliderli.iina\n"
+            + "➤ Remove 1 app, 235.5MB  Enter confirm, ESC cancel: \n"
+        let preview = MoOutputParser.parseUninstallPreview(text: text)
+        XCTAssertEqual(preview.apps.count, 1)
+        XCTAssertEqual(preview.apps.first?.name, "IINA")
+        XCTAssertEqual(preview.apps.first?.paths.count, 2)
+        XCTAssertEqual(preview.totalSize, MoOutputParser.parseByteSize("235.5MB"))
+    }
+
+    func testUninstallPreviewDriftReturnsEmpty() throws {
+        // If Mole stops printing the "Files to be removed:" gate, the parser
+        // yields nothing — and finalizeUninstallPreview leaves the
+        // preview-before-delete guard disarmed, so no delete can proceed.
+        let drifted = try fixture("uninstall-preview")
+            .replacingOccurrences(of: "Files to be removed:", with: "Items queued:")
+        let preview = MoOutputParser.parseUninstallPreview(text: drifted)
+        XCTAssertTrue(preview.isEmpty,
+            "Gate-marker drift must surface as an empty preview so the guard stays disarmed")
+    }
+
+    func testUninstallPreviewToleratesMissingTerminator() {
+        // If only the `➤ Remove …` total line drifts away, the app groups and
+        // their leftover paths are still fully parsed — so the preview stays
+        // valid (and the guard arms), with the total falling back to the sum of
+        // the per-app header sizes. Deletion targets the right apps regardless;
+        // only the displayed grand total is derived rather than read. This is
+        // intentional: a missing total line must NOT silently drop apps/paths.
+        let text = """
+        Files to be removed:
+
+        ◎ IINA , 235.5MB
+          ✓ /Applications/IINA.app
+          ✓ ~/Library/Caches/com.colliderli.iina
+        ◎ Bruno , 471.7MB
+          ✓ /Applications/Bruno.app
+        """
+        let preview = MoOutputParser.parseUninstallPreview(text: text)
+        XCTAssertEqual(preview.apps.map(\.name), ["IINA", "Bruno"],
+            "Missing terminator must not drop app groups")
+        XCTAssertTrue(preview.apps.first?.paths.contains("/Applications/IINA.app") ?? false)
+        XCTAssertFalse(preview.isEmpty, "Valid apps+paths must still arm the preview-before-delete guard")
+        // Total falls back to the sum of the per-app (bundle+leftover) header sizes.
+        let expected = (MoOutputParser.parseByteSize("235.5MB") ?? 0) + (MoOutputParser.parseByteSize("471.7MB") ?? 0)
+        XCTAssertEqual(preview.totalSize, expected)
+    }
+
+    func testUninstallPreviewHandlesAppNamesWithSpaces() {
+        let text = """
+        Files to be removed:
+
+        ◎ Google Chrome , 1.2GB
+          ✓ /Applications/Google Chrome.app
+          ✓ ~/Library/Application Support/Google/Chrome
+        ➤ Remove 1 app, 1.2GB  Enter confirm, ESC cancel:
+        """
+        let preview = MoOutputParser.parseUninstallPreview(text: text)
+        XCTAssertEqual(preview.apps.first?.name, "Google Chrome",
+            "A space-comma-space header must not truncate multi-word app names")
+        XCTAssertTrue(preview.apps.first?.paths.contains("/Applications/Google Chrome.app") ?? false)
+    }
 }
