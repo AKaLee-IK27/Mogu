@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case status = "Status"
@@ -177,16 +178,32 @@ struct ContentView: View {
         }
     }
 
+    // Drilbur brand mark: bundled SidebarLogo.png (emitted by scripts/make_icon.sh
+    // and copied into Resources by build_app.sh); falls back to the bolt glyph if
+    // the asset is absent (e.g. a bare `swift run` debug build).
+    @ViewBuilder private var brandMark: some View {
+        if let url = Bundle.main.resourceURL?.appendingPathComponent("SidebarLogo.png"),
+           let nsImage = NSImage(contentsOf: url) {
+            Image(nsImage: nsImage)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: 26, height: 26)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        } else {
+            Image(systemName: "bolt.fill")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 26, height: 26)
+                .background(DesignTokens.Color.accent)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+    }
+
     private var sidebar: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 10) {
-                    Image(systemName: "bolt.fill")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 26, height: 26)
-                        .background(DesignTokens.Color.accent)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    brandMark
                     Text("Drilbur")
                         .font(DesignTokens.Font.sidebarTitle)
                         .foregroundStyle(DesignTokens.Color.primary)

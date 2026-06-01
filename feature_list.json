@@ -251,6 +251,26 @@
         { "name": "Force-failure runtime verify + screenshot", "status": "done", "evidence": "Forced failure via chmod -x bundled mo + DRILBUR_MO_PATH=stub (--version ok, status exit 1, so the runtime-available guard passes and the per-tab load fails). Screenshot: Status tab shows the new ErrorStateView (triangle, 'Something went wrong', message, Retry). Mascot deferred (no image asset; would be invented). Recovery verified by construction: Retry calls the same refresh()/load that the normal launch screenshot shows producing a working dashboard. Bundled mo exec bit restored." }
       ],
       "evidence": "Reusable ErrorStateView shared across the 5 mo-backed tabs; removed 5 near-duplicate errorView helpers. make build + make app + make parser-test (8/8) pass. Runtime-verified via screenshots: error state renders with Retry on failure; normal Status dashboard renders when mo works (error state is correctly conditional, no regression). DesignTokens only."
+    },
+    {
+      "id": "feat-014",
+      "name": "Drilbur Personalization (icon + theme)",
+      "description": "Personalize the app with the Drilbur identity: new app icon from the provided Sugimori art, app-wide navy/indigo accent derived from Drilbur, and a Drilbur sidebar brand mark. Copyrighted art committed to the public repo per the maintainer's explicit choice (personal use).",
+      "dependencies": ["feat-009"],
+      "doneCriteria": [
+        "scripts/make_icon.sh composites icon-source.jpg onto a macOS squircle and builds a full AppIcon.iconset -> AppIcon.icns (replacing the single-128px icns) + SidebarLogo.png, using only built-ins (swift/sips/iconutil)",
+        "DesignTokens accent/accentSecondary/accentSoft/accentTint recolored to Drilbur navy/indigo, light and dark",
+        "ContentView sidebar shows the Drilbur SidebarLogo (fallback to bolt glyph if asset absent); build_app.sh bundles it",
+        "make build + make app + make parser-test pass",
+        "Runtime-verified: Dock/Finder icon reads as Drilbur; navy accent + sidebar mark render in both light and dark"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Icon pipeline", "status": "done", "evidence": "scripts/make_icon.sh: Swift/CoreGraphics compositor draws the art on a squircle (0.2237 corner ratio, ~9% margin, white->cool-grey gradient bg that blends the art's white bg, hairline edge) -> 1024 master -> sips iconset -> iconutil. AppIcon.icns now multi-res (ic12, 1MB) vs the prior single 128px. 475px source upscaled to 1024 (slightly soft, accepted). icon.png + SidebarLogo.png (256) emitted." },
+        { "name": "Accent recolor", "status": "done", "evidence": "DesignTokens.Color accent 3a4ea8/5d72d6, accentSecondary 7e8fde/8ea0f0, accentSoft e7e9fb/20264a, accentTint 2c3e8f/7e92ef. Derived from Drilbur's slate-blue (sampled art was a muted #80869a; cleaned up for UI contrast). Verified light+dark." },
+        { "name": "Sidebar brand + bundling + verify", "status": "done", "evidence": "ContentView brandMark loads Resources/SidebarLogo.png via Bundle.main, falls back to bolt.fill if absent (debug builds). build_app.sh copies SidebarLogo.png to Resources. Runtime screenshots: Dock icon = Drilbur squircle; navy 'Clean All' button + selected-tab accent + sparklines; Drilbur sidebar mark — all in light and dark." }
+      ],
+      "evidence": "Drilbur identity applied: new multi-res app icon from the provided art, app-wide navy/indigo accent, Drilbur sidebar brand mark. New reproducible scripts/make_icon.sh (built-ins only). make build + make app + make parser-test (8/8) pass. Runtime-verified in light and dark (icon, accent, brand mark). Copyrighted art committed per maintainer's explicit choice (personal use)."
     }
   ]
 }

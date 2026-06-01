@@ -54,11 +54,11 @@ enum DesignTokens {
         static let tertiary = adaptive(light: "77777c", dark: "6e6e73")
         static let placeholder = adaptive(light: "aeaeb2", dark: "48484a")
 
-        // Accent
-        static let accent = adaptive(light: "007aff", dark: "0a84ff")
-        static let accentSecondary = adaptive(light: "5ac8fa", dark: "64d2ff")
-        static let accentSoft = adaptive(light: "e5f1ff", dark: "1a3a5c")
-        static let accentTint = adaptive(light: "0055d4", dark: "409cff")
+        // Accent — Drilbur navy/indigo (derived from the art's slate-blue, tuned for UI contrast)
+        static let accent = adaptive(light: "3a4ea8", dark: "5d72d6")
+        static let accentSecondary = adaptive(light: "7e8fde", dark: "8ea0f0")
+        static let accentSoft = adaptive(light: "e7e9fb", dark: "20264a")
+        static let accentTint = adaptive(light: "2c3e8f", dark: "7e92ef")
 
         // Status
         static let success = adaptive(light: "34c759", dark: "30d158")

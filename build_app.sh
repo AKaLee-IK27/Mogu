@@ -80,6 +80,11 @@ if [[ -f "AppIcon.icns" ]]; then
     cp "AppIcon.icns" "$RESOURCES/AppIcon.icns"
 fi
 
+# Bundle the sidebar brand mark (Drilbur logo) used by ContentView's brandMark
+if [[ -f "SidebarLogo.png" ]]; then
+    cp "SidebarLogo.png" "$RESOURCES/SidebarLogo.png"
+fi
+
 # Copy only the runtime artifacts (not .git, source, docs, tests)
 mkdir -p "$RUNTIME_DST/bin" "$RUNTIME_DST/lib"
 cp "$RUNTIME_SRC/mo" "$RUNTIME_DST/mo"

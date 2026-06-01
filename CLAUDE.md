@@ -42,6 +42,16 @@ make app
 cd Vendor/Mole && make build
 ```
 
+**App icon / brand mark.** The Drilbur icon is generated from `icon-source.jpg`
+by `scripts/make_icon.sh` (built-ins only: swift/sips/iconutil) — it composites
+the art onto a macOS squircle and emits `AppIcon.icns` (full multi-res iconset),
+`icon.png`, and `SidebarLogo.png`. `build_app.sh` copies `AppIcon.icns` and
+`SidebarLogo.png` into `Contents/Resources`; `ContentView.brandMark` loads the
+sidebar logo from there (falls back to a bolt glyph if absent). Re-run
+`./scripts/make_icon.sh` after replacing `icon-source.jpg`. The accent palette
+(`DesignTokens.Color.accent*`) is Drilbur navy/indigo. Note: `icon-source.jpg` is
+copyrighted Pokémon art, committed for personal use only — do not redistribute.
+
 ## Code Architecture
 
 The app is a thin SwiftUI shell over the bundled `mo` CLI. Three layers matter:
