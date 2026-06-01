@@ -113,7 +113,7 @@ struct ContentView: View {
     private func tabView(for item: SidebarItem) -> some View {
         switch item {
         case .status:
-            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
                 StatusView(
                     service: moService,
                     isActive: selectedItem == .status,
@@ -122,7 +122,7 @@ struct ContentView: View {
                 )
             }
         case .clean:
-            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
                 CleanView(
                     service: moService,
                     permissions: permissions,
@@ -134,7 +134,7 @@ struct ContentView: View {
                 )
             }
         case .uninstall:
-            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
                 UninstallView(
                     service: moService,
                     refreshTrigger: $uninstallRefresh,
@@ -143,15 +143,16 @@ struct ContentView: View {
                 )
             }
         case .analyze:
-            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
                 AnalyzeView(
                     service: moService,
+                    permissions: permissions,
                     refreshTrigger: $analyzeRefresh,
                     isLoading: $analyzeLoading
                 )
             }
         case .optimize:
-            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
                 OptimizeView(
                     service: moService,
                     permissions: permissions,
@@ -162,7 +163,7 @@ struct ContentView: View {
                 )
             }
         case .purge:
-            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
                 PurgeView(
                     service: moService,
                     refreshTrigger: $purgeRefresh,
@@ -170,7 +171,7 @@ struct ContentView: View {
                 )
             }
         case .permissions:
-            StickyTab(key: item.id, loadedTabs: $loadedTabs) {
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
                 PermissionsView(permissions: permissions)
             }
         }
@@ -241,15 +242,24 @@ struct ContentView: View {
 // After that, the view stays in memory and switching back is instant.
 struct StickyTab<Content: View>: View {
     let key: String
+    let isActive: Bool
     @Binding var loadedTabs: Set<String>
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        content()
-            .onAppear {
-                if loadedTabs.contains(key) { return }
-                loadedTabs.insert(key)
+        Group {
+            if isActive || loadedTabs.contains(key) {
+                content()
+            } else {
+                Color.clear
             }
+        }
+        .onChange(of: isActive) { _, active in
+            if active { loadedTabs.insert(key) }
+        }
+        .onAppear {
+            if isActive { loadedTabs.insert(key) }
+        }
     }
 }
 

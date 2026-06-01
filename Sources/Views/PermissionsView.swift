@@ -3,6 +3,7 @@ import SwiftUI
 // Dedicated screen explaining MoleMac's minimal, progressive permission model.
 struct PermissionsView: View {
     @ObservedObject var permissions: PermissionsService
+    @Environment(\.openURL) private var openURL
     @State private var appear = false
 
     var body: some View {
@@ -16,6 +17,11 @@ struct PermissionsView: View {
                         .opacity(appear ? 1 : 0)
                         .offset(y: appear ? 0 : 8)
                         .animation(DesignTokens.spring, value: appear)
+
+                    fullDiskAccessCard
+                        .opacity(appear ? 1 : 0)
+                        .offset(y: appear ? 0 : 8)
+                        .animation(DesignTokens.spring.delay(0.04), value: appear)
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
@@ -73,6 +79,84 @@ struct PermissionsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+    }
+
+    private var fullDiskAccessCard: some View {
+        let permission = PermissionKind.fullDiskAccess
+        let status = permissions.status(for: permission)
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Image(systemName: permission.icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(DesignTokens.Color.accent)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 8) {
+                        Text(permission.title)
+                            .font(DesignTokens.Font.section)
+                            .foregroundStyle(DesignTokens.Color.primary)
+                        Text("Optional")
+                            .font(DesignTokens.Font.label)
+                            .foregroundStyle(DesignTokens.Color.accentTint)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 3)
+                            .background(DesignTokens.Color.accentSoft)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
+                    }
+                    Text("Scan quietly without macOS asking per protected folder.")
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.secondary)
+                }
+                Spacer()
+                statusBadge(status)
+            }
+
+            Text(permission.why)
+                .font(DesignTokens.Font.body)
+                .foregroundStyle(DesignTokens.Color.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let settingsURL = permission.settingsURL {
+                Button {
+                    openURL(settingsURL)
+                } label: {
+                    Label("Open in System Settings", systemImage: "gearshape")
+                        .font(DesignTokens.Font.bodyStrong)
+                }
+                .buttonStyle(.bordered)
+                .tint(DesignTokens.Color.accent)
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+    }
+
+    private func statusBadge(_ status: PermissionStatus) -> some View {
+        let style = statusStyle(for: status)
+        return HStack(spacing: 5) {
+            Image(systemName: style.icon).font(.system(size: 11))
+            Text(status.label).font(DesignTokens.Font.label)
+        }
+        .foregroundStyle(style.foreground)
+        .padding(.horizontal, 10).padding(.vertical, 5)
+        .background(style.background)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+    }
+
+    private func statusStyle(for status: PermissionStatus) -> (icon: String, foreground: SwiftUI.Color, background: SwiftUI.Color) {
+        switch status {
+        case .granted:
+            return ("checkmark.circle.fill", DesignTokens.Color.successText, DesignTokens.Color.successSoft)
+        case .notGranted:
+            return ("exclamationmark.circle.fill", DesignTokens.Color.warningText, DesignTokens.Color.warningSoft)
+        case .promptsWhenNeeded:
+            return ("key.fill", DesignTokens.Color.warningText, DesignTokens.Color.warningSoft)
+        case .unknown:
+            return ("questionmark.circle.fill", DesignTokens.Color.tertiary, DesignTokens.Color.codeBg)
+        }
     }
 
     private var adminBadge: some View {

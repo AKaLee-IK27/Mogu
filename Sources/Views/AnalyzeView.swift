@@ -2,6 +2,8 @@ import SwiftUI
 
 struct AnalyzeView: View {
     let service: MoService
+    @ObservedObject var permissions: PermissionsService
+    @Environment(\.openURL) private var openURL
     @Binding var refreshTrigger: UUID
     @Binding var isLoading: Bool
     @State private var result: AnalysisResult?
@@ -13,6 +15,12 @@ struct AnalyzeView: View {
             headerBar
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
 
+            if shouldShowFullDiskAccessHint {
+                fullDiskAccessHint
+                    .padding(.horizontal, 32)
+                    .padding(.top, 12)
+            }
+
             ScrollView {
                 if isLoading { loadingView }
                 else if let error { errorView(message: error) }
@@ -20,7 +28,10 @@ struct AnalyzeView: View {
             }
             .background(DesignTokens.Color.pageBackground)
         }
-        .task { await loadAnalysis() }
+        .task {
+            permissions.refresh()
+            await loadAnalysis()
+        }
         .onChange(of: refreshTrigger) { oldValue, newValue in
             guard oldValue != newValue else { return }
             Task { await loadAnalysis() }
@@ -57,6 +68,40 @@ struct AnalyzeView: View {
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 20)
+    }
+
+    private var shouldShowFullDiskAccessHint: Bool {
+        switch permissions.status(for: .fullDiskAccess) {
+        case .granted: return false
+        case .notGranted, .promptsWhenNeeded, .unknown: return true
+        }
+    }
+
+    private var fullDiskAccessHint: some View {
+        HStack(spacing: 8) {
+            Image(systemName: PermissionKind.fullDiskAccess.icon)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(DesignTokens.Color.tertiary)
+            Text("Grant Full Disk Access to scan without per-folder prompts")
+                .font(DesignTokens.Font.captionStrong)
+                .foregroundStyle(DesignTokens.Color.secondary)
+            Spacer(minLength: 0)
+            if let settingsURL = PermissionKind.fullDiskAccess.settingsURL {
+                Button {
+                    openURL(settingsURL)
+                } label: {
+                    Text("Open Settings")
+                        .font(DesignTokens.Font.label)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .tint(DesignTokens.Color.accent)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
     }
 
     private func analysisContent(_ r: AnalysisResult) -> some View {

@@ -55,8 +55,11 @@ The `cleanPreviewReady` flag enforces preview-before-delete: `executeClean()`
 refuses to run unless a preview was generated first.
 
 **Permissions model (minimal / works-everywhere).** The app requires **no**
-permission to start — `PermissionKind` is `.administrator` only (optional). Clean
-and Optimize run **unprivileged first** (`stream(…)`), cleaning user-owned items;
+permission to start — `PermissionKind` is `.administrator` (for elevation) plus
+`.fullDiskAccess` (optional; granting it silences the per-folder TCC "Files &
+Folders" prompts during home-dir scanning; probed via the system
+`/Library/Application Support/com.apple.TCC/TCC.db`). Clean and Optimize run
+**unprivileged first** (`stream(…)`), cleaning user-owned items;
 Mole skips the system tier gracefully. They then **progressively offer** an optional
 admin escalation (`streamElevated(…)`, osascript password) for system-level items.
 A `BiometricGate` (LAContext Touch ID) gates the escalation **entry** — a
@@ -79,11 +82,12 @@ an inherited TTY stdin would hang the unprivileged execute on `read_key`.
 only) Homebrew `mo` → nonexistent-path sentinel. `make app` builds the runtime
 from the `Vendor/Mole` submodule; packaged builds never use Homebrew Mole.
 
-**`ContentView.swift` — the navigation + action wiring.** All six screens live
-**simultaneously** in a `ZStack` (`StickyTab`), toggled by opacity — so **every
-view's `.task` fires at launch** (six `mo` calls run on startup). ContentView
-declares per-screen `UUID` "trigger" bindings and loading-state bindings that
-it threads into each view. Each view's destructive/refresh actions are
+**`ContentView.swift` — the navigation + action wiring.** Tabs live in a
+`ZStack` but lazy-load via `StickyTab` (`isActive || loadedTabs`) — so only the
+active tab runs its `mo` call at launch, and switching keeps a tab loaded
+(sticky). ContentView declares per-screen `UUID` "trigger" bindings and
+loading-state bindings that it threads into each view. Each view's
+destructive/refresh actions are
 **in-view header buttons** (`HeaderIconButton` / `HeaderActionButton`), wired
 directly to the view's own async methods (`loadPreview`, `runClean`, etc.).
 There is **no window `.toolbar`** — see Gotchas. (The trigger UUID bindings are
@@ -106,12 +110,13 @@ light/dark values — never hardcode colors in views.
   screenshots. **`open` does NOT propagate env vars**, so to use it run the
   bundle executable directly:
   `MOLEMAC_SCREEN=clean /Applications/MoleMac.app/Contents/MacOS/MoleMac`.
-- **Full Disk Access is no longer part of the permission model.** The app moved to a
-  minimal-permissions model (admin-only, optional — see Code Architecture); the UI no
-  longer surfaces or probes FDA. The signing detail still holds and is worth keeping:
-  `build_app.sh` signs every child binary (`mo`, `mole`, Go binaries, shell scripts)
-  with the **same** bundle identifier as the parent so they share one signature domain;
-  changing identifiers per-binary breaks that inheritance.
+- **Full Disk Access is optional, not required.** It is surfaced as a quiet-scan
+  convenience for Analyze/home-dir scans and probed by reading the system TCC DB;
+  Administrator remains optional and only for user-chosen elevation. The signing
+  detail still holds and is worth keeping: `build_app.sh` signs every child binary
+  (`mo`, `mole`, Go binaries, shell scripts) with the **same** bundle identifier as
+  the parent so they share one signature domain; changing identifiers per-binary
+  breaks that inheritance.
 - For UI verification, launch the **`.app` bundle** (`open MoleMac.app`); a bare
   `swift build` debug binary won't activate or raise its window properly.
 
