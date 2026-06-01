@@ -167,9 +167,9 @@ struct AnalyzeView: View {
         let fraction = totalSize > 0 ? Double(entry.size) / Double(totalSize) : 0
         return VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 10) {
-                Image(systemName: entry.isDir ? "folder.fill" : "doc.fill")
+                Image(systemName: (entry.isDir ?? false) ? "folder.fill" : "doc.fill")
                     .font(.system(size: 12))
-                    .foregroundStyle(entry.isDir ? DesignTokens.Color.accent : DesignTokens.Color.tertiary)
+                    .foregroundStyle((entry.isDir ?? false) ? DesignTokens.Color.accent : DesignTokens.Color.tertiary)
                     .frame(width: 20)
 
                 Text(entry.name)

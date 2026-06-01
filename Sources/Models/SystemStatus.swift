@@ -258,7 +258,7 @@ struct DiskEntry: Codable, Identifiable {
     let name: String
     let path: String
     let size: UInt64
-    let isDir: Bool
+    let isDir: Bool?   // `mo analyze` omits is_dir for large_files entries
     let modified: String?
 
     enum CodingKeys: String, CodingKey {

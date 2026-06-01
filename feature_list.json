@@ -148,6 +148,109 @@
         { "name": "Refresh tracking artifacts", "status": "done", "evidence": "feature_list.json entry added; session-handoff.md refreshed for feat-008." }
       ],
       "evidence": "Scope: Analyze banner wiring + tracking only (4 files; no Status files or PermissionsService touched). swift build passes. Controller runtime-verified: Analyze tab renders the PreflightBanner showing 'Full Disk Access', no crash. Pre-existing analyze-data decode error observed (unrelated to this feature; reported separately). FDA not-granted branch is a documented manual check (see session-handoff.md)."
+    },
+    {
+      "id": "feat-009",
+      "name": "Rename App to Drilbur",
+      "description": "Rename the SwiftUI GUI shell from MoleMac to Drilbur (Pokemon-inspired, personal use). GUI identity only: app bundle, executable, bundle ID, env vars, user-visible strings, and docs. The upstream Mole CLI (mo, MoleRuntime/ path, Vendor/Mole submodule) keeps its name and is NOT renamed.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Package.swift product/target renamed MoleMac -> Drilbur; Sources/MoleMacApp.swift -> Sources/DrilburApp.swift; struct MoleMacApp -> DrilburApp",
+        "build_app.sh: APP_NAME/executable -> Drilbur, BUNDLE_ID com.mole.molemac -> co.greenpassport.drilbur, Info.plist CFBundleName/CFBundleExecutable/CFBundleIdentifier updated",
+        "Env vars MOLEMAC_SCREEN/MOLEMAC_MO_PATH -> DRILBUR_SCREEN/DRILBUR_MO_PATH in ContentView.swift and MoService.swift",
+        "User-visible strings (PermissionsView.swift, Permission.swift osascript admin prompt, window title) say Drilbur",
+        "Docs updated: README.md, CLAUDE.md, Makefile, init.sh, feature_list.json, progress.md, session-handoff.md, plans/*.md",
+        "Vendor/Mole, mo, and Contents/Resources/MoleRuntime/ left unchanged",
+        "make app builds; child binaries re-verified to share the new bundle ID signature domain",
+        "Launch verified: window title + osascript admin prompt show 'Drilbur'; DRILBUR_SCREEN=clean .../MacOS/Drilbur deep-links to the Clean tab"
+      ],
+      "status": "pending",
+      "subTasks": [
+        { "name": "Rename Package.swift product/target + MoleMacApp.swift/struct", "status": "pending" },
+        { "name": "Update build_app.sh APP_NAME/BUNDLE_ID/Info.plist + re-verify signature inheritance", "status": "pending" },
+        { "name": "Rename MOLEMAC_* env vars in ContentView + MoService", "status": "pending" },
+        { "name": "Update user-visible strings (PermissionsView, admin prompt, title)", "status": "pending" },
+        { "name": "Update docs + trackers", "status": "pending" },
+        { "name": "make app + launch verify (title, admin prompt, deep-link)", "status": "pending" }
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "feat-010",
+      "name": "Commit Analyze Decode Fix",
+      "description": "Commit the working-tree fix for the Analyze 'data couldn't be read' decode error: mo analyze omits is_dir for large_files entries, so DiskEntry.isDir was made optional with a ?? false fallback in the view.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Sources/Models/SystemStatus.swift DiskEntry.isDir is Bool? (optional)",
+        "Sources/Views/AnalyzeView.swift uses (entry.isDir ?? false)",
+        "make app; Analyze tab renders the large-files list with no decode error",
+        "Committed as a single commit"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Runtime-verify Analyze tab decodes + renders", "status": "done", "evidence": "Root cause confirmed against real mo 1.40.0 output: analyze --json entries[] carry is_dir but large_files[] omit it (sample keys ['name','path','size']), so non-optional isDir failed to decode the large-files list. Optional fix decodes both." },
+        { "name": "Commit the fix", "status": "done" }
+      ],
+      "evidence": "DiskEntry.isDir made Bool? (SystemStatus.swift); AnalyzeView uses (entry.isDir ?? false). Root cause verified: large_files[] omit is_dir while entries[] include it. swift build passes. Committed on branch feat/drilbur-and-next-tasks."
+    },
+    {
+      "id": "feat-011",
+      "name": "Parser-Resilience Regression Harness",
+      "description": "Guard the fragile human-readable-text parsers and literal-string matches that silently return empty results if Mole's output format changes: parseCleanPreview, parsePurgePreview, parseOptimizePreview, and the literal 'System-level cleanup skipped, requires sudo' match. Capture real mo output as golden fixtures and add a parser test that fails on format drift.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Golden-output fixtures captured from real mo (clean preview clean-list.txt, purge, optimize) on Mole 1.40.0",
+        "A parser test feeds the fixtures through the parsers and asserts the expected non-empty structured results",
+        "Test asserts the 'System-level cleanup skipped, requires sudo' detection still matches",
+        "Mutating a glyph marker (===, the box rule, the arrow) or the skip string in a fixture makes the test fail",
+        "Test runs via make test (or a documented command if a test target must be added)"
+      ],
+      "status": "pending",
+      "subTasks": [
+        { "name": "Capture golden fixtures from mo 1.40.0", "status": "pending" },
+        { "name": "Add parser test against fixtures", "status": "pending" },
+        { "name": "Verify drift (mutated fixture) fails the test", "status": "pending" }
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "feat-012",
+      "name": "Resolve Deferred FDA Not-Granted Check",
+      "description": "Close the last open item on feat-008: exercise the Full Disk Access 'not granted' branch and fix the probe path if it false-positives. Documented in session-handoff.md.",
+      "dependencies": ["feat-008"],
+      "doneCriteria": [
+        "With FDA revoked for the app and relaunched, Permissions card + preflight banners read 'Not granted'",
+        "If still 'Granted', PermissionsService.probeFullDiskAccess repointed from ~/Library/.../TCC.db to /Library/Application Support/com.apple.TCC/TCC.db and re-verified",
+        "feat-008 FDA subTask flipped from manual-check to done with evidence",
+        "session-handoff.md manual-check note resolved"
+      ],
+      "status": "pending",
+      "subTasks": [
+        { "name": "Revoke FDA, relaunch, observe Permissions card + banners", "status": "pending" },
+        { "name": "Repoint probe path if false-positive", "status": "pending" },
+        { "name": "Update feat-008 subTask + handoff", "status": "pending" }
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "feat-013",
+      "name": "Consistent Error-State UX",
+      "description": "Replace raw/cryptic failure text with one reusable error+retry state shared across tabs (friendly message + Retry button) for failed mo calls and decode errors. A natural home for a small Drilbur mascot presence.",
+      "dependencies": ["feat-009"],
+      "doneCriteria": [
+        "A reusable error-state view (message + Retry) exists and is wired into the tabs that shell out to mo",
+        "Retry re-runs the failed operation",
+        "Forcing a failure (bad DRILBUR_MO_PATH) shows the error card instead of raw text, and Retry works after the path is fixed",
+        "Follows DesignTokens (no hardcoded colors); make app passes",
+        "Runtime-verified via screenshot"
+      ],
+      "status": "pending",
+      "subTasks": [
+        { "name": "Build reusable error-state component", "status": "pending" },
+        { "name": "Wire into mo-backed tabs", "status": "pending" },
+        { "name": "Force-failure runtime verify + screenshot", "status": "pending" }
+      ],
+      "evidence": ""
     }
   ]
 }
