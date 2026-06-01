@@ -56,9 +56,13 @@ pure parsing logic now lives in **`Services/MoOutputParser.swift`** (extracted
 out of the `MoService` actor so it is unit-testable); `MoService` reads the
 bytes and delegates. Clean's preview is read from the side file
 `~/.config/mole/clean-list.txt`, not stdout. If `mo`'s output format changes,
-these parsers silently return empty results — which is exactly what
-`make parser-test` (golden fixtures in `Tests/DrilburTests/Fixtures`) exists to
-catch. The optimize stream parser is `StepStreamParser` (`ProcessStep.swift`).
+these parsers silently return empty results. `make parser-test` (golden fixtures
+in `Tests/DrilburTests/Fixtures`) guards the parser **code** against regressions
+and pins the format the parsers expect — but the fixtures are static snapshots,
+so they do **not** auto-detect live Mole drift. They surface drift only when a
+human re-captures them, e.g. on a `Vendor/Mole` submodule bump (regenerate per
+`Fixtures/README.md`). The optimize stream parser is `StepStreamParser`
+(`ProcessStep.swift`).
 The `cleanPreviewReady` flag enforces preview-before-delete: `executeClean()`
 refuses to run unless a preview was generated first.
 
