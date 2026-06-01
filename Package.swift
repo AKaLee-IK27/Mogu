@@ -2,20 +2,20 @@
 import PackageDescription
 
 let package = Package(
-    name: "Drilbur",
+    name: "Mogu",
     platforms: [.macOS(.v14)],
     products: [
-        .executable(name: "Drilbur", targets: ["Drilbur"])
+        .executable(name: "Mogu", targets: ["Mogu"])
     ],
     targets: [
         .executableTarget(
-            name: "Drilbur",
+            name: "Mogu",
             path: "Sources"
         ),
         .testTarget(
-            name: "DrilburTests",
-            dependencies: ["Drilbur"],
-            path: "Tests/DrilburTests",
+            name: "MoguTests",
+            dependencies: ["Mogu"],
+            path: "Tests/MoguTests",
             resources: [.copy("Fixtures")]
         )
     ]

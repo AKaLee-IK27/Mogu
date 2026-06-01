@@ -8,7 +8,7 @@ import Foundation
 // format changes, these parsers silently return empty results — the single
 // most fragile cross-component dependency in the app. These functions are
 // extracted out of the `MoService` actor (pure, no disk/actor isolation) so
-// they can be regression-tested against golden fixtures (see DrilburTests).
+// they can be regression-tested against golden fixtures (see MoguTests).
 enum MoOutputParser {
 
     // The exact literal `clean.sh` prints when system-level cleanup is skipped

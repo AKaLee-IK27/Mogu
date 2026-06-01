@@ -1,5 +1,5 @@
 import XCTest
-@testable import Drilbur
+@testable import Mogu
 
 // Regression guard for the fragile text parsers. Mole exposes no JSON for clean
 // or purge, so results come from parsing human-readable output keyed on glyph

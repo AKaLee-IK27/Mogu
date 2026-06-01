@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# Drilbur
+# Mogu
 
 SwiftUI macOS GUI for [Mole CLI](https://github.com/tw93/Mole). Requires macOS 14+, Swift 6.3+, and Go 1.21+ (to build the bundled runtime).
 
@@ -10,14 +10,14 @@ SwiftUI macOS GUI for [Mole CLI](https://github.com/tw93/Mole). Requires macOS 1
 
 ```bash
 make build       # Compile the Swift executable (swift build)
-make app         # Build Drilbur.app with bundled Mole runtime (runs build_app.sh)
+make app         # Build Mogu.app with bundled Mole runtime (runs build_app.sh)
 make test        # Build + verify — build-only, confirms the app compiles
 make parser-test # swift test: regression guard for the fragile text parsers
 make clean       # Remove build artifacts
 ```
 
 There is no lint step. `make test` only confirms the build compiles. The **one**
-test target is `DrilburTests` (`make parser-test`), which guards the fragile
+test target is `MoguTests` (`make parser-test`), which guards the fragile
 `MoOutputParser` text parsers against golden fixtures — it does **not** cover UI
 or runtime behavior. Real verification is still **build + launch the app** (see
 Gotchas); a compile pass does not catch the runtime issues this codebase is
@@ -42,15 +42,16 @@ make app
 cd Vendor/Mole && make build
 ```
 
-**App icon / brand mark.** The Drilbur icon is generated from `icon-source.jpg`
-by `scripts/make_icon.sh` (built-ins only: swift/sips/iconutil) — it composites
-the art onto a macOS squircle and emits `AppIcon.icns` (full multi-res iconset),
-`icon.png`, and `SidebarLogo.png`. `build_app.sh` copies `AppIcon.icns` and
-`SidebarLogo.png` into `Contents/Resources`; `ContentView.brandMark` loads the
-sidebar logo from there (falls back to a bolt glyph if absent). Re-run
-`./scripts/make_icon.sh` after replacing `icon-source.jpg`. The accent palette
-(`DesignTokens.Color.accent*`) is Drilbur navy/indigo. Note: `icon-source.jpg` is
-copyrighted Pokémon art, committed for personal use only — do not redistribute.
+**App icon / brand mark.** The Mogu icon is generated from `icon-source.png`
+(an original transparent-background PNG) by `scripts/make_icon.sh` (built-ins
+only: swift/sips/iconutil) — it composites the art onto a macOS squircle (with a
+~6% inset so the raised drill-claws don't clip at the rounded corners) and emits
+`AppIcon.icns` (full multi-res iconset), `icon.png`, and `SidebarLogo.png`.
+`build_app.sh` copies `AppIcon.icns` and `SidebarLogo.png` into
+`Contents/Resources`; `ContentView.brandMark` loads the sidebar logo from there
+(falls back to a bolt glyph if absent). Re-run `./scripts/make_icon.sh` after
+replacing `icon-source.png`. The accent palette (`DesignTokens.Color.accent*`)
+is Mogu navy/indigo.
 
 ## Code Architecture
 
@@ -67,7 +68,7 @@ out of the `MoService` actor so it is unit-testable); `MoService` reads the
 bytes and delegates. Clean's preview is read from the side file
 `~/.config/mole/clean-list.txt`, not stdout. If `mo`'s output format changes,
 these parsers silently return empty results. `make parser-test` (golden fixtures
-in `Tests/DrilburTests/Fixtures`) guards the parser **code** against regressions
+in `Tests/MoguTests/Fixtures`) guards the parser **code** against regressions
 and pins the format the parsers expect — but the fixtures are static snapshots,
 so they do **not** auto-detect live Mole drift. They surface drift only when a
 human re-captures them, e.g. on a `Vendor/Mole` submodule bump (regenerate per
@@ -109,7 +110,7 @@ dry-run (`runElevatedClean`/`runElevatedOptimize` guard on
 an inherited TTY stdin would hang the unprivileged execute on `read_key`.
 
 **Runtime resolution** (`MoService.resolveMoPath`): bundled
-`Contents/Resources/MoleRuntime/mo` → `DRILBUR_MO_PATH` env override → (DEBUG
+`Contents/Resources/MoleRuntime/mo` → `MOGU_MO_PATH` env override → (DEBUG
 only) Homebrew `mo` → nonexistent-path sentinel. `make app` builds the runtime
 from the `Vendor/Mole` submodule; packaged builds never use Homebrew Mole.
 
@@ -136,16 +137,16 @@ light/dark values — never hardcode colors in views.
 - **Preview operations are slow, not hung.** `clean --dry-run` takes ~35–40s and
   `optimize --dry-run` ~5s. Always show a loading spinner while a preview runs;
   a disabled action button with no spinner reads as broken.
-- **`DRILBUR_SCREEN=<status|clean|uninstall|analyze|optimize|purge>`** launches
+- **`MOGU_SCREEN=<status|clean|uninstall|analyze|optimize|purge>`** launches
   straight to one tab (set in `ContentView.init`) — useful for verification
   screenshots. Plain `open` does not propagate env vars, but **`open --env`
-  does**: `open --env DRILBUR_SCREEN=clean /Applications/Drilbur.app`. Prefer
-  this over direct-exec'ing the `MacOS/Drilbur` binary — see the FDA gotcha below.
+  does**: `open --env MOGU_SCREEN=clean /Applications/Mogu.app`. Prefer
+  this over direct-exec'ing the `MacOS/Mogu` binary — see the FDA gotcha below.
 - **Verify FDA state with `open`, never by direct-exec'ing the binary.** macOS
   TCC attributes a permission check to the *responsible process*. Launching
-  `…/MacOS/Drilbur` from a terminal that has Full Disk Access makes Drilbur
+  `…/MacOS/Mogu` from a terminal that has Full Disk Access makes Mogu
   inherit the terminal's FDA, so `probeFullDiskAccess` reads a **false
-  "Granted"**. Launch via `open` (LaunchServices) so Drilbur is its own
+  "Granted"**. Launch via `open` (LaunchServices) so Mogu is its own
   responsible process and the probe reports truthfully. The probe reads the
   system `/Library/Application Support/com.apple.TCC/TCC.db`.
 - **Full Disk Access is optional, not required.** It is surfaced as a quiet-scan
@@ -155,7 +156,7 @@ light/dark values — never hardcode colors in views.
   (`mo`, `mole`, Go binaries, shell scripts) with the **same** bundle identifier as
   the parent so they share one signature domain; changing identifiers per-binary
   breaks that inheritance.
-- For UI verification, launch the **`.app` bundle** (`open Drilbur.app`); a bare
+- For UI verification, launch the **`.app` bundle** (`open Mogu.app`); a bare
   `swift build` debug binary won't activate or raise its window properly.
 
 ## Agent Workflow: Plan → Build → Check

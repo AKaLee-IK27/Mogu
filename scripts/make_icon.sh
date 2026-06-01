@@ -1,9 +1,10 @@
 #!/bin/bash
-# Build the Drilbur app icon + sidebar logo from icon-source.jpg.
+# Build the Mogu app icon + sidebar logo from icon-source.png.
 #
 # Pipeline: a Swift/CoreGraphics compositor draws the source art onto a macOS
-# squircle (light gradient background, the art is already on near-white so it
-# blends), producing a 1024 master PNG and a small rounded sidebar logo. sips
+# squircle (light gradient background; the art is a transparent PNG so it
+# composites directly over the gradient), producing a 1024 master PNG and a
+# small rounded sidebar logo. sips
 # fans the master out into a full AppIcon.iconset, then iconutil seals the .icns.
 #
 # Requires only macOS built-ins: swift, sips, iconutil. Run from repo root:
@@ -13,8 +14,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-SRC="icon-source.jpg"
-[[ -f "$SRC" ]] || { echo "Missing $SRC (the Drilbur source art)" >&2; exit 1; }
+SRC="icon-source.png"
+[[ -f "$SRC" ]] || { echo "Missing $SRC (the Mogu source art)" >&2; exit 1; }
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -80,8 +81,9 @@ func compose(side: Int, marginFrac: CGFloat) -> CGImage {
         CGColor(red: 0.937, green: 0.945, blue: 0.965, alpha: 1)
     ] as CFArray, locations: [0, 1])!
     ctx.drawLinearGradient(grad, start: CGPoint(x: 0, y: tile.maxY), end: CGPoint(x: 0, y: tile.minY), options: [])
-    // Drilbur art fills the squircle bounding box (its own white margins blend with the bg).
-    ctx.draw(art, in: tile)
+    // Mogu art (transparent PNG) sits inside the squircle with a small inset so the
+    // raised drill-claws don't clip at the rounded corners; the gradient shows around it.
+    ctx.draw(art, in: tile.insetBy(dx: s * 0.06, dy: s * 0.06))
     ctx.restoreGState()
 
     // Hairline edge for definition on light Docks.

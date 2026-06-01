@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "=== Drilbur Initialization ==="
+echo "=== Mogu Initialization ==="
 
 echo "=== Checking submodules ==="
 if [[ ! -f "Vendor/Mole/mole" ]]; then

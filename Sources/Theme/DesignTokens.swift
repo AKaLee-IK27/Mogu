@@ -54,7 +54,7 @@ enum DesignTokens {
         static let tertiary = adaptive(light: "77777c", dark: "6e6e73")
         static let placeholder = adaptive(light: "aeaeb2", dark: "48484a")
 
-        // Accent — Drilbur navy/indigo (derived from the art's slate-blue, tuned for UI contrast)
+        // Accent — Mogu navy/indigo (derived from the art's slate-blue, tuned for UI contrast)
         static let accent = adaptive(light: "3a4ea8", dark: "5d72d6")
         static let accentSecondary = adaptive(light: "7e8fde", dark: "8ea0f0")
         static let accentSoft = adaptive(light: "e7e9fb", dark: "20264a")

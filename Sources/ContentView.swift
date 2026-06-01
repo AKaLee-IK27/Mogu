@@ -69,7 +69,7 @@ struct ContentView: View {
     @State private var purgeLoading = true
 
     init() {
-        let requestedScreen = Foundation.ProcessInfo.processInfo.environment["DRILBUR_SCREEN"]?.lowercased()
+        let requestedScreen = Foundation.ProcessInfo.processInfo.environment["MOGU_SCREEN"]?.lowercased()
         let initialItem = SidebarItem.allCases.first { $0.rawValue.lowercased() == requestedScreen } ?? .status
         _selectedItem = State(initialValue: initialItem)
     }
@@ -178,14 +178,14 @@ struct ContentView: View {
         }
     }
 
-    // Bundled Drilbur logo, loaded once (the sidebar recomputes on every hover,
+    // Bundled Mogu logo, loaded once (the sidebar recomputes on every hover,
     // so we must not re-decode the PNG per render). nil → fall back to the glyph.
     private static let sidebarLogo: NSImage? = {
         guard let url = Bundle.main.resourceURL?.appendingPathComponent("SidebarLogo.png") else { return nil }
         return NSImage(contentsOf: url)
     }()
 
-    // Drilbur brand mark: bundled SidebarLogo.png (emitted by scripts/make_icon.sh
+    // Mogu brand mark: bundled SidebarLogo.png (emitted by scripts/make_icon.sh
     // and copied into Resources by build_app.sh); falls back to the bolt glyph if
     // the asset is absent (e.g. a bare `swift run` debug build).
     @ViewBuilder private var brandMark: some View {
@@ -210,7 +210,7 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 10) {
                     brandMark
-                    Text("Drilbur")
+                    Text("Mogu")
                         .font(DesignTokens.Font.sidebarTitle)
                         .foregroundStyle(DesignTokens.Color.primary)
                     Spacer()

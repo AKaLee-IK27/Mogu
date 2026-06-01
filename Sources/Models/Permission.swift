@@ -25,7 +25,7 @@ enum PermissionKind: String, CaseIterable, Identifiable {
     var why: String {
         switch self {
         case .administrator:
-            return "Lets Drilbur ask for your password only when you choose system-level cleanup. Optional; user-owned cleanup works without it."
+            return "Lets Mogu ask for your password only when you choose system-level cleanup. Optional; user-owned cleanup works without it."
         case .fullDiskAccess:
             return "Lets Mole scan your home folder quietly — macOS won't ask for each folder (Desktop, Documents, Downloads, …). Optional; the app works without it, you'll just see a per-folder prompt the first time you scan each one."
         }

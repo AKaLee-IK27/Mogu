@@ -48,7 +48,7 @@ actor MoService {
             }
         }
 
-        if let overridePath = Foundation.ProcessInfo.processInfo.environment["DRILBUR_MO_PATH"],
+        if let overridePath = Foundation.ProcessInfo.processInfo.environment["MOGU_MO_PATH"],
            !overridePath.isEmpty {
             return overridePath
         }
@@ -258,7 +258,7 @@ actor MoService {
         return AsyncStream { continuation in
             let work = Task.detached {
                 let logURL = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("drilbur-elevated-\(UUID().uuidString).log")
+                    .appendingPathComponent("mogu-elevated-\(UUID().uuidString).log")
                 FileManager.default.createFile(atPath: logURL.path, contents: nil)
 
                 // Build the root shell command: explicit env + mo + args, output
@@ -347,8 +347,8 @@ actor MoService {
 
         let tempDir = FileManager.default.temporaryDirectory
         let id = UUID().uuidString
-        let stdoutURL = tempDir.appendingPathComponent("drilbur-\(id)-stdout.log")
-        let stderrURL = tempDir.appendingPathComponent("drilbur-\(id)-stderr.log")
+        let stdoutURL = tempDir.appendingPathComponent("mogu-\(id)-stdout.log")
+        let stderrURL = tempDir.appendingPathComponent("mogu-\(id)-stderr.log")
         FileManager.default.createFile(atPath: stdoutURL.path, contents: nil)
         FileManager.default.createFile(atPath: stderrURL.path, contents: nil)
 
@@ -412,7 +412,7 @@ actor MoService {
 enum Logger {
     static func log(_ message: String) {
         #if DEBUG
-        print("[Drilbur] \(message)")
+        print("[Mogu] \(message)")
         #endif
     }
 }

@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct DrilburApp: App {
+struct MoguApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
