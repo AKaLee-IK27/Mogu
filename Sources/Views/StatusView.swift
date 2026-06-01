@@ -485,10 +485,13 @@ struct StatusView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 12) {
-            ProgressView().scaleEffect(1.2)
-            Text("Reading system data...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        FeatureLoadingView(
+            icon: "gauge.medium",
+            tint: DesignTokens.Color.accent,
+            title: "Reading system status",
+            subtitle: "Gathering memory, disk, and battery metrics"
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func refresh() async {

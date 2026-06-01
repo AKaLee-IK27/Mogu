@@ -25,7 +25,20 @@ struct OptimizeView: View {
 
             ScrollView {
                 VStack(spacing: 20) {
-                    statusBanner
+                    // Initial dry-run preview: show the personalized loader until
+                    // steps stream in. The streaming banner takes over once the
+                    // run begins or steps are ready.
+                    if isPreviewing && steps.isEmpty {
+                        FeatureLoadingView(
+                            icon: "bolt.horizontal.circle.fill",
+                            tint: DesignTokens.Color.warning,
+                            title: "Analyzing optimization tasks",
+                            subtitle: "Previewing what will run"
+                        )
+                        .padding(.top, 40)
+                    } else {
+                        statusBanner
+                    }
                     if systemOptimizeAvailable {
                         systemOptimizeCard
                             .padding(.horizontal, 32)

@@ -165,9 +165,13 @@ struct PurgeView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 16) {
-            ProgressView().scaleEffect(1.2)
-            Text("Scanning project directories...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
+        VStack(spacing: 20) {
+            FeatureLoadingView(
+                icon: "trash.fill",
+                tint: DesignTokens.Color.purgeAccent,
+                title: "Scanning project directories",
+                subtitle: "Finding build caches and dependency folders"
+            )
             if !activity.isEmpty {
                 ActivityFeed(lines: activity)
                     .padding(.horizontal, 32)

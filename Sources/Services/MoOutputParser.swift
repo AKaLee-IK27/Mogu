@@ -51,34 +51,68 @@ enum MoOutputParser {
     //   # comment lines (skipped)
     //   === Section name ===
     //   /path  # 1.19GB, 10 items
-    // We sum the `# size` of each path under its section.
+    // We keep each path as an item under its section and sum their sizes for
+    // the section total. Sections in encounter order; empty/zero-size sections
+    // are dropped so the drill-down tree never shows an empty node.
     static func parseCleanList(text: String) -> CleanResult {
+        var order: [String] = []
+        var itemsBySection: [String: [CleanItem]] = [:]
         var currentSection: String?
-        var sectionSizes: [String: UInt64] = [:]
 
         for rawLine in text.components(separatedBy: .newlines) {
             let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !line.hasPrefix("#") else { continue }
             if line.hasPrefix("==="), line.hasSuffix("===") {
-                currentSection = line
+                let name = line
                     .replacingOccurrences(of: "=", with: "")
                     .trimmingCharacters(in: .whitespacesAndNewlines)
+                if itemsBySection[name] == nil {
+                    itemsBySection[name] = []
+                    order.append(name)
+                }
+                // Track the active header explicitly so paths attribute to the
+                // section they fall under even if a header repeats (order keeps
+                // first-seen position only, for stable tie-breaking).
+                currentSection = name
                 continue
             }
 
             guard let currentSection, let hashIndex = line.firstIndex(of: "#") else { continue }
+            let path = String(line[..<hashIndex]).trimmingCharacters(in: .whitespaces)
             let comment = String(line[line.index(after: hashIndex)...])
-            if let size = parseByteSize(comment) {
-                sectionSizes[currentSection, default: 0] += size
-            }
+            guard !path.isEmpty, let size = parseByteSize(comment) else { continue }
+            itemsBySection[currentSection, default: []]
+                .append(CleanItem(path: path, size: size, itemCount: parseItemCount(comment)))
         }
 
-        let categories = sectionSizes
-            .filter { $0.value > 0 }
-            .map { CleanCategory(name: $0.key, size: $0.value, selected: true) }
+        let categories = order
+            .compactMap { name -> CleanCategory? in
+                let items = (itemsBySection[name] ?? []).sorted { $0.size > $1.size }
+                let total = items.reduce(UInt64(0)) { $0 + $1.size }
+                guard total > 0 else { return nil }
+                return CleanCategory(name: name, size: total, selected: true, items: items)
+            }
             .sorted { $0.size > $1.size }
         let total = categories.reduce(UInt64(0)) { $0 + $1.size }
         return CleanResult(categories: categories, totalFreed: total, freeSpaceAfter: nil)
+    }
+
+    // Parse the "N items" hint from a clean-list comment like "1.19GB, 10 items".
+    static func parseItemCount(_ text: String) -> Int? {
+        guard let regex = try? NSRegularExpression(pattern: #"([0-9]+)\s+items?"#, options: .caseInsensitive) else { return nil }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        guard let match = regex.firstMatch(in: text, options: [], range: range),
+              let r = Range(match.range(at: 1), in: text) else { return nil }
+        return Int(text[r])
+    }
+
+    // A streamed `clean --dry-run` stdout line that represents a discovered
+    // location: it either reports a size or says it "would clean" something.
+    // Both are real findings, so counting both keeps the live "found N" counter
+    // climbing steadily through the scan rather than jumping only on sized
+    // lines. Drives the scan counter only, never the structured result.
+    static func isCleanScanFinding(_ line: String) -> Bool {
+        parseByteSize(line) != nil || line.localizedCaseInsensitiveContains("would clean")
     }
 
     // Purge dry-run format:

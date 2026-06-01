@@ -193,11 +193,23 @@ struct DiskIO: Codable {
 
 // MARK: - Clean Result
 
+// One discovered location inside a clean category — a real path Mole would
+// remove, with its size and (when Mole reports it) an item count.
+struct CleanItem: Codable, Identifiable {
+    var id: String { path }
+    let path: String
+    let size: UInt64
+    let itemCount: Int?
+}
+
 struct CleanCategory: Codable, Identifiable {
     var id: String { name }
     let name: String
     let size: UInt64
     let selected: Bool?
+    // The locations parsed under this section. Drives the drill-down tree.
+    // Defaulted so older call sites and decoded JSON without items stay valid.
+    var items: [CleanItem] = []
 }
 
 struct CleanResult: Codable {

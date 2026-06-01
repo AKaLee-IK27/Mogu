@@ -71,6 +71,11 @@ enum DesignTokens {
         static let dangerText = adaptive(light: "c42118", dark: "ff6961")
         static let dangerSoft = adaptive(light: "ffe8e6", dark: "3d0a07")
 
+        // Purge feature identity — teal, distinct from the other five tabs
+        // (navy/green/red/orange/indigo) so its sidebar mark + loader read with
+        // energy instead of muted gray.
+        static let purgeAccent = adaptive(light: "0f8a9c", dark: "5ac8d8")
+
         // Utility
         static let codeBg = adaptive(light: "f0f0f2", dark: "2c2c2e")
         static let hoverOverlay = adaptive(light: "ececee", dark: "2a2a2c")

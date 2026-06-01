@@ -32,7 +32,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .uninstall: return DesignTokens.Color.dangerText
         case .optimize: return DesignTokens.Color.warning
         case .analyze: return SwiftUI.Color(hex: "5856d6")
-        case .purge: return DesignTokens.Color.secondary
+        case .purge: return DesignTokens.Color.purgeAccent
         case .permissions: return DesignTokens.Color.accent
         }
     }

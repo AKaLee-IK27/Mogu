@@ -31,6 +31,59 @@ final class MoOutputParserTests: XCTestCase {
         XCTAssertEqual(sizes, sizes.sorted(by: >))
     }
 
+    func testCleanListPopulatesPerItemPaths() throws {
+        let result = MoOutputParser.parseCleanList(text: try fixture("clean-list"))
+        let appCaches = try XCTUnwrap(result.categories.first { $0.name == "App caches" },
+            "Expected an 'App caches' section")
+        XCTAssertGreaterThan(appCaches.items.count, 1,
+            "Drill-down tree needs the individual paths under a section, not just a sum")
+        // Item sizes must add up to the category total the header shows.
+        let itemTotal = appCaches.items.reduce(UInt64(0)) { $0 + $1.size }
+        XCTAssertEqual(itemTotal, appCaches.size,
+            "Category size must equal the sum of its item sizes")
+        // Items carry their real path and, when Mole reports it, an item count.
+        XCTAssertTrue(appCaches.items.allSatisfy { $0.path.hasPrefix("/") },
+            "Each item should keep its absolute path")
+        XCTAssertTrue(appCaches.items.contains { $0.itemCount != nil },
+            "At least one fixture line has an 'N items' count that should parse")
+    }
+
+    func testCleanListAttributesPathsAfterRepeatedHeader() {
+        // A repeated section header must re-activate that section. The previous
+        // `order.last` approach misfiled paths after the repeat into whatever
+        // section was appended last (here, Beta).
+        let text = """
+        === Alpha ===
+        /a  # 10MB
+        === Beta ===
+        /b  # 20MB
+        === Alpha ===
+        /a2  # 5MB
+        """
+        let result = MoOutputParser.parseCleanList(text: text)
+        XCTAssertEqual(result.categories.first { $0.name == "Alpha" }?.items.count, 2,
+            "Both /a and /a2 belong to Alpha")
+        XCTAssertEqual(result.categories.first { $0.name == "Beta" }?.items.count, 1,
+            "/a2 must not leak into Beta")
+    }
+
+    func testCleanListDropsEmptySections() throws {
+        // The fixture has an empty '=== Cloud & Office ===' section.
+        let result = MoOutputParser.parseCleanList(text: try fixture("clean-list"))
+        XCTAssertFalse(result.categories.contains { $0.name == "Cloud & Office" },
+            "Empty sections must not render as empty tree nodes")
+    }
+
+    func testCleanScanFindingCountsSizedAndWouldCleanLines() {
+        // Sized findings tick the live "found N" counter…
+        XCTAssertTrue(MoOutputParser.isCleanScanFinding("→ npm npx cache 3 items, 271.4MB dry"))
+        // …and so do unsized "would clean" findings, so the counter doesn't
+        // stall on "Starting scan…" when sized lines arrive late.
+        XCTAssertTrue(MoOutputParser.isCleanScanFinding("→ pnpm cache · would clean"))
+        // Decoration / headers do not.
+        XCTAssertFalse(MoOutputParser.isCleanScanFinding("Scanning developer caches"))
+    }
+
     func testCleanListDriftReturnsEmpty() throws {
         // Simulate Mole changing its section marker: the parser keys on `=== ... ===`.
         let drifted = try fixture("clean-list").replacingOccurrences(of: "===", with: "###")

@@ -206,10 +206,13 @@ struct AnalyzeView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 12) {
-            ProgressView().scaleEffect(1.2)
-            Text("Analyzing disk usage...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        FeatureLoadingView(
+            icon: "chart.bar.fill",
+            tint: SwiftUI.Color(hex: "5856d6"),
+            title: "Analyzing disk usage",
+            subtitle: "Measuring what's taking up space in your home folder"
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func loadAnalysis() async {

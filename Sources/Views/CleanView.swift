@@ -13,6 +13,7 @@ struct CleanView: View {
     @State private var resultMessage: String?
     @State private var appear = false
     @State private var activity: [String] = []
+    @State private var foundCount = 0
     @State private var runningMessage = "Cleaning in progress..."
     @State private var systemCleanAvailable = false
     @State private var systemCleanPreviewReady = false
@@ -106,16 +107,19 @@ struct CleanView: View {
 
                     VStack(spacing: 0) {
                         ForEach(Array(categories.enumerated()), id: \.element.id) { i, category in
-                            categoryRow(category)
+                            CleanCategoryRow(category: category, maxSize: maxCategorySize)
                                 .opacity(appear ? 1 : 0)
                                 .offset(x: appear ? 0 : -8)
                                 .animation(DesignTokens.stagger(i), value: appear)
 
                             if i < categories.count - 1 {
-                                Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 52)
+                                Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 48)
                             }
                         }
                     }
+                    .padding(.vertical, 4)
+                    .background(DesignTokens.Color.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
                     .padding(.horizontal, 16)
                 }
 
@@ -152,27 +156,8 @@ struct CleanView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
     }
 
-    private func categoryRow(_ category: CleanCategory) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 16))
-                .foregroundStyle(DesignTokens.Color.successText)
-                .frame(width: 22)
-
-            Text(category.name)
-                .font(DesignTokens.Font.bodyStrong)
-                .foregroundStyle(DesignTokens.Color.primary)
-
-            Spacer()
-
-            Text(category.size.humanReadable)
-                .font(DesignTokens.Font.mono)
-                .foregroundStyle(DesignTokens.Color.tertiary)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
+    private var maxCategorySize: UInt64 {
+        categories.map(\.size).max() ?? 0
     }
 
     private var runningView: some View {
@@ -240,13 +225,19 @@ struct CleanView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 16) {
-            ProgressView().scaleEffect(1.2)
-            Text("Scanning for cleanable data...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-            if !activity.isEmpty {
-                ActivityFeed(lines: activity)
-                    .padding(.horizontal, 32)
-            }
+        VStack(spacing: 14) {
+            FeatureLoadingView(
+                icon: "sparkles",
+                tint: DesignTokens.Color.successText,
+                title: "Scanning for cleanable data",
+                subtitle: "Looking through caches, logs, and leftover app data"
+            )
+            Text(foundCount > 0 ? "Found \(foundCount) location\(foundCount == 1 ? "" : "s")…" : "Starting scan…")
+                .font(DesignTokens.Font.captionStrong)
+                .foregroundStyle(DesignTokens.Color.successText)
+                .monospacedDigit()
+                .contentTransition(.numericText())
+                .animation(DesignTokens.ease, value: foundCount)
         }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.vertical, 40)
     }
 
@@ -278,6 +269,7 @@ struct CleanView: View {
         appear = false
         categories.removeAll()
         activity.removeAll()
+        foundCount = 0
         resetSystemCleanEscalation()
         hasData = false
         await service.resetCleanPreview()
@@ -288,6 +280,7 @@ struct CleanView: View {
                 if !t.isEmpty {
                     activity.append(t)
                     if activity.count > 80 { activity.removeFirst(activity.count - 80) }
+                    if MoOutputParser.isCleanScanFinding(t) { foundCount += 1 }
                 }
             case .finished(let code):
                 if code == 0 {
@@ -443,6 +436,139 @@ struct CleanView: View {
         }
         runningMessage = "Cleaning in progress..."
         isRunning = false
+    }
+}
+
+// One top-level cleanup category: a tappable header (icon, name, size, a
+// relative size bar) that expands to reveal the real locations Mole found
+// inside it. Read-only by design — Mole cleans the whole preview, so this is
+// a transparency/inspect affordance, not a per-item selector.
+private struct CleanCategoryRow: View {
+    let category: CleanCategory
+    let maxSize: UInt64
+    @State private var expanded = false
+
+    private var fraction: Double {
+        maxSize > 0 ? min(1, Double(category.size) / Double(maxSize)) : 0
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Button {
+                withAnimation(DesignTokens.spring) { expanded.toggle() }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                        .frame(width: 12)
+                        .rotationEffect(.degrees(expanded ? 90 : 0))
+
+                    Image(systemName: Self.icon(for: category.name))
+                        .font(.system(size: 15))
+                        .foregroundStyle(DesignTokens.Color.accent)
+                        .frame(width: 24)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 8) {
+                            Text(category.name)
+                                .font(DesignTokens.Font.bodyStrong)
+                                .foregroundStyle(DesignTokens.Color.primary)
+                            Text("\(category.items.count)")
+                                .font(DesignTokens.Font.caption)
+                                .foregroundStyle(DesignTokens.Color.tertiary)
+                                .monospacedDigit()
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 1)
+                                .background(DesignTokens.Color.codeBg)
+                                .clipShape(Capsule())
+                            Spacer(minLength: 8)
+                            Text(category.size.humanReadable)
+                                .font(DesignTokens.Font.monoBold)
+                                .foregroundStyle(DesignTokens.Color.secondary)
+                                .monospacedDigit()
+                        }
+                        sizeBar
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if expanded {
+                VStack(spacing: 0) {
+                    // Offset-keyed (not path-keyed): guards against a duplicate
+                    // path within one section colliding ForEach IDs.
+                    ForEach(Array(category.items.enumerated()), id: \.offset) { _, item in
+                        itemRow(item)
+                    }
+                }
+                .padding(.bottom, 6)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private var sizeBar: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(DesignTokens.Color.separatorLight)
+                Capsule()
+                    .fill(DesignTokens.Color.accent.opacity(0.55))
+                    .frame(width: max(4, geo.size.width * fraction))
+            }
+        }
+        .frame(height: 4)
+    }
+
+    private func itemRow(_ item: CleanItem) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "circle.fill")
+                .font(.system(size: 3))
+                .foregroundStyle(DesignTokens.Color.placeholder)
+            Text(Self.friendlyPath(item.path))
+                .font(DesignTokens.Font.mono)
+                .foregroundStyle(DesignTokens.Color.tertiary)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 12)
+            if let count = item.itemCount {
+                Text("\(count) item\(count == 1 ? "" : "s")")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.placeholder)
+                    .monospacedDigit()
+            }
+            Text(item.size.humanReadable)
+                .font(DesignTokens.Font.mono)
+                .foregroundStyle(DesignTokens.Color.tertiary)
+                .monospacedDigit()
+                .frame(minWidth: 56, alignment: .trailing)
+        }
+        .padding(.leading, 50)
+        .padding(.trailing, 16)
+        .padding(.vertical, 5)
+    }
+
+    // Replace the home prefix with ~ so paths read short and don't leak the
+    // username. Middle truncation in the view handles anything still too long.
+    static func friendlyPath(_ path: String) -> String {
+        let home = NSHomeDirectory()
+        if path == home { return "~" }
+        if path.hasPrefix(home + "/") { return "~" + path.dropFirst(home.count) }
+        return path
+    }
+
+    static func icon(for section: String) -> String {
+        let s = section.lowercased()
+        if s.contains("browser") { return "globe" }
+        if s.contains("develop") { return "hammer.fill" }
+        if s.contains("cloud") || s.contains("office") { return "cloud.fill" }
+        if s.contains("system") { return "gearshape.fill" }
+        if s.contains("essential") || s.contains("user") { return "person.crop.circle.fill" }
+        if s.contains("log") { return "doc.text.fill" }
+        return "shippingbox.fill"
     }
 }
 

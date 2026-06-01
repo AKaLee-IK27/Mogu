@@ -172,10 +172,13 @@ struct UninstallView: View {
     }
 
     private var loadingView: some View {
-        VStack(spacing: 12) {
-            ProgressView().scaleEffect(1.2)
-            Text("Scanning installed applications...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+        FeatureLoadingView(
+            icon: "xmark.app.fill",
+            tint: DesignTokens.Color.dangerText,
+            title: "Scanning installed applications",
+            subtitle: "Reading your Applications folder"
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func loadApps() async {
