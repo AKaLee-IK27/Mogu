@@ -67,6 +67,8 @@ cat > "$CONTENTS/Info.plist" << PLIST
     <string>MoleMac needs to analyze application data to provide system cleanup and optimization insights.</string>
     <key>NSSystemAdministrationUsageDescription</key>
     <string>MoleMac needs system administration access to manage application data and system caches.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>MoleMac uses Touch ID to confirm system-level cleanup before asking for your administrator password.</string>
 </dict>
 </plist>
 PLIST
@@ -99,7 +101,8 @@ codesign --remove-signature "$RUNTIME_DST/bin/analyze-go" 2>/dev/null || true
 
 # Step 2: Re-sign Go binaries with the SAME bundle identifier as the main app.
 # This makes them part of the same code signature domain so TCC permissions
-# (Full Disk Access) are shared between parent app and child processes.
+# are shared between parent app and child processes (one signature domain for
+# the app and the elevated `mo` it runs).
 codesign --force --sign - \
     --identifier "${BUNDLE_ID}" \
     --options runtime \
@@ -112,7 +115,7 @@ codesign --force --sign - \
 
 # Step 2b: Sign the shell scripts (mo, mole) with the same identifier.
 # macOS 26.5 TCC requires all child processes to share the parent's code
-# signature domain to inherit Full Disk Access permissions.
+# signature domain to inherit any TCC permissions the user grants the app.
 codesign --force --sign - \
     --identifier "${BUNDLE_ID}" \
     --options runtime \
@@ -172,7 +175,6 @@ if [[ -d "$INSTALL_DIR" ]]; then
     cp -R "$APP" "$INSTALL_DIR/"
     echo "Installed to $INSTALL_DIR/$APP"
     echo ""
-    echo "Grant Full Disk Access once in:"
-    echo "  System Settings > Privacy & Security > Full Disk Access"
-    echo "  -> Add /Applications/MoleMac.app"
+    echo "MoleMac needs no permissions to start. It asks for your administrator"
+    echo "password only when you choose to clean or optimize system-level items."
 fi

@@ -59,6 +59,9 @@ permission to start — `PermissionKind` is `.administrator` only (optional). Cl
 and Optimize run **unprivileged first** (`stream(…)`), cleaning user-owned items;
 Mole skips the system tier gracefully. They then **progressively offer** an optional
 admin escalation (`streamElevated(…)`, osascript password) for system-level items.
+A `BiometricGate` (LAContext Touch ID) gates the escalation **entry** — a
+confirmation only; it fails open (no/unavailable biometrics → proceed), and the
+osascript admin **password** still performs the actual elevation.
 Preview-before-delete is enforced at **both** tiers with function-level guards: the
 unprivileged run via `cleanPreviewIsReady()`, the elevated run via its own elevated
 dry-run (`runElevatedClean`/`runElevatedOptimize` guard on

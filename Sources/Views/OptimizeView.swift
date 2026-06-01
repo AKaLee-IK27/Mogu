@@ -139,7 +139,11 @@ struct OptimizeView: View {
                     .disabled(isRunning || isPreviewing)
                 } else {
                     Button {
-                        Task { await previewElevatedOptimize() }
+                        Task {
+                            if await BiometricGate.confirm(reason: "Confirm to preview and optimize system-level items") {
+                                await previewElevatedOptimize()
+                            }
+                        }
                     } label: {
                         Label("Optimize system items too (requires admin)", systemImage: "lock.open")
                             .font(DesignTokens.Font.bodyStrong)

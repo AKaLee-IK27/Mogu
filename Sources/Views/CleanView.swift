@@ -231,7 +231,11 @@ struct CleanView: View {
                     .disabled(isRunning)
                 } else {
                     Button {
-                        Task { await previewElevatedClean() }
+                        Task {
+                            if await BiometricGate.confirm(reason: "Confirm to preview and clean system-level items") {
+                                await previewElevatedClean()
+                            }
+                        }
                     } label: {
                         Label("Clean system items too (requires admin)", systemImage: "lock.open")
                             .font(DesignTokens.Font.bodyStrong)
