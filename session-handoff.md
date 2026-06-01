@@ -3,73 +3,53 @@
 ## Last Session
 
 **Date:** 2026-06-01
-**Feature:** feat-008 — Permissions / Full Disk Access Finish
-**Status:** Implementation complete + controller runtime-verified (Analyze banner). FDA not-granted branch deferred to a documented manual check.
+**Branch:** `feat/drilbur-and-next-tasks`
+**Work:** feat-009 … feat-013 (rename + 4 next tasks). All five done and verified.
+
+## What shipped (one commit each)
+
+| Feat | Commit | Summary |
+|---|---|---|
+| feat-010 | `5d4e1c9` | Analyze decode fix — `large_files[]` omit `is_dir`, made `DiskEntry.isDir` optional |
+| feat-009 | `a2fbfae` | Rename app **MoleMac → Drilbur** (bundle id `co.greenpassport.drilbur`) |
+| feat-011 | `dada995` | Parser-resilience harness: `MoOutputParser` + `DrilburTests` XCTest target |
+| feat-013 | `912aadd` | Shared `ErrorStateView` (message + Retry) across the 5 mo-backed tabs |
+| feat-012 | (this) | FDA not-granted check resolved — no code change needed |
 
 ## Current State
 
-- Analyze now receives the shared `PermissionsService` and renders `PreflightBanner(item: .analyze, permissions: permissions)` below its header, matching Clean and Optimize.
-- `ContentView.swift` was changed only at the `.analyze` `AnalyzeView(...)` constructor to pass `permissions: permissions`.
-- `feature_list.json` has a `feat-008` entry tracking the Permissions finish work.
-- `PermissionsService.probeFullDiskAccess` was intentionally left unchanged pending the controller's no-FDA runtime test.
+- App is **Drilbur** everywhere (window title, menu bar, sidebar brand; "Powered by bundled Mole"
+  kept). The upstream Mole CLI / `mo` / `MoleRuntime/` path are deliberately unchanged.
+- Env vars are `DRILBUR_SCREEN` / `DRILBUR_MO_PATH`.
+- One test target exists now: `DrilburTests` (`make parser-test`), guarding the text parsers.
+  `make test` is still build-only.
+- `make build`, `make app`, and `make parser-test` (8/8) all pass. Bundle signs valid +
+  satisfies its Designated Requirement.
 
-## Verification State
+## FDA not-granted check — RESOLVED (was the feat-008 manual check)
 
-- `swift build` passes (implementer + controller).
-- Controller runtime verification (built `.app` from this branch, launched to Analyze):
-  1. ✅ Analyze preflight banner renders ("Uses: Full Disk Access"), matching Clean/Optimize. No crash.
-  2. ⏳ **MANUAL CHECK (deferred to maintainer):** FDA not-granted branch — see below.
-  3. ✅ No launch or tab-switch crash observed.
+- The Drilbur rename gave the app a **new bundle id with no FDA grant**, so "not granted" is the
+  default — no manual System Settings revoke was needed.
+- Launched via LaunchServices (`open --env DRILBUR_SCREEN=permissions /Applications/Drilbur.app`,
+  i.e. Drilbur as its own responsible process), the **Permissions card correctly reads "Not granted"**.
+- The probe path needs **no repoint** — `PermissionsService.probeFullDiskAccess` already reads the
+  system `/Library/Application Support/com.apple.TCC/TCC.db` (repointed in `c4fd444`).
+- **Gotcha for future verification:** direct-exec'ing the bundle binary from an FDA-enabled terminal
+  makes Drilbur *inherit* the terminal's FDA (TCC responsible-process attribution) → false "Granted".
+  Always verify FDA state with `open` (LaunchServices), not by running the `MacOS/Drilbur` binary
+  from a shell.
 
-### MANUAL CHECK — FDA "Not granted" branch
+## Verification highlights (runtime, screenshots)
 
-The probe cannot be exercised from an FDA-enabled environment (it reads "Granted"). Run once:
-1. System Settings → Privacy & Security → Full Disk Access → toggle **Drilbur OFF** (or remove it).
-2. Relaunch Drilbur → open the **Permissions** tab.
-3. Expected: Full Disk Access card reads **"Not granted"** (amber); Clean/Optimize/Analyze preflight
-   banners show the FDA pill with a warning dot.
-4. If it still reads **"Granted"** → probe is a false-positive: repoint
-   `PermissionsService.probeFullDiskAccess` from `~/Library/Application Support/com.apple.TCC/TCC.db`
-   to the system path `/Library/Application Support/com.apple.TCC/TCC.db`, rebuild, re-test.
-5. Re-enable FDA afterward.
+- Rename: window title / menu bar / sidebar all "Drilbur"; deep-link works; no crash.
+- Error UX: forced a mo failure → Status tab shows `ErrorStateView` (triangle, "Something went wrong",
+  message, Retry); normal launch shows the full Status dashboard (error state is conditional).
+- Analyze: loaded a 161 GB / 163k-file analysis with no decode error (confirms feat-010 in the bundle).
 
-## Separate finding (NOT this feature — pre-existing, unfixed)
+## Next Step / Open items
 
-- The **Analyze data path** shows a decode error at runtime ("The data couldn't be read because it is
-  missing") — a Codable failure in the analyze result. This feature never touched `AnalysisResult` or
-  `MoService.getAnalysis`, so it is pre-existing. Reported, not fixed. Worth a separate `/hunt`.
-
-## Blockers
-
-- None in implementation scope.
-- FDA probe path must not change unless the manual check above reports a false-positive "Granted".
-
-## Build note (controller, temporary)
-
-- To build this worktree's `.app`, `Vendor/Mole` was symlinked to the main checkout's built submodule
-  (worktrees don't auto-populate submodules). **Remove that symlink before committing** so the
-  submodule gitlink is not replaced — the diff should stay at the 4 source/tracking files only.
-
-## Files Changed This Session
-
-- `Sources/Views/AnalyzeView.swift`
-- `Sources/ContentView.swift`
-- `feature_list.json`
-- `session-handoff.md`
-
-## Guardrails Preserved
-
-- No `.toolbar`, `ToolbarItem`, `ToolbarItemGroup`, or `.searchable` added.
-- No Clean step-UI added.
-- No Status files changed.
-- No hardcoded colors added; banner uses existing `PreflightBanner` and design tokens.
-
-## Next Step
-
-1. Maintainer runs the FDA not-granted manual check above.
-2. Reorganize history: the local base commit `e96bb8c` mixes Status + Permissions. Split into clean
-   commits before any push; merge `feat/permissions-finish` into `main` (no `ContentView` conflict
-   expected — this branch only adds the `AnalyzeView` constructor arg).
-3. Optional Status hardening: let a completed status decode assign even if the poll task was cancelled
-   (StatusView lines ~513/521), to remove the first-launch "Reading system data…" edge on focus-steal.
-4. Separate `/hunt` for the pre-existing Analyze decode error.
+- Branch `feat/drilbur-and-next-tasks` is ready to merge into `main` (not yet pushed).
+- Optional: regenerate `Tests/DrilburTests/Fixtures/purge.txt` from a machine that actually has
+  purgeable project artifacts (current one is format-verified, not a live capture — see Fixtures/README.md).
+- Optional Status hardening: let a completed status decode assign even if the poll task was cancelled
+  (first-launch "Reading system data…" edge on focus-steal).

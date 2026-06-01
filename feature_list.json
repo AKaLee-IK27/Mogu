@@ -144,7 +144,7 @@
       "status": "done",
       "subTasks": [
         { "name": "Add Analyze preflight banner", "status": "done", "evidence": "Sources/Views/AnalyzeView.swift adds @ObservedObject permissions and PreflightBanner(item: .analyze, permissions: permissions). Sources/ContentView.swift passes permissions into AnalyzeView." },
-        { "name": "FDA probe not-granted branch", "status": "manual-check", "evidence": "Cannot be exercised from an FDA-enabled environment (probe reads Granted). Documented as a manual check in session-handoff.md: revoke Full Disk Access for MoleMac, relaunch, expect Permissions card + preflight banners to read 'Not granted'. If still 'Granted', repoint probe from ~/Library/.../TCC.db to /Library/Application Support/com.apple.TCC/TCC.db. PermissionsService.probeFullDiskAccess intentionally unchanged until that check runs." },
+        { "name": "FDA probe not-granted branch", "status": "done", "evidence": "Resolved in feat-012: the Drilbur rename (new bundle id with no FDA) made 'not granted' the default. Launched via LaunchServices (open --env), the Permissions card correctly reads 'Not granted'. Probe path already system /Library TCC.db (c4fd444); no repoint needed. Earlier 'Granted' was terminal responsible-process FDA inheritance, not a probe bug." },
         { "name": "Refresh tracking artifacts", "status": "done", "evidence": "feature_list.json entry added; session-handoff.md refreshed for feat-008." }
       ],
       "evidence": "Scope: Analyze banner wiring + tracking only (4 files; no Status files or PermissionsService touched). swift build passes. Controller runtime-verified: Analyze tab renders the PreflightBanner showing 'Full Disk Access', no crash. Pre-existing analyze-data decode error observed (unrelated to this feature; reported separately). FDA not-granted branch is a documented manual check (see session-handoff.md)."
@@ -224,13 +224,13 @@
         "feat-008 FDA subTask flipped from manual-check to done with evidence",
         "session-handoff.md manual-check note resolved"
       ],
-      "status": "pending",
+      "status": "done",
       "subTasks": [
-        { "name": "Revoke FDA, relaunch, observe Permissions card + banners", "status": "pending" },
-        { "name": "Repoint probe path if false-positive", "status": "pending" },
-        { "name": "Update feat-008 subTask + handoff", "status": "pending" }
+        { "name": "Revoke FDA, relaunch, observe Permissions card + banners", "status": "done", "evidence": "The rename gave Drilbur a new bundle id (co.greenpassport.drilbur) that has never been granted FDA — so 'not granted' is its default, no manual revoke needed. Launched via `open --env DRILBUR_SCREEN=permissions /Applications/Drilbur.app` (own responsible process): Permissions card reads 'Not granted' (amber). screenshot /tmp/drilbur-perm-open.png." },
+        { "name": "Repoint probe path if false-positive", "status": "done", "evidence": "Not needed — probeFullDiskAccess already reads the system path /Library/Application Support/com.apple.TCC/TCC.db (repointed from ~/Library in commit c4fd444). The 'Granted' seen when direct-exec'ing the binary from an FDA-enabled terminal is macOS TCC responsible-process inheritance (child attributed to the terminal), NOT a probe bug: launching via LaunchServices (open) correctly reports 'Not granted'." },
+        { "name": "Update feat-008 subTask + handoff", "status": "done", "evidence": "feat-008 FDA subTask flipped manual-check -> done; session-handoff.md note resolved." }
       ],
-      "evidence": ""
+      "evidence": "FDA not-granted branch verified (no code change needed). Probe path already correct (system /Library TCC.db since c4fd444). Root-caused the earlier 'Granted' false-positive to terminal-launch FDA inheritance, not the probe: a LaunchServices-launched Drilbur (new bundle id, no FDA) correctly shows 'Not granted' on the Permissions card. Bonus: Analyze tab loaded a 161GB analysis with no decode error, confirming feat-010 in the bundled app."
     },
     {
       "id": "feat-013",

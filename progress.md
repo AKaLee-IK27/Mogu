@@ -2,8 +2,23 @@
 
 ## Current State
 
-**Last Updated:** 2026-05-31
-**Status:** All features implemented, crash resolved, app verified running
+**Last Updated:** 2026-06-01
+**Status:** feat-009…feat-013 done on branch `feat/drilbur-and-next-tasks` (not yet merged/pushed)
+
+## Session 2026-06-01 — Drilbur rename + 4 next tasks
+
+App renamed **MoleMac → Drilbur**, plus four follow-on tasks. One commit per feature; all verified.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-010 | Analyze decode fix (`isDir` optional) | Root cause confirmed vs real mo (`large_files[]` omit `is_dir`); `5d4e1c9` |
+| feat-009 | Rename → Drilbur (`co.greenpassport.drilbur`) | Zero residue, MoleRuntime intact, signed valid, runtime title/sidebar/menu "Drilbur"; `a2fbfae` |
+| feat-011 | Parser-resilience harness | `MoOutputParser` extracted + `DrilburTests` (8 tests, `make parser-test`); drift mutation fails the golden test; `dada995` |
+| feat-013 | Shared error-state UX | `ErrorStateView` (msg + Retry) across 5 tabs; forced-failure + normal-path screenshots; `912aadd` |
+| feat-012 | FDA not-granted check | Resolved, no code change: new bundle id = no FDA by default; `open`-launched Permissions card reads "Not granted"; probe already on system `/Library` path |
+
+**Key learning:** verify FDA state via `open` (LaunchServices), never by direct-exec'ing the bundle
+binary from a terminal — the child inherits the terminal's FDA (TCC responsible-process attribution).
 
 ## Completed Features
 
