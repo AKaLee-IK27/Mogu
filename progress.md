@@ -2,8 +2,25 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-01
-**Status:** feat-009…feat-013 done on branch `feat/drilbur-and-next-tasks` (not yet merged/pushed)
+**Last Updated:** 2026-06-02
+**Status:** feat-015 (in-app uninstaller + sortable list) shipped on `main` (commit `4ac5645`, pushed). App is **Mogu** (renamed from Drilbur; env vars `MOGU_SCREEN` / `MOGU_MO_PATH`).
+
+## Session 2026-06-02: In-app uninstaller + sortable list (feat-015)
+
+Turned the read-only Uninstall browser into a working multi-select uninstaller, then added column sorting. One commit, pushed to `main`.
+
+| Area | What changed | Verification |
+|---|---|---|
+| Model | `AppInfo` + `source`/`path`/`requiresAdmin`; `UninstallPreview` | builds |
+| Parser | `MoOutputParser.parseUninstallPreview` (glyph block + ANSI strip) | golden fixture `uninstall-preview.txt`, 5 new tests |
+| Service | `streamFeeding` (fed `y\n`, uninstall-only); `bundleRequiresAdmin`; preview-before-delete guard | `make parser-test` 17/17 |
+| View | multi-select + admin-deferred rows, confirm sheet, streamed execute, sortable columns | real uninstall of a disposable bundle → Trash, exit 0, no hang |
+
+**Verification highlights:** fed `y\n` drives Mole's two uninstall prompts (proven on dry-run single + multi-app); a real execute removed a dummy app + leftover into `~/.Trash`; admin detection matches `stat` (user-owned selectable, root-owned flagged); app launches to the Uninstall screen and renders (checkboxes, Admin badges, size-descending sort).
+
+**Adversarial review:** 25-agent multi-dimension review returned 12 confirmed findings, all triaged. Fixed the real ones (preview/execute selection re-validation, live admin re-check, sheet-state ordering, banner-flicker fold, missing-terminator test, README locale note). Refuted one HIGH by primary source: "admin detection misses system leftovers" is moot because Mole forces `system_files=""` before its `needs_sudo` check (`batch.sh:517`).
+
+**Deferred (discussed, not built):** uninstalling admin apps in-app (needs elevated run with `$HOME` pinned + verification), and an admin pre-authorize button in Permissions (macOS has no persistent admin grant for an ad-hoc-signed app).
 
 ## Session 2026-06-01 — Drilbur rename + 4 next tasks
 

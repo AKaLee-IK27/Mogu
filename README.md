@@ -37,7 +37,7 @@ The Mole CLI itself is free and open source — Mogu builds on that.
 |---|---|
 | **Status** | Live system monitoring — CPU, memory, disk, battery, network, top processes |
 | **Clean** | Preview and execute deep cleanup of caches, logs, browser leftovers |
-| **Uninstall** | Browse installed apps with sizes and related files |
+| **Uninstall** | Select apps to remove them and their leftover files; preview each one, then move it to the Trash. Sort by name or size. |
 | **Optimize** | One-click system optimization — rebuild caches, refresh services |
 | **Analyze** | Visual disk usage breakdown with large-file detection |
 | **Purge** | Find and clean project build artifacts (`node_modules`, `target`, etc.) |
@@ -54,10 +54,12 @@ home-directory scans. Nothing is stored and nothing runs in the background.
 
 ## Safety
 
-All destructive operations (clean, optimize, purge) **preview first** with `--dry-run`
-before anything is deleted — the app never runs a destructive command without showing
-what will be affected. Preview-before-delete is enforced at both the unprivileged and
-elevated tiers.
+All destructive operations (clean, optimize, purge, uninstall) **preview first** with
+`--dry-run` before anything is deleted: the app never runs a destructive command without
+showing what will be affected. Preview-before-delete is enforced at both the unprivileged and
+elevated tiers. Uninstalls move apps and their leftovers to the **Trash**, so a removal is
+recoverable; apps owned by the system or installed via Homebrew are flagged and left to the
+Mole CLI.
 
 Mogu builds Mole from the `Vendor/Mole` git submodule and bundles it into
 `Mogu.app/Contents/Resources/MoleRuntime`, so Homebrew Mole updates do not change app
@@ -101,7 +103,7 @@ Sources/
   Views/
     StatusView.swift          # System health dashboard
     CleanView.swift           # Deep cleanup with category selection
-    UninstallView.swift       # App browser with size info
+    UninstallView.swift       # Multi-select uninstaller, preview sheet, sortable list
     OptimizeView.swift        # System optimization runner
     AnalyzeView.swift         # Disk usage visualization
     PurgeView.swift           # Project artifact cleanup

@@ -271,6 +271,29 @@
         { "name": "Sidebar brand + bundling + verify", "status": "done", "evidence": "ContentView brandMark loads Resources/SidebarLogo.png via Bundle.main, falls back to bolt.fill if absent (debug builds). build_app.sh copies SidebarLogo.png to Resources. Runtime screenshots: Dock icon = Drilbur squircle; navy 'Clean All' button + selected-tab accent + sparklines; Drilbur sidebar mark — all in light and dark." }
       ],
       "evidence": "Drilbur identity applied: new multi-res app icon from the provided art, app-wide navy/indigo accent, Drilbur sidebar brand mark. New reproducible scripts/make_icon.sh (built-ins only). make build + make app + make parser-test (8/8) pass. Runtime-verified in light and dark (icon, accent, brand mark). Copyrighted art committed per maintainer's explicit choice (personal use)."
+    },
+    {
+      "id": "feat-015",
+      "name": "In-App Uninstaller (multi-select, leftover preview, sortable list)",
+      "description": "Turn the read-only Uninstall browser into a working uninstaller. Multi-select apps, preview each one's bundle + leftover files via a dry-run, then move them to the Trash, all without dropping to Terminal. Admin-required apps (root-owned bundles, Homebrew casks) are detected and deferred (non-selectable, badged), kept in the same list rather than a separate section. Add Finder-style column sorting by name and size.",
+      "dependencies": ["feat-011"],
+      "doneCriteria": [
+        "Select one or more user-owned apps and uninstall them with their leftovers in-app (no Terminal)",
+        "A dry-run preview shows each app's bundle + leftover paths and the true total before anything is deleted (preview-before-delete guard armed only on a non-empty parse)",
+        "Removal routes to the Trash (recoverable) and resolves ~/Library leftovers in the user's context",
+        "Admin-required apps are detected (root-owned / non-writable parent / Homebrew) and non-selectable, so an admin app can never poison an unprivileged batch",
+        "The execute re-validates the live selection against the previewed set",
+        "Sortable columns: name and size, ascending and descending",
+        "make build + make parser-test pass; real uninstall verified landing in Trash"
+      ],
+      "status": "done",
+      "subTasks": [
+        { "name": "Model + parser", "status": "done", "evidence": "AppInfo gains source/path/requiresAdmin; UninstallPreview/UninstallPreviewApp added. MoOutputParser.parseUninstallPreview parses the 'Files to be removed:' / glyph block with ANSI stripping; golden fixture uninstall-preview.txt + 5 tests (incl. drift, spaces, missing-terminator)." },
+        { "name": "Service", "status": "done", "evidence": "MoService.streamFeeding(args:input:) feeds y\\n (uninstall-only; stream/streamElevated keep nullDevice). bundleRequiresAdmin mirrors Mole's needs_sudo. finalizeUninstallPreview arms uninstallPreviewReady only on non-empty parse. getUninstallList computes requiresAdmin." },
+        { "name": "View + sort", "status": "done", "evidence": "UninstallView: multi-select rows (admin rows non-selectable + Admin badge), select-all, confirmation sheet listing leftovers, streamed execute, selection re-validated at execute, Finder-style sortable columns (default size-descending)." },
+        { "name": "Adversarial review + fixes", "status": "done", "evidence": "25-agent review; 12 confirmed findings triaged. Fixed: preview/execute set re-validation, live admin re-check, isPreviewing/sheet ordering, banner-flicker fold, missing-terminator test, README locale note. Refuted by primary source: 'admin detection misses system leftovers' (Mole forces system_files='' before its needs_sudo check)." }
+      ],
+      "evidence": "Shipped on main (commit 4ac5645). make build + make parser-test (17 cases) pass. Real uninstall of a disposable bundle removed app + leftover, landed in ~/.Trash, exit 0, no hang. Admin detection verified against real stat (user-owned selectable, root-owned flagged). App launches to the Uninstall screen and renders (checkboxes, Admin badges, size-descending sort). Admin-app uninstall and an admin pre-authorize button were both discussed and deliberately deferred."
     }
   ]
 }

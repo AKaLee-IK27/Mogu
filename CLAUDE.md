@@ -77,6 +77,33 @@ human re-captures them, e.g. on a `Vendor/Mole` submodule bump (regenerate per
 The `cleanPreviewReady` flag enforces preview-before-delete: `executeClean()`
 refuses to run unless a preview was generated first.
 
+**Uninstall (in-app, no Terminal).** `uninstall --list` returns JSON (the browse
+list with sizes), but Mole's actual uninstall and its `--dry-run` have **no
+JSON**. So the uninstall flow drives `mo uninstall <names…>` directly and parses
+its text: `MoOutputParser.parseUninstallPreview` reads the `Files to be removed:`
+block (`◎ <name> , <size>` group headers, `  ✓ <path>` leftover lines, the
+`➤ Remove N apps, <total>` terminator), stripping the ANSI / scan-spinner noise
+that the merged stdout+stderr carries. The parse is glyph-tolerant (file lines
+are detected by a `/` or `~/` remainder, not by the exact bullet glyph) and
+golden-fixture guarded (`Tests/MoguTests/Fixtures/uninstall-preview.txt`). Mole's
+uninstall prompts twice (`read -r confirm` for `[y/N]`, then a single-key
+`Enter/ESC`), so the run is driven by **`streamFeeding(args:input:)`**, which
+feeds `y\n` to stdin then closes it: the first prompt consumes the `y`, the
+second proceeds on EOF. `streamFeeding` is **uninstall-only**; `stream` /
+`streamElevated` keep `nullDevice` stdin (the `[[ -t 0 ]]` hang gotcha). Flow:
+a dry-run preview (`previewUninstall`) populates the confirmation sheet and arms
+`uninstallPreviewReady` **only when the parse is non-empty** (preview-before-delete);
+the execute (`runUninstall`) re-validates that the live selection still matches the
+previewed set before deleting. Removal runs **unprivileged** with the default
+`MOLE_DELETE_MODE=trash`, so items go to the Trash (recoverable) and `~/Library`
+leftovers resolve in the user's own context. **Admin-required apps are deferred,
+not split into a section:** `MoService.bundleRequiresAdmin` mirrors Mole's
+`needs_sudo` (root-owned bundle, non-writable parent dir, or Homebrew cask) and
+those rows render non-selectable with an "Admin" badge, because one admin app in
+an unprivileged batch makes Mole's `ensure_sudo_session` fail and abort the whole
+batch before deleting anything. The list is sortable by name or size, ascending
+or descending, via Finder-style column headers (default size-descending).
+
 **Permissions model (minimal / works-everywhere).** The app requires **no**
 permission to start — `PermissionKind` is `.administrator` (for elevation) plus
 `.fullDiskAccess` (optional; granting it silences the per-folder TCC "Files &
@@ -134,9 +161,11 @@ light/dark values — never hardcode colors in views.
   macOS 26.5 every `.toolbar` usage triggers `SIGTRAP` in
   `[NSToolbar _insertNewItemWithItemIdentifier:]` during initial layout — an
   immediate launch crash. Put actions in the view body as ordinary `Button`s.
-- **Preview operations are slow, not hung.** `clean --dry-run` takes ~35–40s and
-  `optimize --dry-run` ~5s. Always show a loading spinner while a preview runs;
-  a disabled action button with no spinner reads as broken.
+- **Preview operations are slow, not hung.** `clean --dry-run` takes ~35–40s,
+  `optimize --dry-run` ~5s, and `uninstall … --dry-run` runs a full app scan
+  (~5-10s, dominated by the scan, not the app count). Always show a loading
+  spinner while a preview runs; a disabled action button with no spinner reads
+  as broken.
 - **`MOGU_SCREEN=<status|clean|uninstall|analyze|optimize|purge>`** launches
   straight to one tab (set in `ContentView.init`) — useful for verification
   screenshots. Plain `open` does not propagate env vars, but **`open --env`
