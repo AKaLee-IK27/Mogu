@@ -64,7 +64,7 @@ func context(_ side: Int) -> CGContext {
 
 let art = loadCGImage(srcPath)
 
-func compose(side: Int, marginFrac: CGFloat, cornerArt: Bool) -> CGImage {
+func compose(side: Int, marginFrac: CGFloat) -> CGImage {
     let ctx = context(side)
     let s = CGFloat(side)
     let margin = s * marginFrac
@@ -94,9 +94,9 @@ func compose(side: Int, marginFrac: CGFloat, cornerArt: Bool) -> CGImage {
 }
 
 // App icon: ~9% transparent margin around the squircle (Big Sur grid feel).
-writePNG(compose(side: 1024, marginFrac: 0.09, cornerArt: false), iconOut)
-// Sidebar logo: tighter, smaller corners look right at ~26pt. Reuse squircle at low margin.
-writePNG(compose(side: 256, marginFrac: 0.02, cornerArt: true), sidebarOut)
+writePNG(compose(side: 1024, marginFrac: 0.09), iconOut)
+// Sidebar logo: tighter margin reads better at ~26pt.
+writePNG(compose(side: 256, marginFrac: 0.02), sidebarOut)
 SWIFTEOF
 
 echo "=== composing master + sidebar via CoreGraphics ==="

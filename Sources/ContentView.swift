@@ -178,12 +178,18 @@ struct ContentView: View {
         }
     }
 
+    // Bundled Drilbur logo, loaded once (the sidebar recomputes on every hover,
+    // so we must not re-decode the PNG per render). nil → fall back to the glyph.
+    private static let sidebarLogo: NSImage? = {
+        guard let url = Bundle.main.resourceURL?.appendingPathComponent("SidebarLogo.png") else { return nil }
+        return NSImage(contentsOf: url)
+    }()
+
     // Drilbur brand mark: bundled SidebarLogo.png (emitted by scripts/make_icon.sh
     // and copied into Resources by build_app.sh); falls back to the bolt glyph if
     // the asset is absent (e.g. a bare `swift run` debug build).
     @ViewBuilder private var brandMark: some View {
-        if let url = Bundle.main.resourceURL?.appendingPathComponent("SidebarLogo.png"),
-           let nsImage = NSImage(contentsOf: url) {
+        if let nsImage = Self.sidebarLogo {
             Image(nsImage: nsImage)
                 .resizable()
                 .interpolation(.high)
