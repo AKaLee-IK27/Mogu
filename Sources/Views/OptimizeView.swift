@@ -10,6 +10,8 @@ struct OptimizeView: View {
     @State private var steps: [ProcessStep] = []
     @State private var error: String?
     @State private var isPreviewing = false
+    @State private var systemOptimizeAvailable = false
+    @State private var systemOptimizePreviewReady = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -23,6 +25,10 @@ struct OptimizeView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     statusBanner
+                    if systemOptimizeAvailable {
+                        systemOptimizeCard
+                            .padding(.horizontal, 32)
+                    }
                     if !steps.isEmpty {
                         StepListView(steps: steps)
                             .padding(.horizontal, 24)
@@ -101,6 +107,54 @@ struct OptimizeView: View {
         }
     }
 
+    private var systemOptimizeCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "lock.shield")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(DesignTokens.Color.warning)
+                    .frame(width: 22)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("System-level optimization was skipped")
+                        .font(DesignTokens.Font.bodyStrong)
+                        .foregroundStyle(DesignTokens.Color.primary)
+                    Text("User-safe steps ran without admin access. You can optionally preview and run system-level steps with an administrator password.")
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.secondary)
+                }
+                Spacer()
+            }
+
+            HStack {
+                Spacer()
+                if systemOptimizePreviewReady {
+                    Button {
+                        Task { await runElevatedOptimize() }
+                    } label: {
+                        Label("Run system optimization", systemImage: "bolt.horizontal.circle.fill")
+                            .font(DesignTokens.Font.bodyStrong)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignTokens.Color.warning)
+                    .disabled(isRunning || isPreviewing)
+                } else {
+                    Button {
+                        Task { await previewElevatedOptimize() }
+                    } label: {
+                        Label("Optimize system items too (requires admin)", systemImage: "lock.open")
+                            .font(DesignTokens.Font.bodyStrong)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(DesignTokens.Color.warning)
+                    .disabled(isRunning || isPreviewing)
+                }
+            }
+        }
+        .padding(14)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+    }
+
     private func bannerRow(icon: String?, tint: SwiftUI.Color, title: String, subtitle: String) -> some View {
         HStack(spacing: 12) {
             if let icon {
@@ -117,12 +171,18 @@ struct OptimizeView: View {
         .padding(.horizontal, 32)
     }
 
+    private func resetSystemOptimizeEscalation() {
+        systemOptimizeAvailable = false
+        systemOptimizePreviewReady = false
+    }
+
     // Dry-run preview, streamed live. Lands in the "ready" state (NOT complete).
     private func runOptimizePreview() async {
         isPreviewing = true
         isComplete = false
         error = nil
         steps = []
+        resetSystemOptimizeEscalation()
         var parser = StepStreamParser()
         for await event in service.stream(args: ["optimize", "--dry-run"]) {
             switch event {
@@ -142,10 +202,74 @@ struct OptimizeView: View {
         isPreviewing = false
     }
 
-    // Actual run (destructive), streamed live with administrator privileges so
-    // steps that modify system files actually execute. If the user declines the
-    // admin prompt, an `.error` is surfaced (and not overwritten by `.finished`).
+    // Actual run (destructive), streamed live without elevation first. Mole runs
+    // user-safe steps and marks admin-only steps as skipped; those can be
+    // escalated only after an elevated dry-run preview.
     private func runOptimizeRun() async {
+        isRunning = true
+        isComplete = false
+        error = nil
+        steps = []
+        resetSystemOptimizeEscalation()
+        var parser = StepStreamParser()
+        for await event in service.stream(args: ["optimize"]) {
+            switch event {
+            case .line(let l):
+                parser.consume(l)
+                steps = parser.steps
+            case .finished(let code):
+                parser.finish()
+                steps = parser.steps
+                let skippedAdminSteps = steps.contains { $0.state == .skipped && $0.requiresAdmin }
+                if code == 0 {
+                    isComplete = true
+                    systemOptimizeAvailable = skippedAdminSteps
+                } else if error == nil && steps.isEmpty {
+                    error = "Optimization failed (exit \(code))."
+                } else if error == nil {
+                    // Partial: some steps ran but the process reported failure.
+                    isComplete = true
+                    systemOptimizeAvailable = skippedAdminSteps
+                }
+            case .error(let m):
+                error = m
+            }
+        }
+        isRunning = false
+    }
+
+    private func previewElevatedOptimize() async {
+        isPreviewing = true
+        isComplete = false
+        error = nil
+        steps = []
+        systemOptimizePreviewReady = false
+        var parser = StepStreamParser()
+        for await event in service.streamElevated(args: ["optimize", "--dry-run"]) {
+            switch event {
+            case .line(let l):
+                parser.consume(l)
+                steps = parser.steps
+            case .finished(let code):
+                parser.finish()
+                steps = parser.steps
+                if code == 0 {
+                    systemOptimizePreviewReady = true
+                } else if error == nil && steps.isEmpty {
+                    error = "System-level optimization preview failed (exit \(code))."
+                }
+            case .error(let m):
+                error = m
+            }
+        }
+        isPreviewing = false
+    }
+
+    private func runElevatedOptimize() async {
+        guard systemOptimizePreviewReady else {
+            error = "Preview system-level optimization before running it."
+            return
+        }
         isRunning = true
         isComplete = false
         error = nil
@@ -161,10 +285,10 @@ struct OptimizeView: View {
                 steps = parser.steps
                 if code == 0 {
                     isComplete = true
+                    resetSystemOptimizeEscalation()
                 } else if error == nil && steps.isEmpty {
-                    error = "Optimization failed (exit \(code))."
+                    error = "System-level optimization failed (exit \(code))."
                 } else if error == nil {
-                    // Partial: some steps ran but the process reported failure.
                     isComplete = true
                 }
             case .error(let m):

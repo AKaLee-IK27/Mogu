@@ -54,6 +54,23 @@ If `mo`'s output format changes, these parsers silently return empty results.
 The `cleanPreviewReady` flag enforces preview-before-delete: `executeClean()`
 refuses to run unless a preview was generated first.
 
+**Permissions model (minimal / works-everywhere).** The app requires **no**
+permission to start — `PermissionKind` is `.administrator` only (optional). Clean
+and Optimize run **unprivileged first** (`stream(…)`), cleaning user-owned items;
+Mole skips the system tier gracefully. They then **progressively offer** an optional
+admin escalation (`streamElevated(…)`, osascript password) for system-level items.
+Preview-before-delete is enforced at **both** tiers with function-level guards: the
+unprivileged run via `cleanPreviewIsReady()`, the elevated run via its own elevated
+dry-run (`runElevatedClean`/`runElevatedOptimize` guard on
+`systemClean/OptimizePreviewReady`). Clean detects "system items skipped" by
+string-matching Mole's literal `System-level cleanup skipped, requires sudo`
+(`clean.sh:983`) — a fragile cross-component dependency, same class as the glyph
+parsers above; Optimize uses the structured `StepStreamParser` `.skipped` +
+`requiresAdmin` instead. The app must run `mo` **non-interactively**:
+`stream`/`streamElevated` set `standardInput = .nullDevice` because Mole's
+`clean.sh` decides interactive mode by a TTY check (`[[ -t 0 ]]`), not an env var —
+an inherited TTY stdin would hang the unprivileged execute on `read_key`.
+
 **Runtime resolution** (`MoService.resolveMoPath`): bundled
 `Contents/Resources/MoleRuntime/mo` → `MOLEMAC_MO_PATH` env override → (DEBUG
 only) Homebrew `mo` → nonexistent-path sentinel. `make app` builds the runtime
@@ -86,10 +103,12 @@ light/dark values — never hardcode colors in views.
   screenshots. **`open` does NOT propagate env vars**, so to use it run the
   bundle executable directly:
   `MOLEMAC_SCREEN=clean /Applications/MoleMac.app/Contents/MacOS/MoleMac`.
-- **TCC / Full Disk Access depends on code signing.** `build_app.sh` signs every
-  child binary (`mo`, `mole`, Go binaries, shell scripts) with the **same**
-  bundle identifier as the parent so they share one signature domain and inherit
-  Full Disk Access. Changing identifiers per-binary breaks permission inheritance.
+- **Full Disk Access is no longer part of the permission model.** The app moved to a
+  minimal-permissions model (admin-only, optional — see Code Architecture); the UI no
+  longer surfaces or probes FDA. The signing detail still holds and is worth keeping:
+  `build_app.sh` signs every child binary (`mo`, `mole`, Go binaries, shell scripts)
+  with the **same** bundle identifier as the parent so they share one signature domain;
+  changing identifiers per-binary breaks that inheritance.
 - For UI verification, launch the **`.app` bundle** (`open MoleMac.app`); a bare
   `swift build` debug binary won't activate or raise its window properly.
 

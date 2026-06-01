@@ -1,7 +1,6 @@
 import SwiftUI
 
-// Dedicated screen explaining each OS permission Mole may use, its live status
-// (where detectable), and a link to grant it in System Settings.
+// Dedicated screen explaining MoleMac's minimal, progressive permission model.
 struct PermissionsView: View {
     @ObservedObject var permissions: PermissionsService
     @State private var appear = false
@@ -12,20 +11,14 @@ struct PermissionsView: View {
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    intro
-                        .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 12)
-
-                    VStack(spacing: 12) {
-                        ForEach(Array(PermissionKind.allCases.enumerated()), id: \.element.id) { i, kind in
-                            permissionCard(kind)
-                                .opacity(appear ? 1 : 0)
-                                .offset(y: appear ? 0 : 8)
-                                .animation(DesignTokens.stagger(i), value: appear)
-                        }
-                    }
-                    .padding(.horizontal, 24)
+                VStack(alignment: .leading, spacing: 12) {
+                    permissionCard
+                        .opacity(appear ? 1 : 0)
+                        .offset(y: appear ? 0 : 8)
+                        .animation(DesignTokens.spring, value: appear)
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
                 .padding(.bottom, 32)
             }
             .background(DesignTokens.Color.pageBackground)
@@ -42,146 +35,91 @@ struct PermissionsView: View {
                 Text("Permissions")
                     .font(DesignTokens.Font.page)
                     .foregroundStyle(DesignTokens.Color.primary)
-                Text("What Mole asks for, and why")
+                Text("Start without grants; escalate only when you choose")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.tertiary)
             }
             Spacer()
-            HeaderIconButton(systemName: "arrow.clockwise", help: "Re-check") {
-                permissions.refresh()
-            }
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 20)
     }
 
-    private var intro: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "lock.shield")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(DesignTokens.Color.accent)
-                .padding(.top, 1)
-            Text("Mole runs the open-source `mo` tools on your behalf. Some operations "
-                 + "need macOS permissions. Grant only what you're comfortable with — "
-                 + "operations degrade gracefully without them.")
-                .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
-            Spacer(minLength: 0)
-        }
-        .padding(12)
-        .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
-    }
-
-    private func permissionCard(_ kind: PermissionKind) -> some View {
-        let status = permissions.status(for: kind)
-        return VStack(alignment: .leading, spacing: 10) {
+    private var permissionCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
-                Image(systemName: kind.icon)
-                    .font(.system(size: 16))
+                Image(systemName: "lock.open")
+                    .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(DesignTokens.Color.accent)
-                    .frame(width: 24)
-                Text(kind.title)
-                    .font(DesignTokens.Font.bodyStrong)
-                    .foregroundStyle(DesignTokens.Color.primary)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("No permissions required to start")
+                        .font(DesignTokens.Font.section)
+                        .foregroundStyle(DesignTokens.Color.primary)
+                    Text("Clean, optimize, analyze, uninstall, and purge start unprivileged.")
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.secondary)
+                }
                 Spacer()
-                statusBadge(status)
+                adminBadge
             }
-            Text(kind.why)
-                .font(DesignTokens.Font.caption)
+
+            Text("Administrator access is optional. MoleMac asks for your password only when you choose to preview and clean system-level items. Nothing is stored; nothing runs in the background.")
+                .font(DesignTokens.Font.body)
                 .foregroundStyle(DesignTokens.Color.secondary)
                 .fixedSize(horizontal: false, vertical: true)
-
-            if kind.settingsURL != nil {
-                Button {
-                    permissions.openSettings(for: kind)
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "arrow.up.right.square").font(.system(size: 11))
-                        Text("Open in System Settings").font(DesignTokens.Font.captionStrong)
-                    }
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(DesignTokens.Color.accent)
-            }
         }
-        .padding(16)
+        .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
     }
 
-    private func statusBadge(_ status: PermissionStatus) -> some View {
-        let (icon, tint): (String, SwiftUI.Color) = {
-            switch status {
-            case .granted:           return ("checkmark.circle.fill", DesignTokens.Color.successText)
-            case .notGranted:        return ("exclamationmark.triangle.fill", DesignTokens.Color.warningText)
-            case .promptsWhenNeeded: return ("hand.raised.fill", DesignTokens.Color.tertiary)
-            case .unknown:           return ("questionmark.circle.fill", DesignTokens.Color.tertiary)
-            }
-        }()
-        return HStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 11))
-            Text(status.label).font(DesignTokens.Font.label)
+    private var adminBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "key.fill").font(.system(size: 11))
+            Text("Admin optional").font(DesignTokens.Font.label)
         }
-        .foregroundStyle(tint)
+        .foregroundStyle(DesignTokens.Color.warningText)
         .padding(.horizontal, 10).padding(.vertical, 5)
-        .background(tint.opacity(0.12))
+        .background(DesignTokens.Color.warningSoft)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
     }
 }
 
-// Compact per-operation banner: shows which permissions the current operation
-// uses and their status, so the user knows what they're granting before acting.
+// Compact per-operation banner: clean/optimize can optionally escalate for
+// system-level work, but the first run is unprivileged.
 struct PreflightBanner: View {
     let item: SidebarItem
     @ObservedObject var permissions: PermissionsService
 
     var body: some View {
         let required = PermissionsService.requirements(for: item)
-        if !required.isEmpty {
+        if required.contains(.administrator) {
             HStack(spacing: 8) {
                 Image(systemName: "lock.shield")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(DesignTokens.Color.tertiary)
-                Text("Uses:")
+                Text("No permissions required to start")
+                    .font(DesignTokens.Font.captionStrong)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                Text("Admin password is optional for system-level items.")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.tertiary)
-                ForEach(required) { kind in
-                    permissionPill(kind)
-                }
                 Spacer(minLength: 0)
+                HStack(spacing: 5) {
+                    Image(systemName: "key.fill").font(.system(size: 10))
+                    Text("Optional admin").font(DesignTokens.Font.label)
+                }
+                .foregroundStyle(DesignTokens.Color.warningText)
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(DesignTokens.Color.warningSoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(DesignTokens.Color.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
         }
-    }
-
-    private func permissionPill(_ kind: PermissionKind) -> some View {
-        let status = permissions.status(for: kind)
-        let dot: SwiftUI.Color = {
-            switch status {
-            case .granted: return DesignTokens.Color.successText
-            case .notGranted: return DesignTokens.Color.warning
-            default: return DesignTokens.Color.tertiary
-            }
-        }()
-        return Button {
-            if kind.settingsURL != nil { permissions.openSettings(for: kind) }
-        } label: {
-            HStack(spacing: 5) {
-                Circle().fill(dot).frame(width: 6, height: 6)
-                Image(systemName: kind.icon).font(.system(size: 10))
-                Text(kind.title).font(DesignTokens.Font.label)
-            }
-            .foregroundStyle(DesignTokens.Color.secondary)
-            .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(DesignTokens.Color.pageBackground)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
-        }
-        .buttonStyle(.plain)
-        .help(kind.settingsURL != nil ? "Open System Settings — \(kind.title)" : kind.why)
     }
 }

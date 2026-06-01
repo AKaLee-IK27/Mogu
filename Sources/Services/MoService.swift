@@ -209,6 +209,7 @@ actor MoService {
                 process.environment = Self.makeEnvironment()
 
                 let pipe = Pipe()
+                process.standardInput = FileHandle.nullDevice
                 process.standardOutput = pipe
                 process.standardError = pipe
 
@@ -278,6 +279,7 @@ actor MoService {
                 process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
                 process.arguments = ["-e", appleScript]
                 let errPipe = Pipe()
+                process.standardInput = FileHandle.nullDevice
                 process.standardError = errPipe
                 process.standardOutput = FileHandle.nullDevice
 

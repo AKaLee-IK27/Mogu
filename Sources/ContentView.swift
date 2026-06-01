@@ -146,7 +146,6 @@ struct ContentView: View {
             StickyTab(key: item.id, loadedTabs: $loadedTabs) {
                 AnalyzeView(
                     service: moService,
-                    permissions: permissions,
                     refreshTrigger: $analyzeRefresh,
                     isLoading: $analyzeLoading
                 )

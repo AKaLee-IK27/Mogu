@@ -13,6 +13,10 @@ struct CleanView: View {
     @State private var resultMessage: String?
     @State private var appear = false
     @State private var activity: [String] = []
+    @State private var runningMessage = "Cleaning in progress..."
+    @State private var systemCleanAvailable = false
+    @State private var systemCleanPreviewReady = false
+    @State private var systemCleanPreviewLines: [String] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -118,6 +122,12 @@ struct CleanView: View {
                         .padding(.horizontal, 32)
                         .padding(.top, 20)
                 }
+
+                if systemCleanAvailable {
+                    systemCleanCard
+                        .padding(.horizontal, 32)
+                        .padding(.top, 12)
+                }
             }
         }
         .padding(.bottom, 32)
@@ -166,7 +176,7 @@ struct CleanView: View {
     private var runningView: some View {
         VStack(spacing: 16) {
             ProgressView().scaleEffect(1.3)
-            Text("Cleaning in progress...").font(DesignTokens.Font.bodyStrong).foregroundStyle(DesignTokens.Color.secondary)
+            Text(runningMessage).font(DesignTokens.Font.bodyStrong).foregroundStyle(DesignTokens.Color.secondary)
             if !activity.isEmpty {
                 ActivityFeed(lines: activity)
                     .padding(.horizontal, 32)
@@ -183,6 +193,58 @@ struct CleanView: View {
         .padding(12)
         .background(DesignTokens.Color.successSoft)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+    }
+
+    private var systemCleanCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "lock.shield")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(DesignTokens.Color.warning)
+                    .frame(width: 22)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("System-level cleanup was skipped")
+                        .font(DesignTokens.Font.bodyStrong)
+                        .foregroundStyle(DesignTokens.Color.primary)
+                    Text("User-owned items were handled without admin access. You can optionally preview and clean system items with an administrator password.")
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.secondary)
+                }
+                Spacer()
+            }
+
+            if !systemCleanPreviewLines.isEmpty {
+                ActivityFeed(lines: systemCleanPreviewLines, visible: 10)
+            }
+
+            HStack {
+                Spacer()
+                if systemCleanPreviewReady {
+                    Button {
+                        Task { await runElevatedClean() }
+                    } label: {
+                        Label("Clean system items", systemImage: "sparkles")
+                            .font(DesignTokens.Font.bodyStrong)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(DesignTokens.Color.warning)
+                    .disabled(isRunning)
+                } else {
+                    Button {
+                        Task { await previewElevatedClean() }
+                    } label: {
+                        Label("Clean system items too (requires admin)", systemImage: "lock.open")
+                            .font(DesignTokens.Font.bodyStrong)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(DesignTokens.Color.warning)
+                    .disabled(isRunning)
+                }
+            }
+        }
+        .padding(14)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
     }
 
     private var loadingView: some View {
@@ -231,6 +293,7 @@ struct CleanView: View {
         appear = false
         categories.removeAll()
         activity.removeAll()
+        resetSystemCleanEscalation()
         hasData = false
         await service.resetCleanPreview()
         for await event in service.stream(args: ["clean", "--dry-run"]) {
@@ -257,8 +320,22 @@ struct CleanView: View {
         isLoading = false
     }
 
-    // Destructive cleanup, run with administrator privileges (system caches need
-    // sudo) and streamed live into the activity feed.
+    private func appendActivity(_ line: String, limit: Int = 200) {
+        let t = line.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return }
+        activity.append(t)
+        if activity.count > limit { activity.removeFirst(activity.count - limit) }
+    }
+
+    private func resetSystemCleanEscalation() {
+        systemCleanAvailable = false
+        systemCleanPreviewReady = false
+        systemCleanPreviewLines.removeAll()
+    }
+
+    // Destructive cleanup runs unprivileged first. Mole cleans user-owned items
+    // and skips system-level items gracefully; those can be escalated only after
+    // an elevated dry-run preview.
     private func runClean() async {
         // Preview-before-delete: refuse to run without a completed preview.
         guard await service.cleanPreviewIsReady() else {
@@ -266,20 +343,24 @@ struct CleanView: View {
             return
         }
         isRunning = true
+        runningMessage = "Cleaning user-owned items..."
         error = nil
         resultMessage = nil
         activity.removeAll()
-        for await event in service.streamElevated(args: ["clean"]) {
+        resetSystemCleanEscalation()
+        var skippedSystemCleanup = false
+        let skipMarker = "System-level cleanup skipped, requires sudo"
+        for await event in service.stream(args: ["clean"]) {
             switch event {
             case .line(let l):
-                let t = l.trimmingCharacters(in: .whitespaces)
-                if !t.isEmpty {
-                    activity.append(t)
-                    if activity.count > 200 { activity.removeFirst(activity.count - 200) }
-                }
+                appendActivity(l)
+                if l.contains(skipMarker) { skippedSystemCleanup = true }
             case .finished(let code):
                 if code == 0 {
-                    resultMessage = "Cleanup completed"
+                    systemCleanAvailable = skippedSystemCleanup
+                    resultMessage = skippedSystemCleanup
+                        ? "Cleanup completed. System-level items were skipped."
+                        : "Cleanup completed"
                     categories.removeAll()
                     hasData = false
                 } else if error == nil {
@@ -289,6 +370,70 @@ struct CleanView: View {
                 error = m
             }
         }
+        runningMessage = "Cleaning in progress..."
+        isRunning = false
+    }
+
+    private func previewElevatedClean() async {
+        isRunning = true
+        runningMessage = "Previewing system-level cleanup..."
+        error = nil
+        resultMessage = nil
+        activity.removeAll()
+        systemCleanPreviewReady = false
+        systemCleanPreviewLines.removeAll()
+        for await event in service.streamElevated(args: ["clean", "--dry-run"]) {
+            switch event {
+            case .line(let l):
+                appendActivity(l)
+                let t = l.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty {
+                    systemCleanPreviewLines.append(t)
+                    if systemCleanPreviewLines.count > 200 {
+                        systemCleanPreviewLines.removeFirst(systemCleanPreviewLines.count - 200)
+                    }
+                }
+            case .finished(let code):
+                if code == 0 {
+                    systemCleanPreviewReady = true
+                    resultMessage = "System-level cleanup preview ready. Review it before cleaning."
+                } else if error == nil {
+                    error = "System-level cleanup preview failed (exit \(code))."
+                }
+            case .error(let m):
+                error = m
+            }
+        }
+        runningMessage = "Cleaning in progress..."
+        isRunning = false
+    }
+
+    private func runElevatedClean() async {
+        guard systemCleanPreviewReady else {
+            error = "Preview system-level cleanup before cleaning."
+            return
+        }
+        isRunning = true
+        runningMessage = "Cleaning system-level items..."
+        error = nil
+        resultMessage = nil
+        activity.removeAll()
+        for await event in service.streamElevated(args: ["clean"]) {
+            switch event {
+            case .line(let l):
+                appendActivity(l)
+            case .finished(let code):
+                if code == 0 {
+                    resultMessage = "System-level cleanup completed"
+                    resetSystemCleanEscalation()
+                } else if error == nil {
+                    error = "System-level cleanup failed (exit \(code))."
+                }
+            case .error(let m):
+                error = m
+            }
+        }
+        runningMessage = "Cleaning in progress..."
         isRunning = false
     }
 }
