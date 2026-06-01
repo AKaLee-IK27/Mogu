@@ -54,7 +54,7 @@ struct OptimizeView: View {
         }
         .onChange(of: runTrigger) { oldValue, newValue in
             guard oldValue != newValue else { return }
-            Task { await runOptimizeRun() }
+            Task { await optimizeAllAdminFirst() }
         }
         .task { await runOptimizePreview() }
     }
@@ -75,11 +75,12 @@ struct OptimizeView: View {
                 Task { await runOptimizePreview() }
             }
             // Run is enabled once a preview has streamed in; disabled while a
-            // preview/run is in flight or after completion.
+            // preview/run is in flight, after completion, or while the granted
+            // system-confirm card is showing (use that card's button instead).
             HeaderActionButton(label: "Run", systemName: "bolt.horizontal.circle.fill",
                                tint: DesignTokens.Color.warning,
-                               disabled: isRunning || isPreviewing || isComplete || steps.isEmpty) {
-                Task { await runOptimizeRun() }
+                               disabled: isRunning || isPreviewing || isComplete || steps.isEmpty || systemOptimizeAvailable) {
+                Task { await optimizeAllAdminFirst() }
             }
         }
         .padding(.horizontal, 32)
@@ -107,6 +108,8 @@ struct OptimizeView: View {
         }
     }
 
+    // Shown after admin is granted up front: the system-level dry-run preview
+    // streams into the step list below; this card confirms a combined run.
     private var systemOptimizeCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -115,10 +118,10 @@ struct OptimizeView: View {
                     .foregroundStyle(DesignTokens.Color.warning)
                     .frame(width: 22)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("System-level optimization was skipped")
+                    Text("System-level optimization ready")
                         .font(DesignTokens.Font.bodyStrong)
                         .foregroundStyle(DesignTokens.Color.primary)
-                    Text("User-safe steps ran without admin access. You can optionally preview and run system-level steps with an administrator password.")
+                    Text("Administrator access granted. Review the steps below, then run user-safe and system-level steps together.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
                 }
@@ -127,31 +130,15 @@ struct OptimizeView: View {
 
             HStack {
                 Spacer()
-                if systemOptimizePreviewReady {
-                    Button {
-                        Task { await runElevatedOptimize() }
-                    } label: {
-                        Label("Run system optimization", systemImage: "bolt.horizontal.circle.fill")
-                            .font(DesignTokens.Font.bodyStrong)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(DesignTokens.Color.warning)
-                    .disabled(isRunning || isPreviewing)
-                } else {
-                    Button {
-                        Task {
-                            if await BiometricGate.confirm(reason: "Confirm to preview and optimize system-level items") {
-                                await previewElevatedOptimize()
-                            }
-                        }
-                    } label: {
-                        Label("Optimize system items too (requires admin)", systemImage: "lock.open")
-                            .font(DesignTokens.Font.bodyStrong)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(DesignTokens.Color.warning)
-                    .disabled(isRunning || isPreviewing)
+                Button {
+                    Task { await runFullOptimize() }
+                } label: {
+                    Label("Run user + system optimization", systemImage: "bolt.horizontal.circle.fill")
+                        .font(DesignTokens.Font.bodyStrong)
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(DesignTokens.Color.warning)
+                .disabled(isRunning || isPreviewing)
             }
         }
         .padding(14)
@@ -206,15 +193,43 @@ struct OptimizeView: View {
         isPreviewing = false
     }
 
-    // Actual run (destructive), streamed live without elevation first. Mole runs
-    // user-safe steps and marks admin-only steps as skipped; those can be
-    // escalated only after an elevated dry-run preview.
-    private func runOptimizeRun() async {
+    // Admin-first optimization: when the user starts a run, ask for the
+    // administrator password up front (via the elevated dry-run). Granted →
+    // preview system steps and let the user confirm a combined run. Cancelled /
+    // declined → run user-safe steps only. Preview-before-delete holds via
+    // `systemOptimizePreviewReady` before the elevated run.
+    private func optimizeAllAdminFirst() async {
+        resetSystemOptimizeEscalation()
+        // Up-front admin prompt + system-level dry-run.
+        await previewElevatedOptimize()
+        if systemOptimizePreviewReady {
+            // Granted — surface the system preview and wait for explicit confirm.
+            systemOptimizeAvailable = true
+        } else {
+            // Declined / unavailable — fall back to user-safe steps only.
+            error = nil
+            await streamUserOptimize(markComplete: true)
+        }
+    }
+
+    // Confirmed combined run: user-safe steps (unprivileged) then system steps
+    // (elevated). Runs only after the up-front elevated preview succeeded.
+    private func runFullOptimize() async {
+        guard systemOptimizePreviewReady else {
+            error = "Preview system-level optimization before running it."
+            return
+        }
+        await streamUserOptimize(markComplete: false)
+        if error == nil { await runElevatedOptimize() }
+    }
+
+    // Unprivileged optimize run (user-safe steps). Leaves escalation state
+    // untouched so a follow-on elevated run can proceed.
+    private func streamUserOptimize(markComplete: Bool) async {
         isRunning = true
         isComplete = false
         error = nil
         steps = []
-        resetSystemOptimizeEscalation()
         var parser = StepStreamParser()
         for await event in service.stream(args: ["optimize"]) {
             switch event {
@@ -224,16 +239,13 @@ struct OptimizeView: View {
             case .finished(let code):
                 parser.finish()
                 steps = parser.steps
-                let skippedAdminSteps = steps.contains { $0.state == .skipped && $0.requiresAdmin }
                 if code == 0 {
-                    isComplete = true
-                    systemOptimizeAvailable = skippedAdminSteps
+                    if markComplete { isComplete = true }
                 } else if error == nil && steps.isEmpty {
                     error = "Optimization failed (exit \(code))."
                 } else if error == nil {
                     // Partial: some steps ran but the process reported failure.
-                    isComplete = true
-                    systemOptimizeAvailable = skippedAdminSteps
+                    if markComplete { isComplete = true }
                 }
             case .error(let m):
                 error = m

@@ -47,7 +47,7 @@ struct CleanView: View {
         }
         .onChange(of: runTrigger) { oldValue, newValue in
             guard oldValue != newValue else { return }
-            Task { await runClean() }
+            Task { await cleanAllAdminFirst() }
         }
     }
 
@@ -79,10 +79,11 @@ struct CleanView: View {
                 Task { await loadPreview() }
             }
             // Clean All stays disabled until a preview has loaded — enforces the
-            // app's preview-before-delete invariant.
+            // app's preview-before-delete invariant — and while the granted
+            // system-confirm card is showing (use that card's button instead).
             HeaderActionButton(label: "Clean All", systemName: "sparkles",
-                               disabled: isLoading || isRunning || !hasData) {
-                Task { await runClean() }
+                               disabled: isLoading || isRunning || !hasData || systemCleanAvailable) {
+                Task { await cleanAllAdminFirst() }
             }
         }
         .padding(.horizontal, 32)
@@ -195,6 +196,8 @@ struct CleanView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
     }
 
+    // Shown after admin is granted up front: the system-level dry-run preview,
+    // with one confirm that cleans user-owned and system items together.
     private var systemCleanCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -203,10 +206,10 @@ struct CleanView: View {
                     .foregroundStyle(DesignTokens.Color.warning)
                     .frame(width: 22)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("System-level cleanup was skipped")
+                    Text("System-level cleanup ready")
                         .font(DesignTokens.Font.bodyStrong)
                         .foregroundStyle(DesignTokens.Color.primary)
-                    Text("User-owned items were handled without admin access. You can optionally preview and clean system items with an administrator password.")
+                    Text("Administrator access granted. Review the system items below, then clean user-owned and system items together.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
                 }
@@ -219,31 +222,15 @@ struct CleanView: View {
 
             HStack {
                 Spacer()
-                if systemCleanPreviewReady {
-                    Button {
-                        Task { await runElevatedClean() }
-                    } label: {
-                        Label("Clean system items", systemImage: "sparkles")
-                            .font(DesignTokens.Font.bodyStrong)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(DesignTokens.Color.warning)
-                    .disabled(isRunning)
-                } else {
-                    Button {
-                        Task {
-                            if await BiometricGate.confirm(reason: "Confirm to preview and clean system-level items") {
-                                await previewElevatedClean()
-                            }
-                        }
-                    } label: {
-                        Label("Clean system items too (requires admin)", systemImage: "lock.open")
-                            .font(DesignTokens.Font.bodyStrong)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(DesignTokens.Color.warning)
-                    .disabled(isRunning)
+                Button {
+                    Task { await runFullClean() }
+                } label: {
+                    Label("Clean user + system items", systemImage: "sparkles")
+                        .font(DesignTokens.Font.bodyStrong)
                 }
+                .buttonStyle(.borderedProminent)
+                .tint(DesignTokens.Color.warning)
+                .disabled(isRunning)
             }
         }
         .padding(14)
@@ -330,44 +317,68 @@ struct CleanView: View {
         systemCleanPreviewLines.removeAll()
     }
 
-    // Destructive cleanup runs unprivileged first. Mole cleans user-owned items
-    // and skips system-level items gracefully; those can be escalated only after
-    // an elevated dry-run preview.
-    private func runClean() async {
-        // Preview-before-delete: refuse to run without a completed preview.
+    // Admin-first cleanup: when the user starts a clean, ask for the administrator
+    // password up front (via the elevated dry-run). Granted → preview system items
+    // and let the user confirm a combined user+system clean. Cancelled/declined →
+    // clean user-owned items only. Preview-before-delete holds at both tiers
+    // (`cleanPreviewIsReady` for user items, `systemCleanPreviewReady` for system).
+    private func cleanAllAdminFirst() async {
         guard await service.cleanPreviewIsReady() else {
             error = "Run a cleanup preview before cleaning."
             return
         }
+        resetSystemCleanEscalation()
+        // Up-front admin prompt + system-level dry-run.
+        await previewElevatedClean()
+        if systemCleanPreviewReady {
+            // Granted — surface the system preview and wait for explicit confirm.
+            systemCleanAvailable = true
+        } else {
+            // Declined / unavailable — fall back to user-owned cleanup only.
+            error = nil
+            if await streamUserClean() {
+                resultMessage = "Cleaned user-owned items. System items were skipped (admin not granted)."
+                categories.removeAll()
+                hasData = false
+            }
+        }
+    }
+
+    // Confirmed combined clean: user-owned items (unprivileged) then system items
+    // (elevated). Runs only after the up-front elevated preview succeeded.
+    private func runFullClean() async {
+        guard systemCleanPreviewReady else {
+            error = "Preview system-level cleanup before cleaning."
+            return
+        }
+        guard await streamUserClean() else { return }
+        await runElevatedClean()
+    }
+
+    // Unprivileged clean of user-owned items. Returns whether it succeeded.
+    // Leaves escalation state untouched so a follow-on elevated clean can run.
+    @discardableResult
+    private func streamUserClean() async -> Bool {
         isRunning = true
         runningMessage = "Cleaning user-owned items..."
         error = nil
         resultMessage = nil
         activity.removeAll()
-        resetSystemCleanEscalation()
-        var skippedSystemCleanup = false
+        var ok = false
         for await event in service.stream(args: ["clean"]) {
             switch event {
             case .line(let l):
                 appendActivity(l)
-                if MoOutputParser.detectsSystemCleanupSkip(in: l) { skippedSystemCleanup = true }
             case .finished(let code):
-                if code == 0 {
-                    systemCleanAvailable = skippedSystemCleanup
-                    resultMessage = skippedSystemCleanup
-                        ? "Cleanup completed. System-level items were skipped."
-                        : "Cleanup completed"
-                    categories.removeAll()
-                    hasData = false
-                } else if error == nil {
-                    error = "Cleanup failed (exit \(code))."
-                }
+                if code == 0 { ok = true }
+                else if error == nil { error = "Cleanup failed (exit \(code))." }
             case .error(let m):
                 error = m
             }
         }
         runningMessage = "Cleaning in progress..."
         isRunning = false
+        return ok
     }
 
     private func previewElevatedClean() async {

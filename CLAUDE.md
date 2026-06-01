@@ -80,21 +80,30 @@ refuses to run unless a preview was generated first.
 permission to start — `PermissionKind` is `.administrator` (for elevation) plus
 `.fullDiskAccess` (optional; granting it silences the per-folder TCC "Files &
 Folders" prompts during home-dir scanning; probed via the system
-`/Library/Application Support/com.apple.TCC/TCC.db`). Clean and Optimize run
-**unprivileged first** (`stream(…)`), cleaning user-owned items;
-Mole skips the system tier gracefully. They then **progressively offer** an optional
-admin escalation (`streamElevated(…)`, osascript password) for system-level items.
-A `BiometricGate` (LAContext Touch ID) gates the escalation **entry** — a
-confirmation only; it fails open (no/unavailable biometrics → proceed), and the
-osascript admin **password** still performs the actual elevation.
+`/Library/Application Support/com.apple.TCC/TCC.db`). The app still requires no
+permission to *start* (no prompt on launch or tab switch). But when the user
+**initiates** a Clean or Optimize, the admin password is requested **up front**
+(`cleanAllAdminFirst` / `optimizeAllAdminFirst` → `previewElevatedClean` /
+`previewElevatedOptimize`, the elevated dry-run that triggers the osascript
+password dialog). **Granted** → the user confirms a combined run that cleans
+user-owned items unprivileged (`stream(…)`) **then** system items elevated
+(`streamElevated(…)`, `runFullClean`/`runFullOptimize`). **Cancelled/declined**
+→ fall back to the unprivileged run only (user-owned items). This is **admin-first
+with graceful fallback** — it replaced an earlier "unprivileged-first, then
+progressively offer escalation" model. Two `mo` runs are needed because elevated
+`mo` runs as root (`$HOME=/var/root`); the user-tier items must be cleaned in the
+user's own context first. The escalation goes **straight to the osascript admin
+password dialog** (`do shell script … with administrator privileges`). Touch ID is
+**not** used: macOS's script-driven admin authorization (`system.privilege.admin`)
+is password-only, and `pam_tid` + `sudo` was verified **not** to present Touch ID
+when spawned from this GUI app (no controlling TTY) on macOS 26.5 — so a Touch ID
+path was tried and removed in favor of the plain password prompt. (Real
+Touch-ID-grants-admin would need a Developer-ID-signed privileged helper,
+infeasible under this ad-hoc-signed build.)
 Preview-before-delete is enforced at **both** tiers with function-level guards: the
 unprivileged run via `cleanPreviewIsReady()`, the elevated run via its own elevated
 dry-run (`runElevatedClean`/`runElevatedOptimize` guard on
-`systemClean/OptimizePreviewReady`). Clean detects "system items skipped" by
-string-matching Mole's literal `System-level cleanup skipped, requires sudo`
-(`clean.sh:983`) — a fragile cross-component dependency, same class as the glyph
-parsers above; Optimize uses the structured `StepStreamParser` `.skipped` +
-`requiresAdmin` instead. The app must run `mo` **non-interactively**:
+`systemClean/OptimizePreviewReady`). The app must run `mo` **non-interactively**:
 `stream`/`streamElevated` set `standardInput = .nullDevice` because Mole's
 `clean.sh` decides interactive mode by a TTY check (`[[ -t 0 ]]`), not an env var —
 an inherited TTY stdin would hang the unprivileged execute on `read_key`.
