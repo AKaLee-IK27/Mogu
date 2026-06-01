@@ -31,7 +31,7 @@ struct CleanView: View {
                 if isLoading {
                     loadingView
                 } else if let error {
-                    errorView(message: error)
+                    ErrorStateView(message: error) { Task { await loadPreview() } }
                 } else if isRunning {
                     runningView
                 } else {
@@ -260,13 +260,6 @@ struct CleanView: View {
                     .padding(.horizontal, 32)
             }
         }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.vertical, 40)
-    }
-
-    private func errorView(message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.circle").font(.system(size: 24)).foregroundStyle(DesignTokens.Color.danger)
-            Text(message).font(DesignTokens.Font.caption).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyState: some View {

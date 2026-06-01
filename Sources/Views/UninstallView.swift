@@ -17,7 +17,7 @@ struct UninstallView: View {
 
             ScrollView {
                 if isLoading { loadingView }
-                else if let error { errorView(message: error) }
+                else if let error { ErrorStateView(message: error) { Task { await loadApps() } } }
                 else if apps.isEmpty { emptyState }
                 else { content }
             }
@@ -175,13 +175,6 @@ struct UninstallView: View {
         VStack(spacing: 12) {
             ProgressView().scaleEffect(1.2)
             Text("Scanning installed applications...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func errorView(message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.circle").font(.system(size: 24)).foregroundStyle(DesignTokens.Color.danger)
-            Text(message).font(DesignTokens.Font.caption).foregroundStyle(DesignTokens.Color.secondary)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 

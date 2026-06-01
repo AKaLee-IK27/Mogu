@@ -43,7 +43,7 @@ struct StatusView: View {
             } else if isLoading || requestInFlight {
                 loadingView
             } else if let error {
-                errorView(message: error)
+                ErrorStateView(message: error) { Task { await refresh() } }
             } else {
                 loadingView
             }
@@ -488,13 +488,6 @@ struct StatusView: View {
         VStack(spacing: 12) {
             ProgressView().scaleEffect(1.2)
             Text("Reading system data...").font(DesignTokens.Font.body).foregroundStyle(DesignTokens.Color.secondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private func errorView(message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.circle").font(.system(size: 24)).foregroundStyle(DesignTokens.Color.danger)
-            Text(message).font(DesignTokens.Font.caption).foregroundStyle(DesignTokens.Color.secondary).multilineTextAlignment(.center)
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 

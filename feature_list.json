@@ -244,13 +244,13 @@
         "Follows DesignTokens (no hardcoded colors); make app passes",
         "Runtime-verified via screenshot"
       ],
-      "status": "pending",
+      "status": "done",
       "subTasks": [
-        { "name": "Build reusable error-state component", "status": "pending" },
-        { "name": "Wire into mo-backed tabs", "status": "pending" },
-        { "name": "Force-failure runtime verify + screenshot", "status": "pending" }
+        { "name": "Build reusable error-state component", "status": "done", "evidence": "Sources/Views/Components/ErrorStateView.swift: triangle icon + 'Something went wrong' title + message + optional Retry button, all DesignTokens (Color.danger/primary/secondary, Font.section/caption, .bordered button). No hardcoded colors." },
+        { "name": "Wire into mo-backed tabs", "status": "done", "evidence": "StatusView, CleanView, AnalyzeView, PurgeView, UninstallView now render ErrorStateView with their load fn as retry (refresh/loadPreview/loadAnalysis/loadProjects/loadApps); 5 duplicate per-view errorView helpers removed. OptimizeView keeps its contextual streaming banner by design (different interaction)." },
+        { "name": "Force-failure runtime verify + screenshot", "status": "done", "evidence": "Forced failure via chmod -x bundled mo + DRILBUR_MO_PATH=stub (--version ok, status exit 1, so the runtime-available guard passes and the per-tab load fails). Screenshot: Status tab shows the new ErrorStateView (triangle, 'Something went wrong', message, Retry). Mascot deferred (no image asset; would be invented). Recovery verified by construction: Retry calls the same refresh()/load that the normal launch screenshot shows producing a working dashboard. Bundled mo exec bit restored." }
       ],
-      "evidence": ""
+      "evidence": "Reusable ErrorStateView shared across the 5 mo-backed tabs; removed 5 near-duplicate errorView helpers. make build + make app + make parser-test (8/8) pass. Runtime-verified via screenshots: error state renders with Retry on failure; normal Status dashboard renders when mo works (error state is correctly conditional, no regression). DesignTokens only."
     }
   ]
 }
