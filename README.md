@@ -43,6 +43,19 @@ The Mole CLI itself is free and open source — Mogu builds on that.
 | **Purge** | Find and clean project build artifacts (`node_modules`, `target`, etc.) |
 | **Permissions** | Explains the minimal permission model; surfaces optional Full Disk Access |
 
+## Screenshots
+
+<div align="center">
+  <img src="screenshots/status.png" width="820" alt="Mogu Status screen showing live system monitoring" />
+  <br /><em>Status: live CPU, memory, disk, network, and top processes</em>
+  <br /><br />
+  <img src="screenshots/clean.png" width="820" alt="Mogu Clean screen showing a categorized cleanup preview" />
+  <br /><em>Clean: preview caches, logs, and orphaned app data by category, then clean</em>
+  <br /><br />
+  <img src="screenshots/uninstall.png" width="820" alt="Mogu Uninstall screen showing a multi-select app list" />
+  <br /><em>Uninstall: select apps to remove them and their leftovers; system and Homebrew apps are flagged</em>
+</div>
+
 ## Permissions
 
 Mogu needs **no permission to start** — no prompt on launch or tab switch. When you
