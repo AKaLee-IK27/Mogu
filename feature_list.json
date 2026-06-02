@@ -28,13 +28,39 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Install Go", "status": "done", "evidence": "go 1.26.3 darwin/arm64" },
-        { "name": "Remove Vendor/MoleRuntime", "status": "done" },
-        { "name": "Add Mole as git submodule", "status": "done", "evidence": "Vendor/Mole at main" },
-        { "name": "Update build_app.sh", "status": "done", "evidence": "builds Go binaries, copies only runtime artifacts" },
-        { "name": "Verify MoService.swift paths", "status": "done", "evidence": "paths unchanged (still MoleRuntime)" },
-        { "name": "Update CLAUDE.md", "status": "done" },
-        { "name": "Full build + launch verify", "status": "done", "evidence": "make app + app launches, runtime version 1.40.0" }
+        {
+          "name": "Install Go",
+          "status": "done",
+          "evidence": "go 1.26.3 darwin/arm64"
+        },
+        {
+          "name": "Remove Vendor/MoleRuntime",
+          "status": "done"
+        },
+        {
+          "name": "Add Mole as git submodule",
+          "status": "done",
+          "evidence": "Vendor/Mole at main"
+        },
+        {
+          "name": "Update build_app.sh",
+          "status": "done",
+          "evidence": "builds Go binaries, copies only runtime artifacts"
+        },
+        {
+          "name": "Verify MoService.swift paths",
+          "status": "done",
+          "evidence": "paths unchanged (still MoleRuntime)"
+        },
+        {
+          "name": "Update CLAUDE.md",
+          "status": "done"
+        },
+        {
+          "name": "Full build + launch verify",
+          "status": "done",
+          "evidence": "make app + app launches, runtime version 1.40.0"
+        }
       ],
       "evidence": "make app passes. Go binaries built native arm64. App launches, calls /Applications/MoleMac.app/Contents/Resources/MoleRuntime/mo. Version: 1.40.0"
     },
@@ -50,8 +76,16 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Generate AppIcon.icns", "status": "done", "evidence": "iconutil -c icns" },
-        { "name": "Bundle in build_app.sh", "status": "done", "evidence": "cp AppIcon.icns $RESOURCES/AppIcon.icns" }
+        {
+          "name": "Generate AppIcon.icns",
+          "status": "done",
+          "evidence": "iconutil -c icns"
+        },
+        {
+          "name": "Bundle in build_app.sh",
+          "status": "done",
+          "evidence": "cp AppIcon.icns $RESOURCES/AppIcon.icns"
+        }
       ],
       "evidence": "AppIcon.icns generated (39KB, valid ic07). build_app.sh copies it."
     },
@@ -67,8 +101,14 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Add Timer.publish + onReceive to StatusView", "status": "done" },
-        { "name": "Add Live badge in header", "status": "done" }
+        {
+          "name": "Add Timer.publish + onReceive to StatusView",
+          "status": "done"
+        },
+        {
+          "name": "Add Live badge in header",
+          "status": "done"
+        }
       ],
       "evidence": "All 5 features implemented and working. macOS 26.5 .toolbar crash fixed by removing .toolbar (SwiftUI incompatibility). App launches with 1 window, dark mode works."
     },
@@ -85,17 +125,28 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Sort enum + search state in UninstallView", "status": "done" },
-        { "name": "Sort enum + search state in PurgeView", "status": "done" },
-        { "name": "SortOrder shared enum", "status": "done" }
+        {
+          "name": "Sort enum + search state in UninstallView",
+          "status": "done"
+        },
+        {
+          "name": "Sort enum + search state in PurgeView",
+          "status": "done"
+        },
+        {
+          "name": "SortOrder shared enum",
+          "status": "done"
+        }
       ],
-      "evidence": "Both views have sort picker (Size ↓, Name A-Z) and .searchable. make build passes."
+      "evidence": "Both views have sort picker (Size \u2193, Name A-Z) and .searchable. make build passes."
     },
     {
       "id": "feat-006",
       "name": "Real Uninstall Execution",
       "description": "Add executeUninstall to MoService and confirmation dialog to UninstallView.",
-      "dependencies": ["feat-005"],
+      "dependencies": [
+        "feat-005"
+      ],
       "doneCriteria": [
         "MoService.executeUninstall runs mo uninstall (no --dry-run)",
         "UninstallView shows confirmation before running",
@@ -104,9 +155,18 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Add executeUninstall to MoService", "status": "done" },
-        { "name": "Add runTrigger + confirmation dialog to UninstallView", "status": "done" },
-        { "name": "Add toolbar button in ContentView", "status": "done" }
+        {
+          "name": "Add executeUninstall to MoService",
+          "status": "done"
+        },
+        {
+          "name": "Add runTrigger + confirmation dialog to UninstallView",
+          "status": "done"
+        },
+        {
+          "name": "Add toolbar button in ContentView",
+          "status": "done"
+        }
       ],
       "evidence": "executeUninstall runs mo uninstall appName. ConfirmationDialog shows before execution. make build passes."
     },
@@ -123,9 +183,18 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Add adaptive() helper and dark color variants", "status": "done" },
-        { "name": "Remove forced .aqua/.light from MoleMacApp", "status": "done" },
-        { "name": "Add Color(light:dark:) extension", "status": "done" }
+        {
+          "name": "Add adaptive() helper and dark color variants",
+          "status": "done"
+        },
+        {
+          "name": "Remove forced .aqua/.light from MoleMacApp",
+          "status": "done"
+        },
+        {
+          "name": "Add Color(light:dark:) extension",
+          "status": "done"
+        }
       ],
       "evidence": "All tokens use adaptive(light:dark:). App follows system colorScheme. make build passes."
     },
@@ -143,9 +212,21 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Add Analyze preflight banner", "status": "done", "evidence": "Sources/Views/AnalyzeView.swift adds @ObservedObject permissions and PreflightBanner(item: .analyze, permissions: permissions). Sources/ContentView.swift passes permissions into AnalyzeView." },
-        { "name": "FDA probe not-granted branch", "status": "done", "evidence": "Resolved in feat-012: the Drilbur rename (new bundle id with no FDA) made 'not granted' the default. Launched via LaunchServices (open --env), the Permissions card correctly reads 'Not granted'. Probe path already system /Library TCC.db (c4fd444); no repoint needed. Earlier 'Granted' was terminal responsible-process FDA inheritance, not a probe bug." },
-        { "name": "Refresh tracking artifacts", "status": "done", "evidence": "feature_list.json entry added; session-handoff.md refreshed for feat-008." }
+        {
+          "name": "Add Analyze preflight banner",
+          "status": "done",
+          "evidence": "Sources/Views/AnalyzeView.swift adds @ObservedObject permissions and PreflightBanner(item: .analyze, permissions: permissions). Sources/ContentView.swift passes permissions into AnalyzeView."
+        },
+        {
+          "name": "FDA probe not-granted branch",
+          "status": "done",
+          "evidence": "Resolved in feat-012: the Drilbur rename (new bundle id with no FDA) made 'not granted' the default. Launched via LaunchServices (open --env), the Permissions card correctly reads 'Not granted'. Probe path already system /Library TCC.db (c4fd444); no repoint needed. Earlier 'Granted' was terminal responsible-process FDA inheritance, not a probe bug."
+        },
+        {
+          "name": "Refresh tracking artifacts",
+          "status": "done",
+          "evidence": "feature_list.json entry added; session-handoff.md refreshed for feat-008."
+        }
       ],
       "evidence": "Scope: Analyze banner wiring + tracking only (4 files; no Status files or PermissionsService touched). swift build passes. Controller runtime-verified: Analyze tab renders the PreflightBanner showing 'Full Disk Access', no crash. Pre-existing analyze-data decode error observed (unrelated to this feature; reported separately). FDA not-granted branch is a documented manual check (see session-handoff.md)."
     },
@@ -166,12 +247,36 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Rename Package.swift product/target + MoleMacApp.swift/struct", "status": "done", "evidence": "Package name/product/target -> Drilbur; git mv Sources/MoleMacApp.swift -> Sources/DrilburApp.swift; struct DrilburApp." },
-        { "name": "Update build_app.sh APP_NAME/BUNDLE_ID/Info.plist + re-verify signature inheritance", "status": "done", "evidence": "APP=Drilbur.app, BUNDLE_ID=co.greenpassport.drilbur, CFBundleName/Executable/Identifier=Drilbur, git mv MoleMac.entitlements -> Drilbur.entitlements (+ ref). codesign --verify --deep --strict: 'valid on disk' + 'satisfies its Designated Requirement'." },
-        { "name": "Rename MOLEMAC_* env vars in ContentView + MoService", "status": "done", "evidence": "DRILBUR_SCREEN (ContentView), DRILBUR_MO_PATH (MoService); temp-log names molemac-* -> drilbur-*." },
-        { "name": "Update user-visible strings (PermissionsView, admin prompt, title)", "status": "done", "evidence": "Permission.swift + PermissionsView.swift say Drilbur; sidebar brand Text(\"Mole\") -> Text(\"Drilbur\") (kept 'Powered by bundled Mole'); osascript prompt derives name from CFBundleName (no hardcoded string, advisor-confirmed)." },
-        { "name": "Update docs + trackers", "status": "done", "evidence": "README, Makefile, init.sh, CLAUDE.md, progress.md, session-handoff.md, plans/*.md renamed; MoleRuntime/Vendor/Mole left intact." },
-        { "name": "make app + launch verify (title, admin prompt, deep-link)", "status": "done", "evidence": "make app OK. Launch (DRILBUR_SCREEN=clean direct-exec): process alive, no crash, AppleScript window title = 'Drilbur', menu bar 'Drilbur', sidebar 'Drilbur', deep-linked to Clean (screenshots /tmp/drilbur-clean2.png). Old /Applications/MoleMac.app removed first." }
+        {
+          "name": "Rename Package.swift product/target + MoleMacApp.swift/struct",
+          "status": "done",
+          "evidence": "Package name/product/target -> Drilbur; git mv Sources/MoleMacApp.swift -> Sources/DrilburApp.swift; struct DrilburApp."
+        },
+        {
+          "name": "Update build_app.sh APP_NAME/BUNDLE_ID/Info.plist + re-verify signature inheritance",
+          "status": "done",
+          "evidence": "APP=Drilbur.app, BUNDLE_ID=co.greenpassport.drilbur, CFBundleName/Executable/Identifier=Drilbur, git mv MoleMac.entitlements -> Drilbur.entitlements (+ ref). codesign --verify --deep --strict: 'valid on disk' + 'satisfies its Designated Requirement'."
+        },
+        {
+          "name": "Rename MOLEMAC_* env vars in ContentView + MoService",
+          "status": "done",
+          "evidence": "DRILBUR_SCREEN (ContentView), DRILBUR_MO_PATH (MoService); temp-log names molemac-* -> drilbur-*."
+        },
+        {
+          "name": "Update user-visible strings (PermissionsView, admin prompt, title)",
+          "status": "done",
+          "evidence": "Permission.swift + PermissionsView.swift say Drilbur; sidebar brand Text(\"Mole\") -> Text(\"Drilbur\") (kept 'Powered by bundled Mole'); osascript prompt derives name from CFBundleName (no hardcoded string, advisor-confirmed)."
+        },
+        {
+          "name": "Update docs + trackers",
+          "status": "done",
+          "evidence": "README, Makefile, init.sh, CLAUDE.md, progress.md, session-handoff.md, plans/*.md renamed; MoleRuntime/Vendor/Mole left intact."
+        },
+        {
+          "name": "make app + launch verify (title, admin prompt, deep-link)",
+          "status": "done",
+          "evidence": "make app OK. Launch (DRILBUR_SCREEN=clean direct-exec): process alive, no crash, AppleScript window title = 'Drilbur', menu bar 'Drilbur', sidebar 'Drilbur', deep-linked to Clean (screenshots /tmp/drilbur-clean2.png). Old /Applications/MoleMac.app removed first."
+        }
       ],
       "evidence": "Renamed GUI shell MoleMac -> Drilbur (bundle id co.greenpassport.drilbur). grep confirms zero MoleMac/MOLEMAC/old-bundle-id residue (excl Vendor/.git/.build); MoleRuntime path intact. swift build + make app pass; signature valid + satisfies Designated Requirement. Runtime-verified: window title, menu bar, sidebar all show 'Drilbur', deep-link works, no crash. Mole CLI/runtime untouched."
     },
@@ -188,8 +293,15 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Runtime-verify Analyze tab decodes + renders", "status": "done", "evidence": "Root cause confirmed against real mo 1.40.0 output: analyze --json entries[] carry is_dir but large_files[] omit it (sample keys ['name','path','size']), so non-optional isDir failed to decode the large-files list. Optional fix decodes both." },
-        { "name": "Commit the fix", "status": "done" }
+        {
+          "name": "Runtime-verify Analyze tab decodes + renders",
+          "status": "done",
+          "evidence": "Root cause confirmed against real mo 1.40.0 output: analyze --json entries[] carry is_dir but large_files[] omit it (sample keys ['name','path','size']), so non-optional isDir failed to decode the large-files list. Optional fix decodes both."
+        },
+        {
+          "name": "Commit the fix",
+          "status": "done"
+        }
       ],
       "evidence": "DiskEntry.isDir made Bool? (SystemStatus.swift); AnalyzeView uses (entry.isDir ?? false). Root cause verified: large_files[] omit is_dir while entries[] include it. swift build passes. Committed on branch feat/drilbur-and-next-tasks."
     },
@@ -207,17 +319,31 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Capture golden fixtures from mo 1.40.0", "status": "done", "evidence": "Tests/DrilburTests/Fixtures: clean-list.txt (REAL, 15 === sections / 46 # size lines from mo clean --dry-run), optimize.txt (REAL, 22 ➤ steps from mo optimize --dry-run). purge.txt is format-verified (━━━ confirmed at Vendor/Mole/bin/purge.sh:40; size-line convention shared with clean) because this machine had no purgeable artifacts — provenance documented in Fixtures/README.md." },
-        { "name": "Add parser test against fixtures", "status": "done", "evidence": "Extracted pure parsers into Sources/Services/MoOutputParser.swift (parseCleanList, parsePurgeText, parseByteSize, purgeCategoryToType, systemCleanupSkipMarker/detectsSystemCleanupSkip); MoService + CleanView delegate. New DrilburTests XCTest target (Package.swift), 8 tests, pass via `make parser-test`. Coverage honestly: clean (REAL fixture) and optimize/StepStreamParser (REAL fixture, 22 steps) are genuine golden guards against parser-code regressions. The purge assertion is weaker — its fixture is synthetic and matches the parser's expected shape (somewhat circular; purge's real stdout format is unconfirmed). testSystemCleanupSkipMarkerLiteral is near-tautological (constant == its own literal): it guards against accidental edits to the constant, NOT against clean.sh changing its wording." },
-        { "name": "Verify drift (mutated fixture) fails the test", "status": "done", "evidence": "Two in-suite drift tests (=== -> ###, ━━━ -> ===) assert empty results. Also proven empirically: sed-mutating clean-list.txt === markers made testCleanListParsesRealFixture FAIL (got 0 categories, all 3 asserts fired); restoring the fixture made it pass." }
+        {
+          "name": "Capture golden fixtures from mo 1.40.0",
+          "status": "done",
+          "evidence": "Tests/DrilburTests/Fixtures: clean-list.txt (REAL, 15 === sections / 46 # size lines from mo clean --dry-run), optimize.txt (REAL, 22 \u27a4 steps from mo optimize --dry-run). purge.txt is format-verified (\u2501\u2501\u2501 confirmed at Vendor/Mole/bin/purge.sh:40; size-line convention shared with clean) because this machine had no purgeable artifacts \u2014 provenance documented in Fixtures/README.md."
+        },
+        {
+          "name": "Add parser test against fixtures",
+          "status": "done",
+          "evidence": "Extracted pure parsers into Sources/Services/MoOutputParser.swift (parseCleanList, parsePurgeText, parseByteSize, purgeCategoryToType, systemCleanupSkipMarker/detectsSystemCleanupSkip); MoService + CleanView delegate. New DrilburTests XCTest target (Package.swift), 8 tests, pass via `make parser-test`. Coverage honestly: clean (REAL fixture) and optimize/StepStreamParser (REAL fixture, 22 steps) are genuine golden guards against parser-code regressions. The purge assertion is weaker \u2014 its fixture is synthetic and matches the parser's expected shape (somewhat circular; purge's real stdout format is unconfirmed). testSystemCleanupSkipMarkerLiteral is near-tautological (constant == its own literal): it guards against accidental edits to the constant, NOT against clean.sh changing its wording."
+        },
+        {
+          "name": "Verify drift (mutated fixture) fails the test",
+          "status": "done",
+          "evidence": "Two in-suite drift tests (=== -> ###, \u2501\u2501\u2501 -> ===) assert empty results. Also proven empirically: sed-mutating clean-list.txt === markers made testCleanListParsesRealFixture FAIL (got 0 categories, all 3 asserts fired); restoring the fixture made it pass."
+        }
       ],
-      "evidence": "XCTest target chosen (user decision). Pure parsers extracted to MoOutputParser.swift; MoService/CleanView delegate. 8 tests pass (`make parser-test`); make build + make app unaffected. SCOPE (honest): this is a static golden-fixture suite — it guards the parser CODE against regressions and pins the expected format, and a live fixture mutation was shown to fail the test. It does NOT auto-detect live Mole format drift; fixtures are snapshots that must be re-captured on a Vendor/Mole bump (documented in Fixtures/README.md + CLAUDE.md). Clean/optimize fixtures are real; purge fixture is synthetic; the skip-marker test is near-tautological. Runtime-verified the refactored delegation on REAL output: a live `mo clean --dry-run` in the bundled app rendered 5 categories / 3.51GB via MoService.parseCleanPreview -> MoOutputParser.parseCleanList. CLAUDE.md + Makefile updated (the 'no test target' principle is now scoped to one parser-only target; UI/runtime still verified by build+launch)."
+      "evidence": "XCTest target chosen (user decision). Pure parsers extracted to MoOutputParser.swift; MoService/CleanView delegate. 8 tests pass (`make parser-test`); make build + make app unaffected. SCOPE (honest): this is a static golden-fixture suite \u2014 it guards the parser CODE against regressions and pins the expected format, and a live fixture mutation was shown to fail the test. It does NOT auto-detect live Mole format drift; fixtures are snapshots that must be re-captured on a Vendor/Mole bump (documented in Fixtures/README.md + CLAUDE.md). Clean/optimize fixtures are real; purge fixture is synthetic; the skip-marker test is near-tautological. Runtime-verified the refactored delegation on REAL output: a live `mo clean --dry-run` in the bundled app rendered 5 categories / 3.51GB via MoService.parseCleanPreview -> MoOutputParser.parseCleanList. CLAUDE.md + Makefile updated (the 'no test target' principle is now scoped to one parser-only target; UI/runtime still verified by build+launch)."
     },
     {
       "id": "feat-012",
       "name": "Resolve Deferred FDA Not-Granted Check",
       "description": "Close the last open item on feat-008: exercise the Full Disk Access 'not granted' branch and fix the probe path if it false-positives. Documented in session-handoff.md.",
-      "dependencies": ["feat-008"],
+      "dependencies": [
+        "feat-008"
+      ],
       "doneCriteria": [
         "With FDA revoked for the app and relaunched, Permissions card + preflight banners read 'Not granted'",
         "If still 'Granted', PermissionsService.probeFullDiskAccess repointed from ~/Library/.../TCC.db to /Library/Application Support/com.apple.TCC/TCC.db and re-verified",
@@ -226,9 +352,21 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Revoke FDA, relaunch, observe Permissions card + banners", "status": "done", "evidence": "The rename gave Drilbur a new bundle id (co.greenpassport.drilbur) that has never been granted FDA — so 'not granted' is its default, no manual revoke needed. Launched via `open --env DRILBUR_SCREEN=permissions /Applications/Drilbur.app` (own responsible process): Permissions card reads 'Not granted' (amber). screenshot /tmp/drilbur-perm-open.png." },
-        { "name": "Repoint probe path if false-positive", "status": "done", "evidence": "Not needed — probeFullDiskAccess already reads the system path /Library/Application Support/com.apple.TCC/TCC.db (repointed from ~/Library in commit c4fd444). The 'Granted' seen when direct-exec'ing the binary from an FDA-enabled terminal is macOS TCC responsible-process inheritance (child attributed to the terminal), NOT a probe bug: launching via LaunchServices (open) correctly reports 'Not granted'." },
-        { "name": "Update feat-008 subTask + handoff", "status": "done", "evidence": "feat-008 FDA subTask flipped manual-check -> done; session-handoff.md note resolved." }
+        {
+          "name": "Revoke FDA, relaunch, observe Permissions card + banners",
+          "status": "done",
+          "evidence": "The rename gave Drilbur a new bundle id (co.greenpassport.drilbur) that has never been granted FDA \u2014 so 'not granted' is its default, no manual revoke needed. Launched via `open --env DRILBUR_SCREEN=permissions /Applications/Drilbur.app` (own responsible process): Permissions card reads 'Not granted' (amber). screenshot /tmp/drilbur-perm-open.png."
+        },
+        {
+          "name": "Repoint probe path if false-positive",
+          "status": "done",
+          "evidence": "Not needed \u2014 probeFullDiskAccess already reads the system path /Library/Application Support/com.apple.TCC/TCC.db (repointed from ~/Library in commit c4fd444). The 'Granted' seen when direct-exec'ing the binary from an FDA-enabled terminal is macOS TCC responsible-process inheritance (child attributed to the terminal), NOT a probe bug: launching via LaunchServices (open) correctly reports 'Not granted'."
+        },
+        {
+          "name": "Update feat-008 subTask + handoff",
+          "status": "done",
+          "evidence": "feat-008 FDA subTask flipped manual-check -> done; session-handoff.md note resolved."
+        }
       ],
       "evidence": "FDA not-granted branch verified (no code change needed). Probe path already correct (system /Library TCC.db since c4fd444). Root-caused the earlier 'Granted' false-positive to terminal-launch FDA inheritance, not the probe: a LaunchServices-launched Drilbur (new bundle id, no FDA) correctly shows 'Not granted' on the Permissions card. Bonus: Analyze tab loaded a 161GB analysis with no decode error, confirming feat-010 in the bundled app."
     },
@@ -236,7 +374,9 @@
       "id": "feat-013",
       "name": "Consistent Error-State UX",
       "description": "Replace raw/cryptic failure text with one reusable error+retry state shared across tabs (friendly message + Retry button) for failed mo calls and decode errors. A natural home for a small Drilbur mascot presence.",
-      "dependencies": ["feat-009"],
+      "dependencies": [
+        "feat-009"
+      ],
       "doneCriteria": [
         "A reusable error-state view (message + Retry) exists and is wired into the tabs that shell out to mo",
         "Retry re-runs the failed operation",
@@ -246,9 +386,21 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Build reusable error-state component", "status": "done", "evidence": "Sources/Views/Components/ErrorStateView.swift: triangle icon + 'Something went wrong' title + message + optional Retry button, all DesignTokens (Color.danger/primary/secondary, Font.section/caption, .bordered button). No hardcoded colors." },
-        { "name": "Wire into mo-backed tabs", "status": "done", "evidence": "StatusView, CleanView, AnalyzeView, PurgeView, UninstallView now render ErrorStateView with their load fn as retry (refresh/loadPreview/loadAnalysis/loadProjects/loadApps); 5 duplicate per-view errorView helpers removed. OptimizeView keeps its contextual streaming banner by design (different interaction)." },
-        { "name": "Force-failure runtime verify + screenshot", "status": "done", "evidence": "Forced failure via chmod -x bundled mo + DRILBUR_MO_PATH=stub (--version ok, status exit 1, so the runtime-available guard passes and the per-tab load fails). Screenshot: Status tab shows the new ErrorStateView (triangle, 'Something went wrong', message, Retry). Mascot deferred (no image asset; would be invented). Recovery verified by construction: Retry calls the same refresh()/load that the normal launch screenshot shows producing a working dashboard. Bundled mo exec bit restored." }
+        {
+          "name": "Build reusable error-state component",
+          "status": "done",
+          "evidence": "Sources/Views/Components/ErrorStateView.swift: triangle icon + 'Something went wrong' title + message + optional Retry button, all DesignTokens (Color.danger/primary/secondary, Font.section/caption, .bordered button). No hardcoded colors."
+        },
+        {
+          "name": "Wire into mo-backed tabs",
+          "status": "done",
+          "evidence": "StatusView, CleanView, AnalyzeView, PurgeView, UninstallView now render ErrorStateView with their load fn as retry (refresh/loadPreview/loadAnalysis/loadProjects/loadApps); 5 duplicate per-view errorView helpers removed. OptimizeView keeps its contextual streaming banner by design (different interaction)."
+        },
+        {
+          "name": "Force-failure runtime verify + screenshot",
+          "status": "done",
+          "evidence": "Forced failure via chmod -x bundled mo + DRILBUR_MO_PATH=stub (--version ok, status exit 1, so the runtime-available guard passes and the per-tab load fails). Screenshot: Status tab shows the new ErrorStateView (triangle, 'Something went wrong', message, Retry). Mascot deferred (no image asset; would be invented). Recovery verified by construction: Retry calls the same refresh()/load that the normal launch screenshot shows producing a working dashboard. Bundled mo exec bit restored."
+        }
       ],
       "evidence": "Reusable ErrorStateView shared across the 5 mo-backed tabs; removed 5 near-duplicate errorView helpers. make build + make app + make parser-test (8/8) pass. Runtime-verified via screenshots: error state renders with Retry on failure; normal Status dashboard renders when mo works (error state is correctly conditional, no regression). DesignTokens only."
     },
@@ -256,7 +408,9 @@
       "id": "feat-014",
       "name": "Drilbur Personalization (icon + theme)",
       "description": "Personalize the app with the Drilbur identity: new app icon from the provided Sugimori art, app-wide navy/indigo accent derived from Drilbur, and a Drilbur sidebar brand mark. Copyrighted art committed to the public repo per the maintainer's explicit choice (personal use).",
-      "dependencies": ["feat-009"],
+      "dependencies": [
+        "feat-009"
+      ],
       "doneCriteria": [
         "scripts/make_icon.sh composites icon-source.jpg onto a macOS squircle and builds a full AppIcon.iconset -> AppIcon.icns (replacing the single-128px icns) + SidebarLogo.png, using only built-ins (swift/sips/iconutil)",
         "DesignTokens accent/accentSecondary/accentSoft/accentTint recolored to Drilbur navy/indigo, light and dark",
@@ -266,9 +420,21 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Icon pipeline", "status": "done", "evidence": "scripts/make_icon.sh: Swift/CoreGraphics compositor draws the art on a squircle (0.2237 corner ratio, ~9% margin, white->cool-grey gradient bg that blends the art's white bg, hairline edge) -> 1024 master -> sips iconset -> iconutil. AppIcon.icns now multi-res (ic12, 1MB) vs the prior single 128px. 475px source upscaled to 1024 (slightly soft, accepted). icon.png + SidebarLogo.png (256) emitted." },
-        { "name": "Accent recolor", "status": "done", "evidence": "DesignTokens.Color accent 3a4ea8/5d72d6, accentSecondary 7e8fde/8ea0f0, accentSoft e7e9fb/20264a, accentTint 2c3e8f/7e92ef. Derived from Drilbur's slate-blue (sampled art was a muted #80869a; cleaned up for UI contrast). Verified light+dark." },
-        { "name": "Sidebar brand + bundling + verify", "status": "done", "evidence": "ContentView brandMark loads Resources/SidebarLogo.png via Bundle.main, falls back to bolt.fill if absent (debug builds). build_app.sh copies SidebarLogo.png to Resources. Runtime screenshots: Dock icon = Drilbur squircle; navy 'Clean All' button + selected-tab accent + sparklines; Drilbur sidebar mark — all in light and dark." }
+        {
+          "name": "Icon pipeline",
+          "status": "done",
+          "evidence": "scripts/make_icon.sh: Swift/CoreGraphics compositor draws the art on a squircle (0.2237 corner ratio, ~9% margin, white->cool-grey gradient bg that blends the art's white bg, hairline edge) -> 1024 master -> sips iconset -> iconutil. AppIcon.icns now multi-res (ic12, 1MB) vs the prior single 128px. 475px source upscaled to 1024 (slightly soft, accepted). icon.png + SidebarLogo.png (256) emitted."
+        },
+        {
+          "name": "Accent recolor",
+          "status": "done",
+          "evidence": "DesignTokens.Color accent 3a4ea8/5d72d6, accentSecondary 7e8fde/8ea0f0, accentSoft e7e9fb/20264a, accentTint 2c3e8f/7e92ef. Derived from Drilbur's slate-blue (sampled art was a muted #80869a; cleaned up for UI contrast). Verified light+dark."
+        },
+        {
+          "name": "Sidebar brand + bundling + verify",
+          "status": "done",
+          "evidence": "ContentView brandMark loads Resources/SidebarLogo.png via Bundle.main, falls back to bolt.fill if absent (debug builds). build_app.sh copies SidebarLogo.png to Resources. Runtime screenshots: Dock icon = Drilbur squircle; navy 'Clean All' button + selected-tab accent + sparklines; Drilbur sidebar mark \u2014 all in light and dark."
+        }
       ],
       "evidence": "Drilbur identity applied: new multi-res app icon from the provided art, app-wide navy/indigo accent, Drilbur sidebar brand mark. New reproducible scripts/make_icon.sh (built-ins only). make build + make app + make parser-test (8/8) pass. Runtime-verified in light and dark (icon, accent, brand mark). Copyrighted art committed per maintainer's explicit choice (personal use)."
     },
@@ -276,7 +442,9 @@
       "id": "feat-015",
       "name": "In-App Uninstaller (multi-select, leftover preview, sortable list)",
       "description": "Turn the read-only Uninstall browser into a working uninstaller. Multi-select apps, preview each one's bundle + leftover files via a dry-run, then move them to the Trash, all without dropping to Terminal. Admin-required apps (root-owned bundles, Homebrew casks) are detected and deferred (non-selectable, badged), kept in the same list rather than a separate section. Add Finder-style column sorting by name and size.",
-      "dependencies": ["feat-011"],
+      "dependencies": [
+        "feat-011"
+      ],
       "doneCriteria": [
         "Select one or more user-owned apps and uninstall them with their leftovers in-app (no Terminal)",
         "A dry-run preview shows each app's bundle + leftover paths and the true total before anything is deleted (preview-before-delete guard armed only on a non-empty parse)",
@@ -288,12 +456,173 @@
       ],
       "status": "done",
       "subTasks": [
-        { "name": "Model + parser", "status": "done", "evidence": "AppInfo gains source/path/requiresAdmin; UninstallPreview/UninstallPreviewApp added. MoOutputParser.parseUninstallPreview parses the 'Files to be removed:' / glyph block with ANSI stripping; golden fixture uninstall-preview.txt + 5 tests (incl. drift, spaces, missing-terminator)." },
-        { "name": "Service", "status": "done", "evidence": "MoService.streamFeeding(args:input:) feeds y\\n (uninstall-only; stream/streamElevated keep nullDevice). bundleRequiresAdmin mirrors Mole's needs_sudo. finalizeUninstallPreview arms uninstallPreviewReady only on non-empty parse. getUninstallList computes requiresAdmin." },
-        { "name": "View + sort", "status": "done", "evidence": "UninstallView: multi-select rows (admin rows non-selectable + Admin badge), select-all, confirmation sheet listing leftovers, streamed execute, selection re-validated at execute, Finder-style sortable columns (default size-descending)." },
-        { "name": "Adversarial review + fixes", "status": "done", "evidence": "25-agent review; 12 confirmed findings triaged. Fixed: preview/execute set re-validation, live admin re-check, isPreviewing/sheet ordering, banner-flicker fold, missing-terminator test, README locale note. Refuted by primary source: 'admin detection misses system leftovers' (Mole forces system_files='' before its needs_sudo check)." }
+        {
+          "name": "Model + parser",
+          "status": "done",
+          "evidence": "AppInfo gains source/path/requiresAdmin; UninstallPreview/UninstallPreviewApp added. MoOutputParser.parseUninstallPreview parses the 'Files to be removed:' / glyph block with ANSI stripping; golden fixture uninstall-preview.txt + 5 tests (incl. drift, spaces, missing-terminator)."
+        },
+        {
+          "name": "Service",
+          "status": "done",
+          "evidence": "MoService.streamFeeding(args:input:) feeds y\\n (uninstall-only; stream/streamElevated keep nullDevice). bundleRequiresAdmin mirrors Mole's needs_sudo. finalizeUninstallPreview arms uninstallPreviewReady only on non-empty parse. getUninstallList computes requiresAdmin."
+        },
+        {
+          "name": "View + sort",
+          "status": "done",
+          "evidence": "UninstallView: multi-select rows (admin rows non-selectable + Admin badge), select-all, confirmation sheet listing leftovers, streamed execute, selection re-validated at execute, Finder-style sortable columns (default size-descending)."
+        },
+        {
+          "name": "Adversarial review + fixes",
+          "status": "done",
+          "evidence": "25-agent review; 12 confirmed findings triaged. Fixed: preview/execute set re-validation, live admin re-check, isPreviewing/sheet ordering, banner-flicker fold, missing-terminator test, README locale note. Refuted by primary source: 'admin detection misses system leftovers' (Mole forces system_files='' before its needs_sudo check)."
+        }
       ],
       "evidence": "Shipped on main (commit 4ac5645). make build + make parser-test (17 cases) pass. Real uninstall of a disposable bundle removed app + leftover, landed in ~/.Trash, exit 0, no hang. Admin detection verified against real stat (user-owned selectable, root-owned flagged). App launches to the Uninstall screen and renders (checkboxes, Admin badges, size-descending sort). Admin-app uninstall and an admin pre-authorize button were both discussed and deliberately deferred."
+    },
+    {
+      "id": "feat-016",
+      "name": "About Mogu Window",
+      "description": "Custom About Mogu panel replacing the bare macOS default. Shows Mogu logo, version, Mole attribution, MIT license, and GitHub link. Opens via Mogu > About Mogu or \u2318,.",
+      "dependencies": [],
+      "doneCriteria": [
+        "About Mogu opens a centered custom panel (not system default)",
+        "Panel shows: Mogu logo, version, 'Built on Mole by @tw93', MIT license, GitHub link",
+        "\u2318, shortcut opens it",
+        "Window is non-resizable",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-017",
+      "name": "First-Run Onboarding",
+      "description": "3-card modal on first launch explaining: what Mogu does, preview-before-delete safety, optional permissions. Skipped on subsequent launches via AppStorage. Re-triggable from Help menu.",
+      "dependencies": [
+        "feat-020"
+      ],
+      "doneCriteria": [
+        "First launch shows 3-card modal overlay",
+        "Card 1: what Mogu does, Card 2: preview-before-delete, Card 3: optional permissions",
+        "Get Started records hasSeenOnboarding=true in AppStorage",
+        "Second launch: no modal",
+        "Help > Show Onboarding re-shows it",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-018",
+      "name": "Sparkle Update Framework",
+      "description": "Integrate Sparkle 2.x via SPM for over-the-air updates. Check for Updates menu item, silent check on launch, appcast URL placeholder.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Sparkle 2.x linked via SPM in Package.swift",
+        "Check for Updates menu item works (opens Sparkle UI)",
+        "Silent check on launch (no UI unless update available)",
+        "build_app.sh accepts MOGU_VERSION env var",
+        "make build + make app pass with Sparkle linked"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-019",
+      "name": "App Preferences Window",
+      "description": "Minimal preferences window (\u2318,) with General tab: auto-update toggle, launch-at-login toggle, version display.",
+      "dependencies": [
+        "feat-018"
+      ],
+      "doneCriteria": [
+        "\u2318, opens preferences window",
+        "General tab shows: auto-update checkbox, launch-at-login checkbox, version display",
+        "Auto-update toggles Sparkle's automaticallyChecksForUpdates",
+        "Launch-at-login uses ServiceManagement framework",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-020",
+      "name": "Menu Bar Commands & Keyboard Shortcuts",
+      "description": "Populate menu bar with proper commands. View menu: \u23181-\u23187 for tab switching. Help menu: Show Onboarding, GitHub link. Edit menu: standard commands.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Mogu menu: About, Check for Updates, Preferences (\u2318,), Hide, Quit (\u2318Q)",
+        "View menu: Status (\u23181) through Permissions (\u23187)",
+        "Help menu: Show Onboarding, Mogu on GitHub",
+        "Edit menu: standard cut/copy/paste/selectAll",
+        "All shortcuts work from keyboard",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-021",
+      "name": "Window State Restoration",
+      "description": "Remember last-opened tab and window size across launches. MOGU_SCREEN env var overrides remembered state.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Close on Clean tab, reopen \u2192 Clean tab selected",
+        "MOGU_SCREEN still overrides the remembered tab",
+        "State persisted in AppStorage",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-022",
+      "name": "Dock Menu",
+      "description": "Right-clicking Mogu in the Dock shows quick actions: Refresh Status, Quick Clean.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Right-click Dock icon shows Refresh Status and Quick Clean",
+        "Refresh Status switches to Status tab and triggers refresh",
+        "Quick Clean switches to Clean tab and triggers preview",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-023",
+      "name": "Share Sheet",
+      "description": "Standard macOS share menu so users can share Mogu (email, messages, etc.) with GitHub URL.",
+      "dependencies": [],
+      "doneCriteria": [
+        "File > Share shows standard NSSharingServicePicker",
+        "Share target is Mogu GitHub URL",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-024",
+      "name": "Release Notes After Update",
+      "description": "After a version bump, show release notes modal on next launch. Dismissed per-version via AppStorage.",
+      "dependencies": [],
+      "doneCriteria": [
+        "After version change, modal shows release notes on launch",
+        "Dismissed once per version (lastSeenVersion in AppStorage)",
+        "v1.0 shows Initial release or empty",
+        "make build passes"
+      ],
+      "status": "done",
+      "subTasks": [],
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     }
   ]
 }

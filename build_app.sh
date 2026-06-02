@@ -9,9 +9,14 @@ RUNTIME_SRC="Vendor/Mole"
 RUNTIME_DST="$RESOURCES/MoleRuntime"
 BUNDLE_ID="co.greenpassport.mogu"
 
+# Versioning — override via MOGU_VERSION / MOGU_BUILD env vars.
+VERSION="${MOGU_VERSION:-1.0}"
+BUILD="${MOGU_BUILD:-1}"
+
 swift build
 BIN_DIR="$(swift build --show-bin-path)"
 BINARY="$BIN_DIR/Mogu"
+SPARKLE_FRAMEWORK="$BIN_DIR/Sparkle.framework"
 
 if [[ ! -x "$BINARY" ]]; then
     echo "Mogu binary not found at $BINARY" >&2
@@ -33,7 +38,7 @@ if [[ ! -x "$RUNTIME_SRC/bin/status-go" || ! -x "$RUNTIME_SRC/bin/analyze-go" ]]
 fi
 
 rm -rf "$APP"
-mkdir -p "$MACOS" "$RESOURCES"
+mkdir -p "$MACOS" "$RESOURCES" "$CONTENTS/Frameworks"
 
 cat > "$CONTENTS/Info.plist" << PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -51,9 +56,9 @@ cat > "$CONTENTS/Info.plist" << PLIST
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0</string>
+    <string>${VERSION}</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>${BUILD}</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>NSPrincipalClass</key>
@@ -69,11 +74,31 @@ cat > "$CONTENTS/Info.plist" << PLIST
     <string>Mogu needs system administration access to manage application data and system caches.</string>
     <key>NSFaceIDUsageDescription</key>
     <string>Mogu uses Touch ID to confirm system-level cleanup before asking for your administrator password.</string>
+    <!-- Sparkle: the appcast URL for over-the-air updates. -->
+    <key>SUFeedURL</key>
+    <string>https://raw.githubusercontent.com/AKaLee-IK27/Mogu/main/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string>xF+hMsszyUne0c6xUIDlClNJWVj92ZR47mEdN0hKONI=</string>
 </dict>
 </plist>
 PLIST
 
 cp "$BINARY" "$MACOS/Mogu"
+
+# Fix the rpath so the bundled binary finds Sparkle.framework in @executable_path/../Frameworks
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$MACOS/Mogu" 2>/dev/null || true
+# Strip the Xcode developer-tool rpath that SwiftPM leaks in (causes Xprotect warnings)
+install_name_tool -delete_rpath "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx" "$MACOS/Mogu" 2>/dev/null || true
+install_name_tool -delete_rpath "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx" "$MACOS/Mogu" 2>/dev/null || true
+
+# Bundle Sparkle framework (SPM dependency)
+if [[ -d "$SPARKLE_FRAMEWORK" ]]; then
+    rm -rf "$CONTENTS/Frameworks/Sparkle.framework"
+    cp -R "$SPARKLE_FRAMEWORK" "$CONTENTS/Frameworks/"
+    echo "Bundled Sparkle.framework"
+else
+    echo "Warning: Sparkle.framework not found at $SPARKLE_FRAMEWORK" >&2
+fi
 
 # Bundle app icon
 if [[ -f "AppIcon.icns" ]]; then
@@ -83,6 +108,11 @@ fi
 # Bundle the sidebar brand mark (Mogu logo) used by ContentView's brandMark
 if [[ -f "SidebarLogo.png" ]]; then
     cp "SidebarLogo.png" "$RESOURCES/SidebarLogo.png"
+fi
+
+# Bundle CHANGELOG.md for the release-notes viewer
+if [[ -f "CHANGELOG.md" ]]; then
+    cp "CHANGELOG.md" "$RESOURCES/CHANGELOG.md"
 fi
 
 # Copy only the runtime artifacts (not .git, source, docs, tests)
@@ -141,14 +171,20 @@ for script in "$RUNTIME_DST"/bin/*.sh; do
     fi
 done
 
-# Step 3: Sign the main executable (replaces SwiftPM's ad-hoc signature)
+# Step 3: Sign Sparkle framework
+codesign --force --sign - \
+    --identifier "${BUNDLE_ID}" \
+    --options runtime \
+    "$CONTENTS/Frameworks/Sparkle.framework"
+
+# Step 4: Sign the main executable (replaces SwiftPM's ad-hoc signature)
 codesign --force --sign - \
     --identifier "${BUNDLE_ID}" \
     --entitlements "$ENTITLEMENTS" \
     --options runtime \
     "$MACOS/Mogu"
 
-# Step 4: Deep-sign the entire bundle to seal Resources and include nested binaries
+# Step 5: Deep-sign the entire bundle to seal Resources and include nested binaries
 # in the Sealed Resources list. --deep handles mo, mole, and shell scripts.
 codesign --force --deep --sign - \
     --entitlements "$ENTITLEMENTS" \

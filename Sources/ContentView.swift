@@ -46,6 +46,14 @@ struct ContentView: View {
     @State private var sidebarHover: SidebarItem?
     @State private var loadedTabs: Set<String> = []
 
+    // ── Feature flags (AppStorage) ──────────────────────
+    @AppStorage("hasSeenOnboarding")  private var hasSeenOnboarding  = false
+    @AppStorage("lastSelectedTab")    private var lastSelectedTab    = SidebarItem.status.rawValue
+    @AppStorage("lastSeenVersion")    private var lastSeenVersion    = ""
+    @State private var showOnboarding = false
+    @State private var showReleaseNotes = false
+    @State private var showAbout = false
+
     // Trigger bindings (change UUID to fire action in child view)
     @State private var statusRefresh = UUID()
     @State private var cleanRefresh = UUID()
@@ -70,11 +78,74 @@ struct ContentView: View {
 
     init() {
         let requestedScreen = Foundation.ProcessInfo.processInfo.environment["MOGU_SCREEN"]?.lowercased()
-        let initialItem = SidebarItem.allCases.first { $0.rawValue.lowercased() == requestedScreen } ?? .status
+        let initialItem: SidebarItem
+        if let requested = requestedScreen,
+           let match = SidebarItem.allCases.first(where: { $0.rawValue.lowercased() == requested }) {
+            initialItem = match
+        } else {
+            let stored = UserDefaults.standard.string(forKey: "lastSelectedTab") ?? SidebarItem.status.rawValue
+            initialItem = SidebarItem.allCases.first { $0.rawValue == stored } ?? .status
+        }
         _selectedItem = State(initialValue: initialItem)
     }
 
     var body: some View {
+        mainContent
+            // ── Onboarding sheet ────────────────────────
+            .sheet(isPresented: $showOnboarding) {
+                OnboardingView()
+            }
+            // ── Release notes sheet ─────────────────────
+            .sheet(isPresented: $showReleaseNotes) {
+                ReleaseNotesView()
+            }
+            // ── About sheet ─────────────────────────────
+            .sheet(isPresented: $showAbout) {
+                AboutSheet()
+            }
+            // ── Notification observers ──────────────────
+            .onReceive(NotificationCenter.default.publisher(for: .selectTab)) { notification in
+                guard let raw = notification.userInfo?["sidebarItem"] as? String,
+                      let item = SidebarItem(rawValue: raw) else { return }
+                withAnimation(DesignTokens.spring) { selectedItem = item }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .dockRefreshStatus)) { _ in
+                withAnimation(DesignTokens.spring) { selectedItem = .status }
+                statusRefresh = UUID()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .dockQuickClean)) { _ in
+                withAnimation(DesignTokens.spring) { selectedItem = .clean }
+                cleanRefresh = UUID()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .showOnboarding)) { _ in
+                showOnboarding = true
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .showAbout)) { _ in
+                showAbout = true
+            }
+            // ── Lifecycle ───────────────────────────────
+            .task {
+                isAvailable = await moService.isAvailable()
+                // Show onboarding on first launch.
+                if !hasSeenOnboarding {
+                    showOnboarding = true
+                }
+                // Show release notes after a version bump.
+                let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+                if lastSeenVersion.isEmpty {
+                    lastSeenVersion = currentVersion
+                } else if lastSeenVersion != currentVersion {
+                    showReleaseNotes = true
+                    lastSeenVersion = currentVersion
+                }
+            }
+            .onChange(of: selectedItem) { _, newValue in
+                lastSelectedTab = newValue.rawValue
+            }
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
         HStack(spacing: 0) {
             sidebar
                 .frame(width: 230)
@@ -94,7 +165,6 @@ struct ContentView: View {
             .background(DesignTokens.Color.pageBackground)
         }
         .frame(minWidth: 960, minHeight: 640)
-        .task { isAvailable = await moService.isAvailable() }
     }
 
     // Toolbar items
@@ -180,7 +250,8 @@ struct ContentView: View {
 
     // Bundled Mogu logo, loaded once (the sidebar recomputes on every hover,
     // so we must not re-decode the PNG per render). nil → fall back to the glyph.
-    private static let sidebarLogo: NSImage? = {
+    // Internal so AboutView in MoguApp.swift can reuse it.
+    static let sidebarLogo: NSImage? = {
         guard let url = Bundle.main.resourceURL?.appendingPathComponent("SidebarLogo.png") else { return nil }
         return NSImage(contentsOf: url)
     }()
@@ -458,5 +529,71 @@ struct NotInstalledView: View {
                 .background(DesignTokens.Color.codeBg)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
         }
+    }
+}
+
+// MARK: - About Sheet (replaces system About panel with custom content)
+
+struct AboutSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+
+    private var buildNumber: String {
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+    }
+
+    var body: some View {
+        VStack(spacing: 20) {
+            if let nsImage = ContentView.sidebarLogo {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            } else {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 64, height: 64)
+                    .background(DesignTokens.Color.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+
+            VStack(spacing: 4) {
+                Text("Mogu")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Version \(appVersion) (\(buildNumber))")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+            }
+
+            Divider()
+
+            VStack(spacing: 8) {
+                Text("Built on [Mole](https://github.com/tw93/Mole) by @tw93")
+                    .font(DesignTokens.Font.body)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .multilineTextAlignment(.center)
+                Text("MIT License")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+            }
+
+            Button {
+                NSWorkspace.shared.open(URL(string: "https://github.com/AKaLee-IK27/Mogu")!)
+            } label: {
+                Label("View on GitHub", systemImage: "link")
+            }
+            .buttonStyle(.link)
+
+            Button("Close") { dismiss() }
+                .keyboardShortcut(.escape, modifiers: [])
+        }
+        .padding(32)
+        .frame(width: 320)
     }
 }

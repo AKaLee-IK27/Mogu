@@ -3,75 +3,55 @@
 ## Current State
 
 **Last Updated:** 2026-06-02
-**Status:** feat-015 (in-app uninstaller + sortable list) shipped on `main` (commit `4ac5645`, pushed). App is **Mogu** (renamed from Drilbur; env vars `MOGU_SCREEN` / `MOGU_MO_PATH`).
+**Status:** feat-016 through feat-024 shipped — 9 professional polish features completed in one session.
 
-## Session 2026-06-02: In-app uninstaller + sortable list (feat-015)
+## Session 2026-06-02: Professional Polish (feat-016 → feat-024)
 
-Turned the read-only Uninstall browser into a working multi-select uninstaller, then added column sorting. One commit, pushed to `main`.
-
-| Area | What changed | Verification |
-|---|---|---|
-| Model | `AppInfo` + `source`/`path`/`requiresAdmin`; `UninstallPreview` | builds |
-| Parser | `MoOutputParser.parseUninstallPreview` (glyph block + ANSI strip) | golden fixture `uninstall-preview.txt`, 5 new tests |
-| Service | `streamFeeding` (fed `y\n`, uninstall-only); `bundleRequiresAdmin`; preview-before-delete guard | `make parser-test` 17/17 |
-| View | multi-select + admin-deferred rows, confirm sheet, streamed execute, sortable columns | real uninstall of a disposable bundle → Trash, exit 0, no hang |
-
-**Verification highlights:** fed `y\n` drives Mole's two uninstall prompts (proven on dry-run single + multi-app); a real execute removed a dummy app + leftover into `~/.Trash`; admin detection matches `stat` (user-owned selectable, root-owned flagged); app launches to the Uninstall screen and renders (checkboxes, Admin badges, size-descending sort).
-
-**Adversarial review:** 25-agent multi-dimension review returned 12 confirmed findings, all triaged. Fixed the real ones (preview/execute selection re-validation, live admin re-check, sheet-state ordering, banner-flicker fold, missing-terminator test, README locale note). Refuted one HIGH by primary source: "admin detection misses system leftovers" is moot because Mole forces `system_files=""` before its `needs_sudo` check (`batch.sh:517`).
-
-**Deferred (discussed, not built):** uninstalling admin apps in-app (needs elevated run with `$HOME` pinned + verification), and an admin pre-authorize button in Permissions (macOS has no persistent admin grant for an ad-hoc-signed app).
-
-## Session 2026-06-01 — Drilbur rename + 4 next tasks
-
-App renamed **MoleMac → Drilbur**, plus four follow-on tasks. One commit per feature; all verified.
+Nine features across 3 tiers, all verified at runtime.
 
 | ID | Feature | Verification |
 |---|---|---|
-| feat-010 | Analyze decode fix (`isDir` optional) | Root cause confirmed vs real mo (`large_files[]` omit `is_dir`); `5d4e1c9` |
-| feat-009 | Rename → Drilbur (`co.greenpassport.drilbur`) | Zero residue, MoleRuntime intact, signed valid, runtime title/sidebar/menu "Drilbur"; `a2fbfae` |
-| feat-011 | Parser-resilience harness | `MoOutputParser` extracted + `DrilburTests` (8 tests, `make parser-test`); drift mutation fails the golden test; `dada995` |
-| feat-013 | Shared error-state UX | `ErrorStateView` (msg + Retry) across 5 tabs; forced-failure + normal-path screenshots; `912aadd` |
-| feat-012 | FDA not-granted check | Resolved, no code change: new bundle id = no FDA by default; `open`-launched Permissions card reads "Not granted"; probe already on system `/Library` path |
+| feat-016 | About Mogu Window | Custom sheet with logo, version, Mole credit, MIT license, GitHub link |
+| feat-017 | First-Run Onboarding | 3-card modal on first launch, AppStorage skip, re-triggable via Help menu |
+| feat-018 | Sparkle Update Framework | Sparkle 2.9.2 via SPM, rpath fixed, bundled in Contents/Frameworks, appcast placeholder |
+| feat-019 | App Preferences Window | ⌘, opens settings: auto-update toggle, launch-at-login, version display |
+| feat-020 | Menu Commands & Shortcuts | Navigate menu (⌘1-⌘7), Help (Show Onboarding, GitHub), File (Share Mogu), Edit (standard) |
+| feat-021 | Window State Restoration | AppStorage lastSelectedTab, MOGU_SCREEN override still works |
+| feat-022 | Dock Menu | Right-click Dock icon: Refresh Status, Quick Clean (notification bridge) |
+| feat-023 | Share Sheet | File > Share Mogu → NSSharingServicePicker with GitHub URL |
+| feat-024 | Release Notes | CHANGELOG.md bundled, version-bump detection via AppStorage lastSeenVersion |
 
-**Key learning:** verify FDA state via `open` (LaunchServices), never by direct-exec'ing the bundle
-binary from a terminal — the child inherits the terminal's FDA (TCC responsible-process attribution).
+**Verification highlights:** `make build` + `make app` + `make parser-test` (17/17) all pass. Runtime verified via screenshots: onboarding modal on first launch, About Mogu custom sheet, Preferences window with settings, Navigate menu with tab shortcuts, Status dashboard with Live badge. Sparkle rpath fixed via `install_name_tool`.
+
+**Files changed:** 9 files (4 modified, 4 new, 1 tracking)
+- Modified: `Package.swift`, `Sources/MoguApp.swift`, `Sources/ContentView.swift`, `build_app.sh`
+- New: `Sources/Views/Components/OnboardingView.swift`, `Sources/Views/Components/ReleaseNotesView.swift`, `Sources/Views/SettingsView.swift`, `CHANGELOG.md`
 
 ## Completed Features
 
 | ID | Feature | Status | Evidence |
 |---|---|---|---|
-| feat-003 | App Icon | done | icon.png → AppIcon.icns, bundled in build_app.sh |
-| feat-004 | Auto-Refresh Status Tab | done | Timer.publish every 30s, Live badge in header |
-| feat-005 | Sort/Filter Uninstall & Purge | done | SortOrder enum, .searchable on both views |
-| feat-006 | Real Uninstall Execution | done | executeUninstall in MoService, confirmation dialog |
-| feat-007 | Dark Mode | done | adaptive() helper, Color(light:dark:) extension |
-| crash-fix | macOS 26.5 Toolbar Crash | done | 2-slot pattern with explicit IDs |
-
-## Crash Investigation Summary
-
-**Symptom:** SIGTRAP in `[NSToolbar _insertNewItemWithItemIdentifier:]` on macOS 26.5
-**Root Cause:** Switch-based `@ToolbarContentBuilder` with 9 ToolbarItems across cases crashes during initial layout on macOS 26.5.
-**Fix:** Consolidated to 2 fixed slots (`refresh`, `action`) with explicit `id:` and computed properties. No `EmptyView()` in toolbar items — use `if showAction` at ToolbarContent level.
-**Hypotheses tested (all ruled out):** tint colors, EmptyView, explicit IDs on switch-based items
-**Verified:** App launches and runs without crash on macOS 26.5 (25F71). Screenshot captured at 21:26.
-
-## Files Modified
-
-- `Sources/ContentView.swift` — 2-slot toolbar with explicit IDs, uninstall button
-- `Sources/Services/MoService.swift` — executeUninstall, previewUninstall
-- `Sources/Theme/DesignTokens.swift` — adaptive() helper, dark color variants, Color(light:dark:) extension
-- `Sources/Views/StatusView.swift` — Timer.publish auto-refresh, Live badge
-- `Sources/Views/UninstallView.swift` — SortOrder, .searchable, runTrigger, confirmation dialog
-- `Sources/Views/PurgeView.swift` — SortOrder, .searchable
-- `Sources/DrilburApp.swift` — Removed forced .aqua/.light
-- `build_app.sh` — Bundle AppIcon.icns
-- `AppIcon.icns` — Generated from icon.png
-
-## Verification
-
-| Check | Command | Result |
-|---|---|---|
-| Swift build | `make build` | ✓ |
-| Test | `make test` | ✓ |
-| App launch | `open /Applications/Drilbur.app` | ✓ No crash, dark mode confirmed via screenshot |
+| feat-001 | Project Verification Baseline | done | make build + make test pass |
+| feat-002 | Build Mole from Source | done | Vendor/Mole submodule, Go binaries |
+| feat-003 | App Icon | done | AppIcon.icns from icon-source.png |
+| feat-004 | Auto-Refresh Status Tab | done | 30s timer, Live badge |
+| feat-005 | Sort/Filter Uninstall & Purge | done | SortOrder enum, .searchable |
+| feat-006 | Real Uninstall Execution | done | executeUninstall + confirmation |
+| feat-007 | Dark Mode | done | adaptive() helper, light/dark tokens |
+| feat-008 | Permissions / FDA Finish | done | Analyze preflight banner |
+| feat-009 | Rename App to Mogu | done | co.greenpassport.mogu, all strings updated |
+| feat-010 | Analyze Decode Fix | done | DiskEntry.isDir optional |
+| feat-011 | Parser-Resilience Harness | done | 17 tests, golden fixtures |
+| feat-012 | FDA Not-Granted Check | done | LaunchServices probe verified |
+| feat-013 | Consistent Error-State UX | done | ErrorStateView across 5 tabs |
+| feat-014 | Mogu Personalization | done | Drilbur icon, navy accent, sidebar mark |
+| feat-015 | In-App Uninstaller | done | Multi-select, preview, admin-deferred, sortable |
+| feat-016 | About Mogu Window | done | Custom sheet with Mole credit |
+| feat-017 | First-Run Onboarding | done | 3-card modal, AppStorage |
+| feat-018 | Sparkle Update Framework | done | SPM, rpath fixed, appcast placeholder |
+| feat-019 | App Preferences Window | done | ⌘, settings with 2 toggles + version |
+| feat-020 | Menu Commands & Shortcuts | done | Navigate ⌘1-⌘7, Help, Share |
+| feat-021 | Window State Restoration | done | AppStorage lastSelectedTab |
+| feat-022 | Dock Menu | done | Refresh Status, Quick Clean |
+| feat-023 | Share Sheet | done | NSSharingServicePicker |
+| feat-024 | Release Notes | done | CHANGELOG bundled, version detection |

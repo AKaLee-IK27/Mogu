@@ -7,9 +7,15 @@ let package = Package(
     products: [
         .executable(name: "Mogu", targets: ["Mogu"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.7.0")
+    ],
     targets: [
         .executableTarget(
             name: "Mogu",
+            dependencies: [
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             path: "Sources"
         ),
         .testTarget(
