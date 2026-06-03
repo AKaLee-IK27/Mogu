@@ -2,8 +2,21 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-02
-**Status:** feat-016 through feat-024 shipped — 9 professional polish features completed in one session.
+**Last Updated:** 2026-06-03
+**Status:** feat-025 completed locally — Status dashboard visual polish implemented and runtime-verified.
+
+## Session 2026-06-03: Status Dashboard Visual Polish (feat-025)
+
+Finished the in-progress Status screen redesign and closed the live-polling safety gap.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-025 | Status Dashboard Visual Polish | `make build`, `make test`, `make app`, `make parser-test`; runtime window capture `/tmp/mogu-status-live-feat025-live.png`; active Status sampling observed `status-go` on cadence; after backgrounding, 20s sample showed no `status-go` / `mole status --json` processes |
+
+**Key fix:** macOS `scenePhase` stayed active while another app was frontmost, so foreground gating now uses `NSApplication.didBecomeActiveNotification` / `didResignActiveNotification` in `Sources/Views/StatusView.swift`.
+
+**Files changed:** 5 files
+- Modified: `Sources/Views/StatusView.swift`, `feature_list.json`, `progress.md`, `session-handoff.md`, `plans/status-live-redesign.md`
 
 ## Session 2026-06-02: Professional Polish (feat-016 → feat-024)
 
@@ -55,3 +68,4 @@ Nine features across 3 tiers, all verified at runtime.
 | feat-022 | Dock Menu | done | Refresh Status, Quick Clean |
 | feat-023 | Share Sheet | done | NSSharingServicePicker |
 | feat-024 | Release Notes | done | CHANGELOG bundled, version detection |
+| feat-025 | Status Dashboard Visual Polish | done | Runtime-verified live dashboard + foreground-gated polling |

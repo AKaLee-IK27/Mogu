@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct StatusView: View {
@@ -6,7 +7,7 @@ struct StatusView: View {
     @Binding var refreshTrigger: UUID
     @Binding var isLoading: Bool
 
-    @Environment(\.scenePhase) private var scenePhase
+    @State private var appIsActive = NSApplication.shared.isActive
     @State private var status: SystemStatus?
     @State private var error: String?
     @State private var history = StatusHistory()
@@ -15,31 +16,19 @@ struct StatusView: View {
     @State private var appear = false
 
     private var pollingEnabled: Bool {
-        isActive && scenePhase == .active
+        isActive && appIsActive
     }
 
     var body: some View {
         VStack(spacing: 0) {
             if let status {
                 headerBar(status)
-                Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
+                Rectangle().fill(DesignTokens.Color.separator).frame(height: 1)
 
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        primaryMetrics(status)
-                            .opacity(appear ? 1 : 0)
-                            .offset(y: appear ? 0 : 8)
-
-                        ioMetrics(status)
-                            .opacity(appear ? 1 : 0)
-                            .offset(y: appear ? 0 : 6)
-
-                        processesSection(status)
-                            .opacity(appear ? 1 : 0)
-                            .offset(y: appear ? 0 : 4)
-                    }
-                    .padding(24)
+                    content(status)
                 }
+                .padding(viewPadding)
             } else if isLoading || requestInFlight {
                 loadingView
             } else if let error {
@@ -50,12 +39,23 @@ struct StatusView: View {
         }
         .background(DesignTokens.Color.pageBackground)
         .task(id: pollingEnabled) { await pollingLoop(active: pollingEnabled) }
-        .onAppear { withAnimation(DesignTokens.spring) { appear = true } }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            appIsActive = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didResignActiveNotification)) { _ in
+            appIsActive = false
+        }
+        .onAppear {
+            appIsActive = NSApplication.shared.isActive
+            withAnimation(DesignTokens.spring) { appear = true }
+        }
         .onChange(of: refreshTrigger) { oldValue, newValue in
             guard oldValue != newValue, pollingEnabled else { return }
             Task { await refresh() }
         }
     }
+
+    // MARK: - Polling
 
     private func pollingLoop(active: Bool) async {
         guard active else {
@@ -76,25 +76,131 @@ struct StatusView: View {
         }
     }
 
+    // MARK: - Responsive content
+
+    private var viewPadding: CGFloat {
+        24
+    }
+
+    @ViewBuilder
+    private func content(_ s: SystemStatus) -> some View {
+        // ViewThatFits picks the first child that fits, enabling adaptive column counts
+        VStack(alignment: .leading, spacing: 20) {
+            heroSection(s)
+                .opacity(appear ? 1 : 0)
+                .offset(y: appear ? 0 : 8)
+
+            metricsGrid3(s)
+                .opacity(appear ? 1 : 0)
+                .offset(y: appear ? 0 : 6)
+
+            ioGrid3(s)
+                .opacity(appear ? 1 : 0)
+                .offset(y: appear ? 0 : 4)
+
+            processesSection(s)
+                .opacity(appear ? 1 : 0)
+                .offset(y: appear ? 0 : 2)
+        }
+    }
+
+    // Adaptive metric rows: each row is an HStack where both cards
+    // are stretched to equal height via maxHeight: .infinity.
+    // ViewThatFits picks the first layout that fits horizontally.
+    @ViewBuilder
+    private func metricsGrid3(_ s: SystemStatus) -> some View {
+        ViewThatFits(in: .horizontal) {
+            // 3 in a row
+            metricsRow3(
+                AnyView(metricCard { cpuSection(s.cpu) }),
+                AnyView(metricCard { memorySection(s.memory) }),
+                AnyView(metricCard { diskSection(s.disks) })
+            )
+            // 2+1 split
+            VStack(spacing: 16) {
+                metricsRow2(
+                    AnyView(metricCard { cpuSection(s.cpu) }),
+                    AnyView(metricCard { memorySection(s.memory) })
+                )
+                metricCard { diskSection(s.disks) }
+            }
+            // stacked
+            VStack(spacing: 16) {
+                metricCard { cpuSection(s.cpu) }
+                metricCard { memorySection(s.memory) }
+                metricCard { diskSection(s.disks) }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func ioGrid3(_ s: SystemStatus) -> some View {
+        ViewThatFits(in: .horizontal) {
+            ioRow3(
+                AnyView(metricCard { diskIOSection(s.diskIO) }),
+                AnyView(metricCard { networkSection(s.primaryNetworkInterface) }),
+                AnyView(metricCard { secondaryStatusSection(s) })
+            )
+            VStack(spacing: 16) {
+                ioRow2(
+                    AnyView(metricCard { diskIOSection(s.diskIO) }),
+                    AnyView(metricCard { networkSection(s.primaryNetworkInterface) })
+                )
+                metricCard { secondaryStatusSection(s) }
+            }
+            VStack(spacing: 16) {
+                metricCard { diskIOSection(s.diskIO) }
+                metricCard { networkSection(s.primaryNetworkInterface) }
+                metricCard { secondaryStatusSection(s) }
+            }
+        }
+    }
+
+    // HStack rows where all cards stretch to equal height
+    private func metricsRow3(_ a: AnyView, _ b: AnyView, _ c: AnyView) -> some View {
+        HStack(spacing: 16) {
+            a.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            b.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            c.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func metricsRow2(_ a: AnyView, _ b: AnyView) -> some View {
+        HStack(spacing: 16) {
+            a.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            b.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func ioRow3(_ a: AnyView, _ b: AnyView, _ c: AnyView) -> some View {
+        HStack(spacing: 16) {
+            a.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            b.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            c.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    private func ioRow2(_ a: AnyView, _ b: AnyView) -> some View {
+        HStack(spacing: 16) {
+            a.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            b.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        }
+    }
+
+    // MARK: - Header
+
     private func headerBar(_ status: SystemStatus) -> some View {
         HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 10) {
-                    Text("System Status")
-                        .font(DesignTokens.Font.page)
-                        .foregroundStyle(DesignTokens.Color.primary)
-                    liveBadge
-                    proxyBadge(status.proxy)
-                }
-
-                Text("\(status.hardware.cpuModel) · \(status.hardware.totalRam) · \(status.hardware.osVersion) · up \(status.uptime)")
-                    .font(DesignTokens.Font.caption)
-                    .foregroundStyle(DesignTokens.Color.tertiary)
-                    .lineLimit(1)
+            HStack(spacing: 10) {
+                Text("Status")
+                    .font(DesignTokens.Font.page)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                liveBadge
+                proxyBadge(status.proxy)
             }
 
             Spacer()
-            healthBadge(score: status.healthScore)
+
             if let collectedAt = StatusTimestamp.displayTime(from: status.collectedAt) {
                 Text("Updated \(collectedAt)")
                     .font(DesignTokens.Font.label)
@@ -105,7 +211,7 @@ struct StatusView: View {
             }
         }
         .padding(.horizontal, 32)
-        .padding(.vertical, 20)
+        .padding(.vertical, 16)
     }
 
     private var liveBadge: some View {
@@ -140,36 +246,99 @@ struct StatusView: View {
         }
     }
 
-    private func healthBadge(score: Int) -> some View {
-        let color = DesignTokens.healthColor(score: score)
-        let bg = DesignTokens.healthBgColor(score: score)
-        return HStack(spacing: 6) {
-            Image(systemName: DesignTokens.healthIcon(score: score))
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(color)
-            Text("\(score)")
-                .font(DesignTokens.Font.monoLarge)
-                .foregroundStyle(color)
-                .monospacedDigit()
+    // MARK: - Hero Section: health score + hardware summary
+
+    private func heroSection(_ s: SystemStatus) -> some View {
+        ViewThatFits(in: .horizontal) {
+            heroRow(s)
+            VStack(spacing: 16) {
+                heroRow(s)
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(bg)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
     }
 
-    private func primaryMetrics(_ s: SystemStatus) -> some View {
-        HStack(alignment: .top, spacing: 18) {
-            metricCard { cpuSection(s.cpu) }
-            metricCard { memorySection(s.memory) }
-            metricCard { diskSection(s.disks) }
+    private func heroRow(_ s: SystemStatus) -> some View {
+        HStack(spacing: 20) {
+            healthGauge(score: s.healthScore)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(s.hardware.cpuModel)
+                    .font(DesignTokens.Font.bodyStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                    .lineLimit(1)
+                Text("\(s.hardware.totalRam) RAM · \(s.hardware.osVersion) · up \(s.uptime)")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(20)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+    }
+
+    private func healthGauge(score: Int) -> some View {
+        let color = DesignTokens.healthColor(score: score)
+        let bg = DesignTokens.healthBgColor(score: score)
+        let ringProgress = Double(score) / 100.0
+
+        return HStack(spacing: 14) {
+            ZStack {
+                // Background ring
+                Circle()
+                    .stroke(DesignTokens.Color.pageBackground, lineWidth: 4)
+                    .frame(width: 56, height: 56)
+                // Progress ring (270-degree arc starting from top-left)
+                Circle()
+                    .trim(from: 0, to: ringProgress)
+                    .stroke(
+                        color,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round)
+                    )
+                    .frame(width: 56, height: 56)
+                    .rotationEffect(.degrees(-90))
+                    .animation(DesignTokens.spring, value: score)
+                // Score number
+                Text("\(score)")
+                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                    .foregroundStyle(color)
+                    .monospacedDigit()
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Health Score")
+                    .font(DesignTokens.Font.labelUppercase)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                Text(healthLabel(score: score))
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+    }
+
+    private func healthLabel(score: Int) -> String {
+        switch score {
+        case 90...100: return "Excellent"
+        case 80..<90: return "Good"
+        case 70..<80: return "Fair"
+        case 60..<70: return "Needs attention"
+        default: return "Critical"
         }
     }
 
     private func cpuSection(_ cpu: CPUInfo) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             sectionHeader("CPU", value: "\(cpu.usage.pctString)%", subtitle: "\(cpu.pCoreCount)P + \(cpu.eCoreCount)E cores")
-            ProgressBar(value: cpu.usage / 100, color: DesignTokens.Color.accent)
+
+            // Wider progress bar
+            ProgressBar(value: cpu.usage / 100, color: cpuColor(cpu.usage), height: 8)
+
+            // Sparkline: taller for readability
             LiveSparkline(
                 samples: history.samples,
                 title: "CPU usage",
@@ -177,8 +346,13 @@ struct StatusView: View {
                 yDomain: 0...100,
                 value: { $0.cpuUsage }
             )
+            .frame(height: 56)
+
+            // Per-core strip, compact
             PerCoreStrip(perCore: cpu.perCore, pCoreCount: cpu.pCoreCount, eCoreCount: cpu.eCoreCount)
-            HStack(spacing: 6) {
+
+            // Load averages in a single compact row
+            HStack(spacing: 8) {
                 loadBadge(label: "1m", value: cpu.load1)
                 loadBadge(label: "5m", value: cpu.load5)
                 loadBadge(label: "15m", value: cpu.load15)
@@ -186,70 +360,96 @@ struct StatusView: View {
         }
     }
 
+    private func cpuColor(_ usage: Double) -> SwiftUI.Color {
+        switch usage {
+        case 0..<50: return DesignTokens.Color.accent
+        case 50..<80: return DesignTokens.Color.warning
+        default: return DesignTokens.Color.dangerText
+        }
+    }
+
     private func memorySection(_ mem: MemoryInfo) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Memory", value: "\(mem.usedPercent.pctString)%", subtitle: mem.used.humanReadable)
-            ProgressBar(value: mem.usedPercent / 100, color: DesignTokens.Color.accentSecondary)
+
+            ProgressBar(value: mem.usedPercent / 100, color: DesignTokens.Color.accentSecondary, height: 8)
+
             MemoryBreakdownBar(memory: mem)
+
+            // Compact total/free/swap line
             HStack {
                 statLine("Total", mem.total.humanReadable)
                 Spacer()
                 statLine("Free", mem.free.humanReadable)
-            }
-        }
-    }
-
-    private func diskSection(_ disks: [DiskInfo]) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Disk")
-            ForEach(disks.prefix(3)) { disk in
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        Text(disk.mount)
-                            .font(DesignTokens.Font.caption)
-                            .foregroundStyle(DesignTokens.Color.tertiary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Spacer()
-                        Text("\(disk.usedPercent.pctString)%")
-                            .font(DesignTokens.Font.mono)
-                            .foregroundStyle(DesignTokens.Color.secondary)
-                    }
-                    MiniBar(value: disk.usedPercent / 100, color: DesignTokens.Color.accent)
-                    HStack {
-                        statLine("Used", disk.used.humanReadable)
-                        Spacer()
-                        statLine("Free", disk.free.humanReadable)
-                    }
+                if let swapUsed = mem.swapUsed, swapUsed > 0 {
+                    Spacer()
+                    statLine("Swap", swapUsed.humanReadable)
                 }
             }
         }
     }
 
-    private func ioMetrics(_ s: SystemStatus) -> some View {
-        HStack(alignment: .top, spacing: 18) {
-            metricCard { diskIOSection(s.diskIO) }
-            metricCard { networkSection(s.primaryNetworkInterface) }
-            metricCard { secondaryStatusSection(s) }
+    private func diskSection(_ disks: [DiskInfo]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("Storage")
+            ForEach(disks.prefix(3)) { disk in
+                diskRow(disk)
+            }
+        }
+    }
+
+    private func diskRow(_ disk: DiskInfo) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(disk.mount)
+                    .font(DesignTokens.Font.captionStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Spacer()
+                Text(disk.used.humanReadable)
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+                Text("/")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.placeholder)
+                Text(disk.total.humanReadable)
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+                Text("\(disk.usedPercent.pctString)%")
+                    .font(DesignTokens.Font.monoBold)
+                    .foregroundStyle(diskColor(disk.usedPercent))
+                    .monospacedDigit()
+            }
+            MiniBar(value: disk.usedPercent / 100, color: diskColor(disk.usedPercent))
+        }
+    }
+
+    private func diskColor(_ pct: Double) -> SwiftUI.Color {
+        switch pct {
+        case 0..<70: return DesignTokens.Color.accent
+        case 70..<85: return DesignTokens.Color.warning
+        default: return DesignTokens.Color.dangerText
         }
     }
 
     private func diskIOSection(_ diskIO: DiskIO?) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             sectionHeader("Disk I/O")
-            HStack(spacing: 14) {
-                rateSparkline(
+            HStack(spacing: 16) {
+                ioRateDisplay(
                     label: "Read",
                     value: diskIO?.readRate ?? 0,
-                    symbol: "↓",
+                    symbol: "arrow.down",
                     color: DesignTokens.Color.successText,
                     domain: 0...history.maxValue(\.diskReadRate),
                     sampleValue: { $0.diskReadRate }
                 )
-                rateSparkline(
+                Divider().frame(height: 50)
+                ioRateDisplay(
                     label: "Write",
                     value: diskIO?.writeRate ?? 0,
-                    symbol: "↑",
+                    symbol: "arrow.up",
                     color: DesignTokens.Color.accentTint,
                     domain: 0...history.maxValue(\.diskWriteRate),
                     sampleValue: { $0.diskWriteRate }
@@ -259,21 +459,22 @@ struct StatusView: View {
     }
 
     private func networkSection(_ iface: NetworkInterface?) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Network", subtitle: iface?.name ?? "No interface")
-            HStack(spacing: 14) {
-                rateSparkline(
+        VStack(alignment: .leading, spacing: 10) {
+            sectionHeader("Network", subtitle: iface?.name)
+            HStack(spacing: 16) {
+                ioRateDisplay(
                     label: "Down",
                     value: iface?.rxRate ?? 0,
-                    symbol: "↓",
+                    symbol: "arrow.down",
                     color: DesignTokens.Color.successText,
                     domain: 0...history.maxValue(\.networkRxRate),
                     sampleValue: { $0.networkRxRate }
                 )
-                rateSparkline(
+                Divider().frame(height: 50)
+                ioRateDisplay(
                     label: "Up",
                     value: iface?.txRate ?? 0,
-                    symbol: "↑",
+                    symbol: "arrow.up",
                     color: DesignTokens.Color.accentTint,
                     domain: 0...history.maxValue(\.networkTxRate),
                     sampleValue: { $0.networkTxRate }
@@ -281,34 +482,12 @@ struct StatusView: View {
             }
             if let ip = iface?.ip {
                 statLine("IP", ip)
+                    .padding(.top, 2)
             }
         }
     }
 
-    private func secondaryStatusSection(_ s: SystemStatus) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("System", subtitle: s.procs.map { "\($0) processes" })
-            if let battery = s.batteries?.first {
-                HStack(spacing: 12) {
-                    statLine("Battery", "\(battery.percent)%")
-                    if let health = battery.health { statLine("Health", health) }
-                    if let cycles = battery.cycleCount { statLine("Cycles", "\(cycles)") }
-                }
-            } else {
-                statLine("Battery", "No battery data")
-            }
-
-            if let thermal = s.thermal {
-                HStack(spacing: 12) {
-                    if let cpuTemp = thermal.cpuTemp, cpuTemp > 0 { statLine("CPU", String(format: "%.1f°C", cpuTemp)) }
-                    if let gpuTemp = thermal.gpuTemp, gpuTemp > 0 { statLine("GPU", String(format: "%.1f°C", gpuTemp)) }
-                    if let fan = thermal.fanSpeed, fan > 0 { statLine("Fan", "\(fan) RPM") }
-                }
-            }
-        }
-    }
-
-    private func rateSparkline(
+    private func ioRateDisplay(
         label: String,
         value: Double,
         symbol: String,
@@ -316,10 +495,10 @@ struct StatusView: View {
         domain: ClosedRange<Double>,
         sampleValue: @escaping (StatusSample) -> Double
     ) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 5) {
-                Text(symbol)
-                    .font(DesignTokens.Font.monoBold)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: symbol)
+                    .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(color)
                 Text(formatRate(value))
                     .font(DesignTokens.Font.monoBold)
@@ -330,19 +509,162 @@ struct StatusView: View {
                 .font(DesignTokens.Font.caption)
                 .foregroundStyle(DesignTokens.Color.tertiary)
             LiveSparkline(samples: history.samples, title: label, color: color, yDomain: domain, value: sampleValue)
+                .frame(height: 32)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private func secondaryStatusSection(_ s: SystemStatus) -> some View {
+        let battery = s.batteries?.first
+        let thermalReadings = s.thermal.map { self.thermalReadings($0) } ?? []
+
+        return VStack(alignment: .leading, spacing: 14) {
+            sectionHeader("System")
+
+            if let battery {
+                batteryWidget(battery)
+            }
+
+            if !thermalReadings.isEmpty {
+                thermalLine(thermalReadings)
+            }
+
+            if battery == nil && thermalReadings.isEmpty {
+                statLine("Sensors", "No battery or thermal data")
+            }
+        }
+    }
+
+    private func batteryWidget(_ battery: BatteryInfo) -> some View {
+        let color = batteryColor(battery.percent)
+        let bg = batteryBgColor(battery.percent)
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center, spacing: 14) {
+                // Large battery icon with percentage inside
+                ZStack {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(color, lineWidth: 2)
+                        .frame(width: 44, height: 22)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(color)
+                        .frame(width: max(3, CGFloat(battery.percent) / 100 * 36), height: 16)
+                        .offset(x: 2)
+                    // Terminal nub
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(color)
+                        .frame(width: 3, height: 8)
+                        .offset(x: 24)
+                    // Percentage centered
+                    Text("\(battery.percent)")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundStyle(color)
+                        .monospacedDigit()
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Battery")
+                        .font(DesignTokens.Font.labelUppercase)
+                        .foregroundStyle(DesignTokens.Color.secondary)
+                    Text(batteryDetailLine(battery))
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+            }
+
+            // Stats row: time left, cycles, health
+            batteryStatsRow(battery)
+        }
+        .padding(12)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+    }
+
+    private func batteryBgColor(_ percent: Int) -> SwiftUI.Color {
+        switch percent {
+        case 0..<20: return DesignTokens.Color.dangerSoft
+        case 20..<50: return DesignTokens.Color.warningSoft
+        default: return DesignTokens.Color.successSoft
+        }
+    }
+
+    private func batteryDetailLine(_ battery: BatteryInfo) -> String {
+        if let timeLeft = battery.timeLeft, !timeLeft.isEmpty {
+            return timeLeft
+        }
+        if let status = battery.status, !status.isEmpty {
+            return status
+        }
+        return "Charged"
+    }
+
+    @ViewBuilder
+    private func batteryStatsRow(_ battery: BatteryInfo) -> some View {
+        let items = batteryStatItems(battery)
+        if !items.isEmpty {
+            HStack(spacing: 12) {
+                ForEach(items.indices, id: \.self) { i in
+                    statLine(items[i].label, items[i].value)
+                }
+            }
+        }
+    }
+
+    private func batteryStatItems(_ battery: BatteryInfo) -> [(label: String, value: String)] {
+        var items: [(String, String)] = []
+        if let cycles = battery.cycleCount {
+            items.append(("Cycles", "\(cycles)"))
+        }
+        if let health = battery.health, !health.isEmpty {
+            items.append(("Health", health))
+        }
+        if let capacity = battery.capacity {
+            items.append(("Capacity", "\(capacity) mAh"))
+        }
+        return items
+    }
+
+    private func batteryColor(_ percent: Int) -> SwiftUI.Color {
+        switch percent {
+        case 0..<20: return DesignTokens.Color.dangerText
+        case 20..<50: return DesignTokens.Color.warningText
+        default: return DesignTokens.Color.successText
+        }
+    }
+
+    private func thermalLine(_ readings: [String]) -> some View {
+        HStack(spacing: 8) {
+            ForEach(readings.indices, id: \.self) { i in
+                Text(readings[i])
+                    .font(DesignTokens.Font.mono)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+            }
+        }
+    }
+
+    private func thermalReadings(_ t: ThermalInfo) -> [String] {
+        var out: [String] = []
+        if let v = t.cpuTemp, v > 0 { out.append("CPU \(String(format: "%.1f", v))°") }
+        if let v = t.gpuTemp, v > 0 { out.append("GPU \(String(format: "%.1f", v))°") }
+        if let v = t.fanSpeed, v > 0 { out.append("Fan \(v) RPM") }
+        return out
+    }
+
+    // MARK: - Processes Section
+
     private func processesSection(_ s: SystemStatus) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .firstTextBaseline) {
+            HStack {
                 sectionHeader("Top Processes", subtitle: "stable order · live CPU")
                 Spacer()
             }
-            .padding(.bottom, 12)
+            .padding(.bottom, 10)
 
-            if !orderedProcesses(for: s).isEmpty {
+            let processes = orderedProcesses(for: s)
+            if !processes.isEmpty {
+                // Column headers
                 HStack {
                     Text("Process")
                         .font(DesignTokens.Font.label)
@@ -351,51 +673,26 @@ struct StatusView: View {
                     Text("CPU")
                         .font(DesignTokens.Font.label)
                         .foregroundStyle(DesignTokens.Color.tertiary)
-                        .frame(width: 80, alignment: .trailing)
+                        .frame(width: 70, alignment: .trailing)
                     Text("MEM")
                         .font(DesignTokens.Font.label)
                         .foregroundStyle(DesignTokens.Color.tertiary)
-                        .frame(width: 80, alignment: .trailing)
+                        .frame(width: 70, alignment: .trailing)
                 }
                 .padding(.horizontal, 14)
-                .padding(.bottom, 8)
+                .padding(.bottom, 6)
 
                 VStack(spacing: 0) {
-                    ForEach(Array(orderedProcesses(for: s).prefix(8).enumerated()), id: \.element.id) { i, proc in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(proc.name)
-                                    .font(DesignTokens.Font.body)
-                                    .foregroundStyle(DesignTokens.Color.primary)
-                                    .lineLimit(1)
-                                if let command = proc.command, !command.isEmpty {
-                                    Text(command)
-                                        .font(DesignTokens.Font.caption)
-                                        .foregroundStyle(DesignTokens.Color.tertiary)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                            Text("\(proc.cpu.pctString)%")
-                                .font(DesignTokens.Font.mono)
-                                .foregroundStyle(DesignTokens.Color.secondary)
-                                .monospacedDigit()
-                                .frame(width: 80, alignment: .trailing)
-                            Text("\(proc.memory.pctString)%")
-                                .font(DesignTokens.Font.mono)
-                                .foregroundStyle(DesignTokens.Color.secondary)
-                                .monospacedDigit()
-                                .frame(width: 80, alignment: .trailing)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                        .background(i % 2 == 0 ? DesignTokens.Color.cardBackground : DesignTokens.Color.pageBackground)
+                    ForEach(Array(processes.prefix(8).enumerated()), id: \.element.id) { i, proc in
+                        processRow(proc, index: i)
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
                 .overlay(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium).stroke(DesignTokens.Color.separatorLight, lineWidth: 1))
+            } else {
+                Text("No process data")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
             }
         }
         .padding(18)
@@ -403,6 +700,41 @@ struct StatusView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
         .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
+
+    private func processRow(_ proc: ProcessInfo, index: Int) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(proc.name)
+                    .font(DesignTokens.Font.body)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                    .lineLimit(1)
+                if let command = proc.command, !command.isEmpty {
+                    Text(command)
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text("\(proc.cpu.pctString)%")
+                .font(DesignTokens.Font.mono)
+                .foregroundStyle(cpuColor(proc.cpu))
+                .monospacedDigit()
+                .frame(width: 70, alignment: .trailing)
+            Text("\(proc.memory.pctString)%")
+                .font(DesignTokens.Font.mono)
+                .foregroundStyle(DesignTokens.Color.secondary)
+                .monospacedDigit()
+                .frame(width: 70, alignment: .trailing)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(index % 2 == 0 ? DesignTokens.Color.cardBackground : DesignTokens.Color.pageBackground)
+    }
+
+    // MARK: - Reusable Components
 
     private func metricCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         content()
@@ -520,17 +852,20 @@ struct StatusView: View {
     }
 }
 
+// MARK: - Progress Bars
+
 struct ProgressBar: View {
     let value: Double
     let color: SwiftUI.Color
+    var height: CGFloat = 6
 
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(DesignTokens.Color.pageBackground).frame(height: 6)
-                Capsule().fill(color).frame(width: geo.size.width * min(max(value, 0), 1), height: 6)
+                Capsule().fill(DesignTokens.Color.pageBackground).frame(height: height)
+                Capsule().fill(color).frame(width: geo.size.width * min(max(value, 0), 1), height: height)
             }
-        }.frame(height: 6)
+        }.frame(height: height)
     }
 }
 

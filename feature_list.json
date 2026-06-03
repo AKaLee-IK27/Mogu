@@ -623,6 +623,38 @@
       "status": "done",
       "subTasks": [],
       "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+    },
+    {
+      "id": "feat-025",
+      "name": "Status Dashboard Visual Polish",
+      "description": "Finish the in-progress Status dashboard redesign: adaptive hero/cards, live sparklines, hidden metric surfacing, stable process rows, and foreground/tab-gated polling.",
+      "dependencies": [],
+      "doneCriteria": [
+        "Status screen renders the polished dashboard at runtime",
+        "Status values update on the live polling cadence while the Status tab is active and Mogu is frontmost",
+        "Polling stops after switching away from Status or backgrounding the app",
+        "make build, make test, make app, and make parser-test pass",
+        "plans/status-live-redesign.md uses current Mogu launch instructions"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Finish StatusView polish",
+          "status": "done",
+          "evidence": "Sources/Views/StatusView.swift renders the hero health card, adaptive metric rows, CPU/memory/storage cards, live sparklines, per-core strip, memory breakdown, proxy/live badges, and stable top-process rows."
+        },
+        {
+          "name": "Fix foreground gating on macOS",
+          "status": "done",
+          "evidence": "Replaced scenePhase gating with NSApplication didBecomeActive/didResignActive notifications; scenePhase stayed active while another app was frontmost on macOS."
+        },
+        {
+          "name": "Runtime verify",
+          "status": "done",
+          "evidence": "make app installed /Applications/Mogu.app. Window capture /tmp/mogu-status-live-feat025-live.png shows the polished Status dashboard. Active Status sampling observed status-go spawning on cadence; after backgrounding, a 20-second sample showed no status-go/mole status --json processes."
+        }
+      ],
+      "evidence": "make build + make test + make app + make parser-test pass. Runtime: open --env MOGU_SCREEN=status /Applications/Mogu.app, window capture /tmp/mogu-status-live-feat025-live.png, active polling observed, background polling stopped for 20s after NSApplication notification fix."
     }
   ]
 }

@@ -1,7 +1,7 @@
 # Handoff: Live (streaming) System Status + data-viz redesign
 
 **Owner:** Pi (execution) · **Controller/verifier:** Claude
-**Status:** Approved, not started
+**Status:** Implemented and runtime-verified as feat-025
 **Verification gate:** runtime launch + screenshot (NOT `make build` alone)
 
 ---
@@ -16,7 +16,8 @@ currently decoded but never rendered.
 ## Scope
 
 - Status screen only. Do **not** touch Clean / Uninstall / Analyze / Optimize / Purge / Permissions.
-- 5 files total: 3 modified, 2 new. No new dependency (`import Charts` is a system framework).
+- Original implementation surface: 5 files total, 3 modified and 2 new. No new dependency (`import Charts` is a system framework).
+- feat-025 completion surface: `Sources/Views/StatusView.swift` polish plus tracking docs; the supporting model/chart files already exist in the current repo.
 
 ## Non-scope (explicitly rejected)
 
@@ -53,7 +54,7 @@ is what makes sparklines/trends drawable (a single snapshot can't show a trend).
    hidden tabs (battery drain + `status-go` polluting the process list it renders).
    Poll **only when `selectedItem == .status` AND the app is frontmost.**
    - Thread `isActive: Bool` from `ContentView` into `StatusView`.
-   - Combine with `@Environment(\.scenePhase) == .active`.
+   - Combine with `NSApplication.didBecomeActiveNotification` / `didResignActiveNotification` on macOS. `scenePhase` was rejected during implementation because it stayed active while another app was frontmost.
    - Drive an `.task(id:)` loop keyed on the combined gate; loop exits when gate is false.
    - Switching tabs or backgrounding the app MUST stop subprocess spawning.
 
@@ -131,7 +132,7 @@ Top processes (stable order, live %)
 ## Verification (runtime — anti-pattern #20; compile is NOT sufficient)
 
 1. `make app`
-2. `DRILBUR_SCREEN=status /Applications/Drilbur.app/Contents/MacOS/Drilbur`
+2. `open --env MOGU_SCREEN=status /Applications/Mogu.app`
 3. Numbers/bars update on ~3s cadence; sparklines accumulate a trend. **Screenshot.**
 4. Switch to another tab → Activity Monitor shows `status-go` **stops** spawning (proves
    gating). Background the app → same.
