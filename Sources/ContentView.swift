@@ -304,26 +304,28 @@ struct ContentView: View {
         .background(DesignTokens.Color.sidebar)
     }
 
+    @ViewBuilder
     private var sidebarHeader: some View {
-        HStack(spacing: DesignTokens.Spacing.sm) {
-            if !isSidebarCollapsed {
-                HStack(spacing: 10) {
-                    brandMark
-                    Text("Mogu")
-                        .font(DesignTokens.Font.sidebarTitle)
-                        .foregroundStyle(DesignTokens.Color.primary)
-                }
-                Spacer()
-            } else {
+        if isSidebarCollapsed {
+            VStack(spacing: DesignTokens.Spacing.sm) {
                 brandMark
-                    .frame(maxWidth: .infinity)
+                    .padding(.top, 16)
+                collapseToggle
             }
-
-            collapseToggle
+            .padding(.bottom, 16)
+        } else {
+            HStack(spacing: 10) {
+                brandMark
+                Text("Mogu")
+                    .font(DesignTokens.Font.sidebarTitle)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Spacer()
+                collapseToggle
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
+            .padding(.bottom, 18)
         }
-        .padding(.horizontal, isSidebarCollapsed ? 15 : 20)
-        .padding(.top, 16)
-        .padding(.bottom, isSidebarCollapsed ? 16 : 18)
     }
 
     private var collapseToggle: some View {
@@ -357,7 +359,7 @@ struct ContentView: View {
                 .onHover { hovering in sidebarHover = hovering ? item : nil }
             }
         }
-        .padding(.horizontal, isSidebarCollapsed ? 10 : 12)
+        .padding(.horizontal, isSidebarCollapsed ? 16 : 12)
         .padding(.top, isSidebarCollapsed ? 16 : 10)
     }
 

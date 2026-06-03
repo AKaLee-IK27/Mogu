@@ -27,7 +27,7 @@ enum DesignTokens {
 
     enum Layout {
         static let sidebarWidth: CGFloat = 230
-        static let sidebarCollapsedWidth: CGFloat = 68
+        static let sidebarCollapsedWidth: CGFloat = 76
         static let headerHorizontalPadding: CGFloat = 32
         static let headerVerticalPadding: CGFloat = 18
         static let contentHorizontalPadding: CGFloat = 32
