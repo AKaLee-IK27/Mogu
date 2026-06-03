@@ -138,7 +138,7 @@
           "status": "done"
         }
       ],
-      "evidence": "Both views have sort picker (Size \u2193, Name A-Z) and .searchable. make build passes."
+      "evidence": "Both views have sort picker (Size ↓, Name A-Z) and .searchable. make build passes."
     },
     {
       "id": "feat-006",
@@ -322,20 +322,20 @@
         {
           "name": "Capture golden fixtures from mo 1.40.0",
           "status": "done",
-          "evidence": "Tests/DrilburTests/Fixtures: clean-list.txt (REAL, 15 === sections / 46 # size lines from mo clean --dry-run), optimize.txt (REAL, 22 \u27a4 steps from mo optimize --dry-run). purge.txt is format-verified (\u2501\u2501\u2501 confirmed at Vendor/Mole/bin/purge.sh:40; size-line convention shared with clean) because this machine had no purgeable artifacts \u2014 provenance documented in Fixtures/README.md."
+          "evidence": "Tests/DrilburTests/Fixtures: clean-list.txt (REAL, 15 === sections / 46 # size lines from mo clean --dry-run), optimize.txt (REAL, 22 ➤ steps from mo optimize --dry-run). purge.txt is format-verified (━━━ confirmed at Vendor/Mole/bin/purge.sh:40; size-line convention shared with clean) because this machine had no purgeable artifacts — provenance documented in Fixtures/README.md."
         },
         {
           "name": "Add parser test against fixtures",
           "status": "done",
-          "evidence": "Extracted pure parsers into Sources/Services/MoOutputParser.swift (parseCleanList, parsePurgeText, parseByteSize, purgeCategoryToType, systemCleanupSkipMarker/detectsSystemCleanupSkip); MoService + CleanView delegate. New DrilburTests XCTest target (Package.swift), 8 tests, pass via `make parser-test`. Coverage honestly: clean (REAL fixture) and optimize/StepStreamParser (REAL fixture, 22 steps) are genuine golden guards against parser-code regressions. The purge assertion is weaker \u2014 its fixture is synthetic and matches the parser's expected shape (somewhat circular; purge's real stdout format is unconfirmed). testSystemCleanupSkipMarkerLiteral is near-tautological (constant == its own literal): it guards against accidental edits to the constant, NOT against clean.sh changing its wording."
+          "evidence": "Extracted pure parsers into Sources/Services/MoOutputParser.swift (parseCleanList, parsePurgeText, parseByteSize, purgeCategoryToType, systemCleanupSkipMarker/detectsSystemCleanupSkip); MoService + CleanView delegate. New DrilburTests XCTest target (Package.swift), 8 tests, pass via `make parser-test`. Coverage honestly: clean (REAL fixture) and optimize/StepStreamParser (REAL fixture, 22 steps) are genuine golden guards against parser-code regressions. The purge assertion is weaker — its fixture is synthetic and matches the parser's expected shape (somewhat circular; purge's real stdout format is unconfirmed). testSystemCleanupSkipMarkerLiteral is near-tautological (constant == its own literal): it guards against accidental edits to the constant, NOT against clean.sh changing its wording."
         },
         {
           "name": "Verify drift (mutated fixture) fails the test",
           "status": "done",
-          "evidence": "Two in-suite drift tests (=== -> ###, \u2501\u2501\u2501 -> ===) assert empty results. Also proven empirically: sed-mutating clean-list.txt === markers made testCleanListParsesRealFixture FAIL (got 0 categories, all 3 asserts fired); restoring the fixture made it pass."
+          "evidence": "Two in-suite drift tests (=== -> ###, ━━━ -> ===) assert empty results. Also proven empirically: sed-mutating clean-list.txt === markers made testCleanListParsesRealFixture FAIL (got 0 categories, all 3 asserts fired); restoring the fixture made it pass."
         }
       ],
-      "evidence": "XCTest target chosen (user decision). Pure parsers extracted to MoOutputParser.swift; MoService/CleanView delegate. 8 tests pass (`make parser-test`); make build + make app unaffected. SCOPE (honest): this is a static golden-fixture suite \u2014 it guards the parser CODE against regressions and pins the expected format, and a live fixture mutation was shown to fail the test. It does NOT auto-detect live Mole format drift; fixtures are snapshots that must be re-captured on a Vendor/Mole bump (documented in Fixtures/README.md + CLAUDE.md). Clean/optimize fixtures are real; purge fixture is synthetic; the skip-marker test is near-tautological. Runtime-verified the refactored delegation on REAL output: a live `mo clean --dry-run` in the bundled app rendered 5 categories / 3.51GB via MoService.parseCleanPreview -> MoOutputParser.parseCleanList. CLAUDE.md + Makefile updated (the 'no test target' principle is now scoped to one parser-only target; UI/runtime still verified by build+launch)."
+      "evidence": "XCTest target chosen (user decision). Pure parsers extracted to MoOutputParser.swift; MoService/CleanView delegate. 8 tests pass (`make parser-test`); make build + make app unaffected. SCOPE (honest): this is a static golden-fixture suite — it guards the parser CODE against regressions and pins the expected format, and a live fixture mutation was shown to fail the test. It does NOT auto-detect live Mole format drift; fixtures are snapshots that must be re-captured on a Vendor/Mole bump (documented in Fixtures/README.md + CLAUDE.md). Clean/optimize fixtures are real; purge fixture is synthetic; the skip-marker test is near-tautological. Runtime-verified the refactored delegation on REAL output: a live `mo clean --dry-run` in the bundled app rendered 5 categories / 3.51GB via MoService.parseCleanPreview -> MoOutputParser.parseCleanList. CLAUDE.md + Makefile updated (the 'no test target' principle is now scoped to one parser-only target; UI/runtime still verified by build+launch)."
     },
     {
       "id": "feat-012",
@@ -355,12 +355,12 @@
         {
           "name": "Revoke FDA, relaunch, observe Permissions card + banners",
           "status": "done",
-          "evidence": "The rename gave Drilbur a new bundle id (co.greenpassport.drilbur) that has never been granted FDA \u2014 so 'not granted' is its default, no manual revoke needed. Launched via `open --env DRILBUR_SCREEN=permissions /Applications/Drilbur.app` (own responsible process): Permissions card reads 'Not granted' (amber). screenshot /tmp/drilbur-perm-open.png."
+          "evidence": "The rename gave Drilbur a new bundle id (co.greenpassport.drilbur) that has never been granted FDA — so 'not granted' is its default, no manual revoke needed. Launched via `open --env DRILBUR_SCREEN=permissions /Applications/Drilbur.app` (own responsible process): Permissions card reads 'Not granted' (amber). screenshot /tmp/drilbur-perm-open.png."
         },
         {
           "name": "Repoint probe path if false-positive",
           "status": "done",
-          "evidence": "Not needed \u2014 probeFullDiskAccess already reads the system path /Library/Application Support/com.apple.TCC/TCC.db (repointed from ~/Library in commit c4fd444). The 'Granted' seen when direct-exec'ing the binary from an FDA-enabled terminal is macOS TCC responsible-process inheritance (child attributed to the terminal), NOT a probe bug: launching via LaunchServices (open) correctly reports 'Not granted'."
+          "evidence": "Not needed — probeFullDiskAccess already reads the system path /Library/Application Support/com.apple.TCC/TCC.db (repointed from ~/Library in commit c4fd444). The 'Granted' seen when direct-exec'ing the binary from an FDA-enabled terminal is macOS TCC responsible-process inheritance (child attributed to the terminal), NOT a probe bug: launching via LaunchServices (open) correctly reports 'Not granted'."
         },
         {
           "name": "Update feat-008 subTask + handoff",
@@ -433,7 +433,7 @@
         {
           "name": "Sidebar brand + bundling + verify",
           "status": "done",
-          "evidence": "ContentView brandMark loads Resources/SidebarLogo.png via Bundle.main, falls back to bolt.fill if absent (debug builds). build_app.sh copies SidebarLogo.png to Resources. Runtime screenshots: Dock icon = Drilbur squircle; navy 'Clean All' button + selected-tab accent + sparklines; Drilbur sidebar mark \u2014 all in light and dark."
+          "evidence": "ContentView brandMark loads Resources/SidebarLogo.png via Bundle.main, falls back to bolt.fill if absent (debug builds). build_app.sh copies SidebarLogo.png to Resources. Runtime screenshots: Dock icon = Drilbur squircle; navy 'Clean All' button + selected-tab accent + sparklines; Drilbur sidebar mark — all in light and dark."
         }
       ],
       "evidence": "Drilbur identity applied: new multi-res app icon from the provided art, app-wide navy/indigo accent, Drilbur sidebar brand mark. New reproducible scripts/make_icon.sh (built-ins only). make build + make app + make parser-test (8/8) pass. Runtime-verified in light and dark (icon, accent, brand mark). Copyrighted art committed per maintainer's explicit choice (personal use)."
@@ -482,18 +482,18 @@
     {
       "id": "feat-016",
       "name": "About Mogu Window",
-      "description": "Custom About Mogu panel replacing the bare macOS default. Shows Mogu logo, version, Mole attribution, MIT license, and GitHub link. Opens via Mogu > About Mogu or \u2318,.",
+      "description": "Custom About Mogu panel replacing the bare macOS default. Shows Mogu logo, version, Mole attribution, MIT license, and GitHub link. Opens via Mogu > About Mogu or ⌘,.",
       "dependencies": [],
       "doneCriteria": [
         "About Mogu opens a centered custom panel (not system default)",
         "Panel shows: Mogu logo, version, 'Built on Mole by @tw93', MIT license, GitHub link",
-        "\u2318, shortcut opens it",
+        "⌘, shortcut opens it",
         "Window is non-resizable",
         "make build passes"
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-017",
@@ -512,7 +512,7 @@
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-018",
@@ -528,17 +528,17 @@
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-019",
       "name": "App Preferences Window",
-      "description": "Minimal preferences window (\u2318,) with General tab: auto-update toggle, launch-at-login toggle, version display.",
+      "description": "Minimal preferences window (⌘,) with General tab: auto-update toggle, launch-at-login toggle, version display.",
       "dependencies": [
         "feat-018"
       ],
       "doneCriteria": [
-        "\u2318, opens preferences window",
+        "⌘, opens preferences window",
         "General tab shows: auto-update checkbox, launch-at-login checkbox, version display",
         "Auto-update toggles Sparkle's automaticallyChecksForUpdates",
         "Launch-at-login uses ServiceManagement framework",
@@ -546,16 +546,16 @@
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-020",
       "name": "Menu Bar Commands & Keyboard Shortcuts",
-      "description": "Populate menu bar with proper commands. View menu: \u23181-\u23187 for tab switching. Help menu: Show Onboarding, GitHub link. Edit menu: standard commands.",
+      "description": "Populate menu bar with proper commands. View menu: ⌘1-⌘7 for tab switching. Help menu: Show Onboarding, GitHub link. Edit menu: standard commands.",
       "dependencies": [],
       "doneCriteria": [
-        "Mogu menu: About, Check for Updates, Preferences (\u2318,), Hide, Quit (\u2318Q)",
-        "View menu: Status (\u23181) through Permissions (\u23187)",
+        "Mogu menu: About, Check for Updates, Preferences (⌘,), Hide, Quit (⌘Q)",
+        "View menu: Status (⌘1) through Permissions (⌘7)",
         "Help menu: Show Onboarding, Mogu on GitHub",
         "Edit menu: standard cut/copy/paste/selectAll",
         "All shortcuts work from keyboard",
@@ -563,7 +563,7 @@
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-021",
@@ -571,14 +571,14 @@
       "description": "Remember last-opened tab and window size across launches. MOGU_SCREEN env var overrides remembered state.",
       "dependencies": [],
       "doneCriteria": [
-        "Close on Clean tab, reopen \u2192 Clean tab selected",
+        "Close on Clean tab, reopen → Clean tab selected",
         "MOGU_SCREEN still overrides the remembered tab",
         "State persisted in AppStorage",
         "make build passes"
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-022",
@@ -593,7 +593,7 @@
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-023",
@@ -607,7 +607,7 @@
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-024",
@@ -622,7 +622,7 @@
       ],
       "status": "done",
       "subTasks": [],
-      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with \u23181-\u23187 tab switching, Preferences (\u2318,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
+      "evidence": "make build + make app + make parser-test (17/17) pass. Runtime-verified: onboarding modal on first launch, Navigate menu with ⌘1-⌘7 tab switching, Preferences (⌘,) with auto-update/launch-at-login/version, About Mogu system panel, Sparkle linked (rpath fixed), Dock menu (Refresh Status/Quick Clean), Share Mogu in File menu, CHANGELOG bundled for release notes."
     },
     {
       "id": "feat-025",
@@ -655,6 +655,46 @@
         }
       ],
       "evidence": "make build + make test + make app + make parser-test pass. Runtime: open --env MOGU_SCREEN=status /Applications/Mogu.app, window capture /tmp/mogu-status-live-feat025-live.png, active polling observed, background polling stopped for 20s after NSApplication notification fix."
+    },
+    {
+      "id": "feat-026",
+      "name": "Mogu Design System Foundation",
+      "description": "Install a curated Mogu design-system source of truth and apply foundational SwiftUI design tokens to shared app controls and states.",
+      "dependencies": [
+        "feat-025"
+      ],
+      "doneCriteria": [
+        "design-system/mogu/MASTER.md exists and reflects Mogu native macOS constraints, not raw web/mobile generator output",
+        "DesignTokens includes spacing, layout, radius, stroke, surface, focus, and shadow tokens for reusable app-wide design decisions",
+        "Shared controls use the new tokens: sidebar width, header icon buttons, search field, activity feed, loading state, and error state",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the app still renders after global token changes"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Generate and curate design system",
+          "status": "done",
+          "evidence": "Ran .pi/skills/ui-ux-pro-max/scripts/search.py with --design-system --persist, then replaced the raw web/mobile-oriented output with a curated native Mogu SwiftUI design system in design-system/mogu/MASTER.md."
+        },
+        {
+          "name": "Tokenize shared visual language",
+          "status": "done",
+          "evidence": "Sources/Theme/DesignTokens.swift now defines Spacing, Layout, Stroke, expanded Radius, richer surface colors, focus ring, selected overlay, and card/control shadow levels."
+        },
+        {
+          "name": "Apply tokens to shared UI primitives",
+          "status": "done",
+          "evidence": "Sources/ContentView.swift shared controls plus FeatureLoadingView and ErrorStateView use the new layout/spacing/stroke/shadow tokens."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open --env MOGU_SCREEN=status /Applications/Mogu.app and captured /tmp/mogu-design-system-feat026-status.png. Grep found no active .toolbar/ToolbarItem/ToolbarItemGroup/.searchable usage in Sources."
+        }
+      ],
+      "evidence": "Curated design-system/mogu/MASTER.md created; DesignTokens and shared controls updated; make build + make test + make parser-test + make app pass; runtime screenshot /tmp/mogu-design-system-feat026-status.png confirms the app renders after global token changes."
     }
   ]
 }

@@ -148,7 +148,7 @@ struct ContentView: View {
     private var mainContent: some View {
         HStack(spacing: 0) {
             sidebar
-                .frame(width: 230)
+                .frame(width: DesignTokens.Layout.sidebarWidth)
 
             Rectangle()
                 .fill(DesignTokens.Color.separator)
@@ -371,12 +371,18 @@ struct HeaderIconButton: View {
             Image(systemName: systemName)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(disabled ? DesignTokens.Color.tertiary : DesignTokens.Color.secondary)
-                .frame(width: 30, height: 28)
+                .frame(width: DesignTokens.Layout.iconButtonSize, height: DesignTokens.Layout.iconButtonSize)
                 .background(DesignTokens.Color.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
-                .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
+                        .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+                )
+                .shadow(color: DesignTokens.Shadow.control, radius: DesignTokens.Shadow.controlRadius, y: DesignTokens.Shadow.controlY)
         }
         .buttonStyle(.plain)
+        .frame(width: DesignTokens.Layout.minimumHitSize, height: DesignTokens.Layout.minimumHitSize)
+        .contentShape(Rectangle())
         .disabled(disabled)
         .help(help)
     }
@@ -397,6 +403,7 @@ struct HeaderActionButton: View {
         .buttonStyle(.borderedProminent)
         .tint(tint)
         .controlSize(.large)
+        .frame(minHeight: DesignTokens.Layout.minimumHitSize)
         .disabled(disabled)
     }
 }
@@ -409,7 +416,7 @@ struct InlineSearchField: View {
     let prompt: String
 
     var body: some View {
-        HStack(spacing: 7) {
+        HStack(spacing: DesignTokens.Spacing.sm) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(DesignTokens.Color.tertiary)
@@ -426,10 +433,15 @@ struct InlineSearchField: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.sm)
+        .frame(minHeight: DesignTokens.Layout.minimumHitSize)
         .background(DesignTokens.Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 }
 
@@ -450,10 +462,14 @@ struct ActivityFeed: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .padding(12)
+        .padding(DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Color.codeBg)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 }
 
@@ -483,14 +499,14 @@ struct SidebarRow: View {
                         .frame(width: 3, height: 18)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
+            .padding(.horizontal, DesignTokens.Spacing.md)
+            .padding(.vertical, DesignTokens.Spacing.sm)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
-                        .fill(DesignTokens.Color.cardBackground)
-                        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+                        .fill(DesignTokens.Color.selectedOverlay)
+                        .shadow(color: DesignTokens.Shadow.control, radius: DesignTokens.Shadow.controlRadius, y: DesignTokens.Shadow.controlY)
                 } else if isHovered {
                     RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
                         .fill(DesignTokens.Color.hoverOverlay)

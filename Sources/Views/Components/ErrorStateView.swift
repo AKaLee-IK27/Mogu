@@ -9,12 +9,12 @@ struct ErrorStateView: View {
     var retry: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: DesignTokens.Spacing.lg) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 28, weight: .medium))
                 .foregroundStyle(DesignTokens.Color.danger)
 
-            VStack(spacing: 6) {
+            VStack(spacing: DesignTokens.Spacing.xs) {
                 Text("Something went wrong")
                     .font(DesignTokens.Font.section)
                     .foregroundStyle(DesignTokens.Color.primary)
@@ -32,7 +32,7 @@ struct ErrorStateView: View {
                 .buttonStyle(.bordered)
             }
         }
-        .padding(40)
+        .padding(DesignTokens.Spacing.xxxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

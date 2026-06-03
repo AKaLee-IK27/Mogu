@@ -4,13 +4,15 @@
 
 **Date:** 2026-06-03
 **Branch:** `main`
-**Work:** feat-025, Status dashboard visual polish and live-polling gating fix.
+**Work:** feat-026, Mogu design-system foundation.
 
 ## What changed
 
-- Finished the in-progress `Sources/Views/StatusView.swift` dashboard polish: hero health card, adaptive metric rows, CPU/memory/storage cards, live sparklines, per-core strip, memory breakdown, proxy/live badges, and stable top-process rows.
-- Fixed the macOS foreground-gating bug: `scenePhase` stayed active while another app was frontmost, so Status polling now follows `NSApplication.didBecomeActiveNotification` / `didResignActiveNotification`.
-- Updated tracking/docs: `feature_list.json`, `progress.md`, and `plans/status-live-redesign.md` now reflect feat-025 and current `MOGU_SCREEN` / `Mogu.app` launch instructions.
+- Created `design-system/mogu/MASTER.md`, a curated native macOS design system for Mogu. It replaces the raw UI/UX Pro Max web/mobile output with Mogu-specific rules: compact utility density, navy/indigo accents, native SwiftUI typography, preview-before-delete safety, and no toolbar/searchable modifiers.
+- Expanded `Sources/Theme/DesignTokens.swift` with spacing, layout, stroke, richer radius, surface, focus, selected overlay, and card/control shadow tokens.
+- Applied the new tokens to shared app primitives in `Sources/ContentView.swift`: sidebar width, header icon buttons, search field, activity feed, and selected sidebar row treatment.
+- Applied spacing tokens to shared state components: `FeatureLoadingView` and `ErrorStateView`.
+- `feature_list.json` and `progress.md` updated for feat-026.
 
 ## Verification
 
@@ -19,25 +21,26 @@ All verification passed in this session:
 ```bash
 make build
 make test
-make app
 make parser-test
+make app
 ```
 
 Runtime verification:
 
 - Launched with `open --env MOGU_SCREEN=status /Applications/Mogu.app`.
-- Captured Status window evidence at `/tmp/mogu-status-live-feat025-live.png`.
-- Active Status sampling observed `status-go` / `mole status --json` spawning on the live cadence.
-- After backgrounding Mogu, a 20-second sample showed no `status-go` / `mole status --json` processes.
+- Captured Status window evidence at `/tmp/mogu-design-system-feat026-status.png`.
+- Grep found no active `.toolbar`, `ToolbarItem`, `ToolbarItemGroup`, or `.searchable` usage in `Sources`.
 
 ## Current State
 
-- Status tab is visually polished and live-updating when Mogu is frontmost.
-- Polling stops when Mogu is backgrounded. Earlier tab-switch verification also settled to no `status-go` processes after leaving Status.
-- The installed `/Applications/Mogu.app` was rebuilt from the current source.
+- `main` is ahead of `origin/main` by 2 committed changes from earlier in the session:
+  - `86f4630 feat: polish status dashboard`
+  - `dcdea40 chore: install ui-ux pro max skills`
+- feat-026 is implemented but not committed yet.
+- Installed `/Applications/Mogu.app` was rebuilt from the current source.
 
 ## Next Step / Open items
 
-- Post-implementation `/check` completed in-session; no unresolved feat-025 blocker.
-- If ready, commit the feat-025 diff.
-- Unrelated follow-up observed during runtime verification: first-run onboarding dismissal does not appear to persist `hasSeenOnboarding`; left out of scope for feat-025.
+- Run `/check` on the feat-026 diff before committing.
+- Optional follow-up: apply the design system screen-by-screen to deeper tab layouts, starting with Clean and Uninstall.
+- Unrelated known issue: first-run onboarding dismissal does not appear to persist `hasSeenOnboarding`; still out of scope.

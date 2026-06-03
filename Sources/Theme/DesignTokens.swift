@@ -5,11 +5,38 @@ import SwiftUI
 
 enum DesignTokens {
 
+    enum Spacing {
+        static let xxs: CGFloat = 3
+        static let xs: CGFloat = 6
+        static let sm: CGFloat = 8
+        static let md: CGFloat = 12
+        static let lg: CGFloat = 16
+        static let xl: CGFloat = 20
+        static let xxl: CGFloat = 24
+        static let xxxl: CGFloat = 32
+    }
+
     enum Radius {
+        static let tiny: CGFloat = 4
         static let small: CGFloat = 6
-        static let medium: CGFloat = 8
-        static let large: CGFloat = 12
+        static let medium: CGFloat = 9
+        static let large: CGFloat = 14
+        static let xLarge: CGFloat = 18
         static let pill: CGFloat = 999
+    }
+
+    enum Layout {
+        static let sidebarWidth: CGFloat = 230
+        static let headerHorizontalPadding: CGFloat = 32
+        static let headerVerticalPadding: CGFloat = 18
+        static let contentHorizontalPadding: CGFloat = 32
+        static let cardPadding: CGFloat = 18
+        static let iconButtonSize: CGFloat = 34
+        static let minimumHitSize: CGFloat = 40
+    }
+
+    enum Stroke {
+        static let hairline: CGFloat = 1
     }
 
     enum Font {
@@ -27,6 +54,7 @@ enum DesignTokens {
         static let monoBold = SwiftUI.Font.system(size: 12, weight: .semibold, design: .monospaced)
         static let monoLarge = SwiftUI.Font.system(size: 20, weight: .bold, design: .monospaced)
         static let displayNumber = SwiftUI.Font.system(size: 28, weight: .bold, design: .monospaced)
+        static let displayNumberLarge = SwiftUI.Font.system(size: 34, weight: .bold, design: .monospaced)
 
         static let sidebarTitle = SwiftUI.Font.system(size: 15, weight: .heavy, design: .rounded)
         static let sidebarSubtitle = SwiftUI.Font.system(size: 11, weight: .regular)
@@ -41,24 +69,28 @@ enum DesignTokens {
     }
 
     enum Color {
-        // Surfaces
-        static let sidebar = adaptive(light: "ececed", dark: "1e1e20")
-        static let pageBackground = adaptive(light: "f5f5f7", dark: "121214")
-        static let cardBackground = adaptive(light: "ffffff", dark: "1c1c1e")
-        static let separator = adaptive(light: "d1d1d6", dark: "38383a")
-        static let separatorLight = adaptive(light: "e5e5ea", dark: "2c2c2e")
+        // Surfaces: cool, brand-tinted neutrals. Adjacent surfaces must differ
+        // enough to read as layers in both light and dark appearances.
+        static let sidebar = adaptive(light: "e9ebf3", dark: "171922")
+        static let pageBackground = adaptive(light: "f4f5fa", dark: "0f1117")
+        static let cardBackground = adaptive(light: "ffffff", dark: "1a1d27")
+        static let elevatedBackground = adaptive(light: "ffffff", dark: "222636")
+        static let insetBackground = adaptive(light: "edf0f7", dark: "121520")
+        static let separator = adaptive(light: "cfd3df", dark: "373c4d")
+        static let separatorLight = adaptive(light: "e1e4ed", dark: "2a2f3e")
 
-        // Text, tuned for respective surfaces
-        static let primary = adaptive(light: "1d1d1f", dark: "f5f5f7")
-        static let secondary = adaptive(light: "515154", dark: "a1a1a6")
-        static let tertiary = adaptive(light: "77777c", dark: "6e6e73")
-        static let placeholder = adaptive(light: "aeaeb2", dark: "48484a")
+        // Text, tuned for respective surfaces.
+        static let primary = adaptive(light: "1b1d27", dark: "f4f6fb")
+        static let secondary = adaptive(light: "51586a", dark: "a9afbd")
+        static let tertiary = adaptive(light: "7b8190", dark: "737a8a")
+        static let placeholder = adaptive(light: "aeb4c1", dark: "515766")
 
-        // Accent — Mogu navy/indigo (derived from the art's slate-blue, tuned for UI contrast)
-        static let accent = adaptive(light: "3a4ea8", dark: "5d72d6")
-        static let accentSecondary = adaptive(light: "7e8fde", dark: "8ea0f0")
-        static let accentSoft = adaptive(light: "e7e9fb", dark: "20264a")
-        static let accentTint = adaptive(light: "2c3e8f", dark: "7e92ef")
+        // Accent: Mogu navy/indigo, derived from the app mark and tuned for UI contrast.
+        static let accent = adaptive(light: "34489e", dark: "7185ef")
+        static let accentSecondary = adaptive(light: "7b8bd9", dark: "9aabff")
+        static let accentSoft = adaptive(light: "e7eaf8", dark: "22284d")
+        static let accentTint = adaptive(light: "2b3d8e", dark: "8fa1ff")
+        static let focusRing = adaptive(light: "34489e33", dark: "8fa1ff40")
 
         // Status
         static let success = adaptive(light: "34c759", dark: "30d158")
@@ -77,8 +109,9 @@ enum DesignTokens {
         static let purgeAccent = adaptive(light: "0f8a9c", dark: "5ac8d8")
 
         // Utility
-        static let codeBg = adaptive(light: "f0f0f2", dark: "2c2c2e")
-        static let hoverOverlay = adaptive(light: "ececee", dark: "2a2a2c")
+        static let codeBg = adaptive(light: "eef1f7", dark: "131720")
+        static let hoverOverlay = adaptive(light: "eef1f8", dark: "242938")
+        static let selectedOverlay = adaptive(light: "ffffff", dark: "202432")
     }
 
     static func healthColor(score: Int) -> SwiftUI.Color {
@@ -112,9 +145,13 @@ enum DesignTokens {
     }
 
     enum Shadow {
-        static let card = adaptive(light: "0000000a", dark: "0000004d") // ~4% light, ~30% dark
-        static let cardRadius: CGFloat = 3
-        static let cardY: CGFloat = 1
+        static let card = adaptive(light: "1b1d2714", dark: "00000066")
+        static let cardRadius: CGFloat = 8
+        static let cardY: CGFloat = 2
+
+        static let control = adaptive(light: "1b1d2710", dark: "0000004d")
+        static let controlRadius: CGFloat = 5
+        static let controlY: CGFloat = 1
     }
 }
 
@@ -126,7 +163,7 @@ extension SwiftUI.Color {
         let a, r, g, b: UInt64
         switch hex.count {
         case 6: (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        case 8: (a, r, g, b) = (int & 0xFF, int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF)
         default: (a, r, g, b) = (255, 0, 0, 0)
         }
         self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: Double(a) / 255)
@@ -148,6 +185,4 @@ extension SwiftUI.Color {
         })
         #endif
     }
-
-
 }

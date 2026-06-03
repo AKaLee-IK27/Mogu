@@ -3,7 +3,19 @@
 ## Current State
 
 **Last Updated:** 2026-06-03
-**Status:** feat-025 completed locally — Status dashboard visual polish implemented and runtime-verified.
+**Status:** feat-026 completed locally — Mogu design-system foundation implemented and runtime-verified.
+
+## Session 2026-06-03: Mogu Design System Foundation (feat-026)
+
+Created a curated native macOS design-system source of truth and applied foundational tokens to shared UI primitives.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-026 | Mogu Design System Foundation | `make build`, `make test`, `make parser-test`, `make app`; runtime screenshot `/tmp/mogu-design-system-feat026-status.png`; grep confirms no active `.toolbar` / `ToolbarItem` / `ToolbarItemGroup` / `.searchable` usage |
+
+**Files changed:** 6 files
+- Modified: `Sources/Theme/DesignTokens.swift`, `Sources/ContentView.swift`, `Sources/Views/Components/FeatureLoadingView.swift`, `Sources/Views/Components/ErrorStateView.swift`, `feature_list.json`, `progress.md`
+- New: `design-system/mogu/MASTER.md`
 
 ## Session 2026-06-03: Status Dashboard Visual Polish (feat-025)
 
@@ -69,3 +81,4 @@ Nine features across 3 tiers, all verified at runtime.
 | feat-023 | Share Sheet | done | NSSharingServicePicker |
 | feat-024 | Release Notes | done | CHANGELOG bundled, version detection |
 | feat-025 | Status Dashboard Visual Polish | done | Runtime-verified live dashboard + foreground-gated polling |
+| feat-026 | Mogu Design System Foundation | done | Curated design-system/mogu/MASTER.md + shared tokens/primitives |

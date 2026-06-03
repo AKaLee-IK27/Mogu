@@ -17,7 +17,7 @@ struct FeatureLoadingView: View {
     @State private var breathing = false
 
     var body: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: DesignTokens.Spacing.xl) {
             ZStack {
                 // Breathing tinted halo — subtle secondary motion.
                 Circle()
@@ -52,7 +52,7 @@ struct FeatureLoadingView: View {
                 }
             }
 
-            VStack(spacing: 5) {
+            VStack(spacing: DesignTokens.Spacing.xs) {
                 Text(title)
                     .font(DesignTokens.Font.bodyStrong)
                     .foregroundStyle(DesignTokens.Color.primary)
