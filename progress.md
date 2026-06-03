@@ -3,7 +3,19 @@
 ## Current State
 
 **Last Updated:** 2026-06-03
-**Status:** feat-027 completed locally — Clean screen redesign implemented and runtime-verified.
+**Status:** feat-028 completed locally — Uninstall screen redesign implemented and runtime-verified.
+
+## Session 2026-06-03: Uninstall Screen Design System Redesign (feat-028)
+
+Redesigned UninstallView as a safer batch-selection and preview-before-uninstall surface using the Mogu design system, without changing uninstall command behavior.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-028 | Uninstall Screen Design System Redesign | `make build`, `make test`, `make parser-test`, `make app`; runtime list screenshot `/tmp/mogu-uninstall-feat028-list.png`; runtime selected-row screenshot `/tmp/mogu-uninstall-feat028-selected.png`; no Preview Uninstall or Move to Trash click |
+
+**Files changed:** 5 files
+- Modified: `Sources/Views/UninstallView.swift`, `feature_list.json`, `progress.md`, `session-handoff.md`
+- New: `design-system/mogu/pages/uninstall.md`
 
 ## Session 2026-06-03: Clean Screen Design System Redesign (feat-027)
 
@@ -95,3 +107,4 @@ Nine features across 3 tiers, all verified at runtime.
 | feat-025 | Status Dashboard Visual Polish | done | Runtime-verified live dashboard + foreground-gated polling |
 | feat-026 | Mogu Design System Foundation | done | Curated design-system/mogu/MASTER.md + shared tokens/primitives |
 | feat-027 | Clean Screen Design System Redesign | done | Runtime-verified Clean loading + preview dashboard |
+| feat-028 | Uninstall Screen Design System Redesign | done | Runtime-verified Uninstall list + selected-row state |

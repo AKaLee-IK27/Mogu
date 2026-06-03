@@ -53,41 +53,53 @@ struct UninstallView: View {
     }
 
     private var headerBar: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("App Uninstaller")
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.lg) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                Text("Uninstall")
                     .font(DesignTokens.Font.page)
                     .foregroundStyle(DesignTokens.Color.primary)
-                Text("Select apps to remove them and their leftover files")
+                Text("Select apps, preview leftovers, then move them to Trash")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.tertiary)
             }
             Spacer()
             if !apps.isEmpty && selected.isEmpty {
                 InlineSearchField(text: $searchText, prompt: "Search apps")
-                    .frame(width: 200)
-                HStack(spacing: 6) {
-                    Image(systemName: "internaldrive.fill").font(.system(size: 10))
+                    .frame(width: 210)
+                HStack(spacing: DesignTokens.Spacing.xs) {
+                    Image(systemName: "internaldrive.fill")
+                        .font(.system(size: 11, weight: .semibold))
                     Text(totalAppsSize)
-                        .font(DesignTokens.Font.monoLarge)
-                        .foregroundStyle(DesignTokens.Color.accentTint)
+                        .font(DesignTokens.Font.monoBold)
                         .monospacedDigit()
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .foregroundStyle(DesignTokens.Color.accentTint)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.xs)
                 .background(DesignTokens.Color.accentSoft)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
             if !selected.isEmpty {
-                Text("\(selected.count) selected · \(selectedSize.humanReadable)")
-                    .font(DesignTokens.Font.captionStrong)
-                    .foregroundStyle(DesignTokens.Color.secondary)
-                    .monospacedDigit()
+                HStack(spacing: DesignTokens.Spacing.xs) {
+                    Image(systemName: "checkmark.square.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("\(selected.count) selected")
+                        .font(DesignTokens.Font.captionStrong)
+                    Text(selectedSize.humanReadable)
+                        .font(DesignTokens.Font.monoBold)
+                        .monospacedDigit()
+                }
+                .foregroundStyle(DesignTokens.Color.dangerText)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.xs)
+                .background(DesignTokens.Color.dangerSoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+
                 Button("Clear") { selected.removeAll() }
                     .buttonStyle(.plain)
-                    .font(DesignTokens.Font.caption)
+                    .font(DesignTokens.Font.captionStrong)
                     .foregroundStyle(DesignTokens.Color.accent)
-                HeaderActionButton(label: "Uninstall", systemName: "trash",
+                HeaderActionButton(label: "Preview Uninstall", systemName: "trash",
                                    tint: DesignTokens.Color.dangerText,
                                    disabled: isPreviewing || isRunning) {
                     Task { await startPreview() }
@@ -98,8 +110,8 @@ struct UninstallView: View {
                 Task { await loadApps() }
             }
         }
-        .padding(.horizontal, 32)
-        .padding(.vertical, 20)
+        .padding(.horizontal, DesignTokens.Layout.headerHorizontalPadding)
+        .padding(.vertical, DesignTokens.Layout.headerVerticalPadding)
     }
 
     private var filteredApps: [AppInfo] {
@@ -173,148 +185,253 @@ struct UninstallView: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Installed Apps", subtitle: "\(filteredApps.count) found")
-                .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 12)
-
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            uninstallSummaryCard
             uninstallNote
-                .padding(.horizontal, 32)
-                .padding(.bottom, 12)
 
             if let resultMessage {
                 resultBanner(resultMessage)
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, 12)
             }
 
-            // Table header with a select-all-eligible toggle.
-            HStack(spacing: 12) {
-                Button { toggleSelectAll() } label: {
-                    Image(systemName: allEligibleSelected ? "checkmark.square.fill" : "square")
-                        .font(.system(size: 14))
-                        .foregroundStyle(allEligibleSelected ? DesignTokens.Color.accent : DesignTokens.Color.tertiary)
-                }
-                .buttonStyle(.plain)
-                .disabled(eligibleKeys.isEmpty)
-                .help("Select all eligible apps")
-                .frame(width: 22)
-                sortHeader("Application", field: .name, alignment: .leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                sortHeader("Size", field: .size, alignment: .trailing)
-                    .frame(width: 80, alignment: .trailing)
-            }
-            .padding(.leading, 32).padding(.trailing, 32).padding(.bottom, 8)
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                sectionHeader("Installed apps", subtitle: "\(filteredApps.count) shown")
 
-            VStack(spacing: 0) {
-                ForEach(Array(sortedApps.enumerated()), id: \.offset) { i, app in
-                    appRow(app)
-                        .opacity(appear ? 1 : 0)
-                        .offset(x: appear ? 0 : -8)
-                        .animation(DesignTokens.stagger(i), value: appear)
+                VStack(spacing: 0) {
+                    // Table header with a select-all-eligible toggle.
+                    HStack(spacing: DesignTokens.Spacing.md) {
+                        Button { toggleSelectAll() } label: {
+                            Image(systemName: allEligibleSelected ? "checkmark.square.fill" : "square")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(allEligibleSelected ? DesignTokens.Color.accent : DesignTokens.Color.tertiary)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(eligibleKeys.isEmpty)
+                        .help("Select all eligible apps")
+                        .frame(width: 22)
+                        sortHeader("Application", field: .name, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        sortHeader("Size", field: .size, alignment: .trailing)
+                            .frame(width: 92, alignment: .trailing)
+                    }
+                    .padding(.horizontal, DesignTokens.Spacing.md)
+                    .padding(.vertical, DesignTokens.Spacing.sm)
+                    .background(DesignTokens.Color.insetBackground)
 
-                    if i < sortedApps.count - 1 {
-                        Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 70)
+                    ForEach(Array(sortedApps.enumerated()), id: \.offset) { i, app in
+                        appRow(app)
+                            .opacity(appear ? 1 : 0)
+                            .offset(x: appear ? 0 : -8)
+                            .animation(DesignTokens.stagger(i), value: appear)
+
+                        if i < sortedApps.count - 1 {
+                            Rectangle()
+                                .fill(DesignTokens.Color.separatorLight)
+                                .frame(height: 1)
+                                .padding(.leading, 76)
+                        }
                     }
                 }
+                .background(DesignTokens.Color.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                        .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+                )
+                .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
             }
-            .padding(.horizontal, 16)
         }
-        .padding(.bottom, 32)
+        .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+        .padding(.vertical, DesignTokens.Spacing.xxl)
         .onAppear { withAnimation(DesignTokens.spring) { appear = true } }
     }
 
+    private var uninstallSummaryCard: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.xl) {
+                HStack(spacing: DesignTokens.Spacing.md) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                            .fill(DesignTokens.Color.dangerSoft)
+                            .frame(width: 56, height: 56)
+                        Image(systemName: selected.isEmpty ? "xmark.app.fill" : "checkmark.square.fill")
+                            .font(.system(size: 23, weight: .semibold))
+                            .foregroundStyle(DesignTokens.Color.dangerText)
+                    }
+
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                        Text(selected.isEmpty ? "Installed apps ready for review" : "Uninstall batch selected")
+                            .font(DesignTokens.Font.section)
+                            .foregroundStyle(DesignTokens.Color.primary)
+                        Text(selected.isEmpty ? "Select apps to preview their leftovers before moving anything to Trash." : "Preview the selected apps and leftovers before the final Trash confirmation.")
+                            .font(DesignTokens.Font.caption)
+                            .foregroundStyle(DesignTokens.Color.secondary)
+                    }
+                }
+
+                Spacer(minLength: DesignTokens.Spacing.lg)
+
+                VStack(alignment: .trailing, spacing: DesignTokens.Spacing.xxs) {
+                    Text(selected.isEmpty ? totalAppsSize : selectedSize.humanReadable)
+                        .font(DesignTokens.Font.displayNumberLarge)
+                        .foregroundStyle(DesignTokens.Color.primary)
+                        .monospacedDigit()
+                    Text(selected.isEmpty ? "installed app data" : "selected for preview")
+                        .font(DesignTokens.Font.labelUppercase)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                }
+            }
+
+            HStack(spacing: DesignTokens.Spacing.md) {
+                UninstallSummaryMetric(title: "Installed", value: "\(apps.count)", systemName: "square.grid.2x2.fill", tint: DesignTokens.Color.accent)
+                UninstallSummaryMetric(title: "Selectable", value: "\(selectableAppsCount)", systemName: "checkmark.square.fill", tint: DesignTokens.Color.successText)
+                UninstallSummaryMetric(title: "Admin", value: "\(adminRequiredCount)", systemName: "lock.shield.fill", tint: DesignTokens.Color.warningText)
+                UninstallSummaryMetric(title: "Selected", value: "\(selected.count)", systemName: "trash.fill", tint: DesignTokens.Color.dangerText)
+            }
+        }
+        .padding(DesignTokens.Layout.cardPadding)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+    }
+
     private var uninstallNote: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "arrow.uturn.backward.circle")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(DesignTokens.Color.accent)
-                .padding(.top, 1)
-            Text("Selected apps and their leftover files move to the Trash, so you can restore them. Apps marked Admin are owned by the system or installed via Homebrew — remove those from Terminal with `mo uninstall`.")
-                .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "arrow.uturn.backward.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.accentTint)
+                .frame(width: 28, height: 28)
+                .background(DesignTokens.Color.accentSoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                Text("Trash recovery")
+                    .font(DesignTokens.Font.captionStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Selected apps and leftover files move to the Trash, so you can restore them. Apps marked Admin are disabled here; remove those from Terminal with `mo uninstall`.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Spacer(minLength: 0)
         }
-        .padding(12)
-        .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .padding(DesignTokens.Spacing.md)
+        .background(DesignTokens.Color.insetBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 
     private func appRow(_ app: AppInfo) -> some View {
         let key = rowKey(app)
         let isSelected = selected.contains(key)
-        return HStack(spacing: 12) {
+        return HStack(spacing: DesignTokens.Spacing.md) {
             // Selection control, or a lock for admin-required apps.
             Group {
                 if app.requiresAdmin {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 12))
-                        .foregroundStyle(DesignTokens.Color.tertiary)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(DesignTokens.Color.warningText)
                         .help("Requires administrator — remove from Terminal: mo uninstall \"\(app.name)\"")
                 } else {
                     Image(systemName: isSelected ? "checkmark.square.fill" : "square")
-                        .font(.system(size: 15))
-                        .foregroundStyle(isSelected ? DesignTokens.Color.accent : DesignTokens.Color.tertiary)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(isSelected ? DesignTokens.Color.dangerText : DesignTokens.Color.tertiary)
                 }
             }
             .frame(width: 22)
 
             Image(systemName: "app.fill")
-                .font(.system(size: 15))
-                .foregroundStyle(DesignTokens.Color.tertiary)
-                .frame(width: 22)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(app.requiresAdmin ? DesignTokens.Color.warningText : DesignTokens.Color.accentTint)
+                .frame(width: 34, height: 34)
+                .background(app.requiresAdmin ? DesignTokens.Color.warningSoft : DesignTokens.Color.accentSoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                HStack(spacing: DesignTokens.Spacing.xs) {
                     Text(app.name)
                         .font(DesignTokens.Font.bodyStrong)
                         .foregroundStyle(DesignTokens.Color.primary)
                     if app.requiresAdmin { adminBadge }
                 }
                 if let bid = app.bundleID {
-                    Text(bid).font(DesignTokens.Font.mono).foregroundStyle(DesignTokens.Color.tertiary)
+                    Text(bid)
+                        .font(DesignTokens.Font.mono)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                } else if app.requiresAdmin {
+                    Text("Admin-required app, remove from Terminal")
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
                 }
             }
 
-            Spacer()
+            Spacer(minLength: DesignTokens.Spacing.md)
 
             Text(app.size.humanReadable)
-                .font(DesignTokens.Font.mono)
-                .foregroundStyle(DesignTokens.Color.tertiary)
-                .frame(width: 80, alignment: .trailing)
+                .font(DesignTokens.Font.monoBold)
+                .foregroundStyle(isSelected ? DesignTokens.Color.dangerText : DesignTokens.Color.secondary)
+                .monospacedDigit()
+                .frame(width: 92, alignment: .trailing)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .opacity(app.requiresAdmin ? 0.6 : 1)
-        .background(isSelected ? DesignTokens.Color.accentSoft : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .opacity(app.requiresAdmin ? 0.72 : 1)
+        .background(isSelected ? DesignTokens.Color.dangerSoft : Color.clear)
         .onTapGesture { if !app.requiresAdmin { toggle(key) } }
     }
 
     private var adminBadge: some View {
         Text("Admin")
-            .font(.system(size: 9, weight: .semibold))
-            .foregroundStyle(DesignTokens.Color.warning)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 1)
+            .font(DesignTokens.Font.labelUppercase)
+            .foregroundStyle(DesignTokens.Color.warningText)
+            .padding(.horizontal, DesignTokens.Spacing.xs)
+            .padding(.vertical, 2)
             .background(DesignTokens.Color.warningSoft)
-            .clipShape(Capsule())
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
     }
 
     private func resultBanner(_ message: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignTokens.Color.successText)
-            Text(message).font(DesignTokens.Font.bodyStrong)
+        HStack(spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.successText)
+            Text(message)
+                .font(DesignTokens.Font.bodyStrong)
+                .foregroundStyle(DesignTokens.Color.primary)
             Spacer()
         }
-        .padding(12)
+        .padding(DesignTokens.Spacing.md)
         .background(DesignTokens.Color.successSoft)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(DesignTokens.Color.successText.opacity(0.18), lineWidth: DesignTokens.Stroke.hairline)
+        )
+    }
+
+    private var totalAppsSizeBytes: UInt64 {
+        apps.reduce(0) { $0 + $1.size }
     }
 
     private var totalAppsSize: String {
-        apps.reduce(0) { $0 + $1.size }.humanReadable
+        totalAppsSizeBytes.humanReadable
+    }
+
+    private var adminRequiredCount: Int {
+        apps.filter(\.requiresAdmin).count
+    }
+
+    private var selectableAppsCount: Int {
+        apps.count - adminRequiredCount
     }
 
     // MARK: - Confirmation sheet
@@ -322,61 +439,55 @@ struct UninstallView: View {
     private var confirmSheet: some View {
         let preview = preview ?? UninstallPreview(apps: [], totalSize: 0)
         return VStack(alignment: .leading, spacing: 0) {
-            HStack(spacing: 12) {
-                Image(systemName: "trash")
-                    .font(.system(size: 18, weight: .semibold))
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(DesignTokens.Color.dangerText)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(preview.apps.count == 1 ? "Uninstall 1 app?" : "Uninstall \(preview.apps.count) apps?")
+                    .frame(width: 40, height: 40)
+                    .background(DesignTokens.Color.dangerSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    Text(preview.apps.count == 1 ? "Move 1 app to Trash?" : "Move \(preview.apps.count) apps to Trash?")
                         .font(DesignTokens.Font.section)
                         .foregroundStyle(DesignTokens.Color.primary)
-                    Text("These items move to the Trash — about \(preview.totalSize.humanReadable). You can restore them from Trash.")
+                    Text("The dry-run preview found selected apps and leftovers totaling \(preview.totalSize.humanReadable). You can restore them from Trash.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer()
+                Spacer(minLength: DesignTokens.Spacing.md)
+                VStack(alignment: .trailing, spacing: DesignTokens.Spacing.xxs) {
+                    Text(preview.totalSize.humanReadable)
+                        .font(DesignTokens.Font.monoLarge)
+                        .foregroundStyle(DesignTokens.Color.dangerText)
+                        .monospacedDigit()
+                    Text("previewed")
+                        .font(DesignTokens.Font.labelUppercase)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                }
             }
-            .padding(20)
+            .padding(DesignTokens.Spacing.xl)
 
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
                     ForEach(preview.apps) { app in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(app.name)
-                                    .font(DesignTokens.Font.bodyStrong)
-                                    .foregroundStyle(DesignTokens.Color.primary)
-                                Spacer()
-                                Text(app.size.humanReadable)
-                                    .font(DesignTokens.Font.monoBold)
-                                    .foregroundStyle(DesignTokens.Color.secondary)
-                                    .monospacedDigit()
-                            }
-                            ForEach(Array(app.paths.enumerated()), id: \.offset) { _, path in
-                                HStack(spacing: 6) {
-                                    Image(systemName: "circle.fill")
-                                        .font(.system(size: 3))
-                                        .foregroundStyle(DesignTokens.Color.placeholder)
-                                    Text(friendlyPath(path))
-                                        .font(DesignTokens.Font.mono)
-                                        .foregroundStyle(DesignTokens.Color.tertiary)
-                                        .lineLimit(1)
-                                        .truncationMode(.middle)
-                                }
-                            }
-                        }
+                        previewReceiptRow(app)
                     }
                 }
-                .padding(20)
+                .padding(DesignTokens.Spacing.xl)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxHeight: 320)
+            .frame(maxHeight: 340)
+            .background(DesignTokens.Color.pageBackground)
 
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
 
-            HStack(spacing: 12) {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
+                Text("Final action: move the previewed apps and leftovers to Trash.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
                 Spacer()
                 Button("Cancel") { showConfirm = false }
                     .keyboardShortcut(.cancelAction)
@@ -391,59 +502,146 @@ struct UninstallView: View {
                 .tint(DesignTokens.Color.dangerText)
                 .keyboardShortcut(.defaultAction)
             }
-            .padding(20)
+            .padding(DesignTokens.Spacing.xl)
         }
-        .frame(width: 520)
+        .frame(width: 600)
+    }
+
+    private func previewReceiptRow(_ app: UninstallPreviewApp) -> some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+            HStack(spacing: DesignTokens.Spacing.md) {
+                Image(systemName: "app.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(DesignTokens.Color.dangerText)
+                    .frame(width: 30, height: 30)
+                    .background(DesignTokens.Color.dangerSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+                Text(app.name)
+                    .font(DesignTokens.Font.bodyStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Spacer()
+                Text(app.size.humanReadable)
+                    .font(DesignTokens.Font.monoBold)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .monospacedDigit()
+            }
+            ForEach(Array(app.paths.enumerated()), id: \.offset) { _, path in
+                HStack(spacing: DesignTokens.Spacing.sm) {
+                    Image(systemName: "circle.fill")
+                        .font(.system(size: 3))
+                        .foregroundStyle(DesignTokens.Color.placeholder)
+                    Text(friendlyPath(path))
+                        .font(DesignTokens.Font.mono)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                .padding(.leading, 42)
+            }
+        }
+        .padding(DesignTokens.Spacing.md)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 
     // MARK: - States
 
     private var loadingView: some View {
-        FeatureLoadingView(
-            icon: "xmark.app.fill",
-            tint: DesignTokens.Color.dangerText,
-            title: "Scanning installed applications",
-            subtitle: "Reading your Applications folder"
-        )
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            FeatureLoadingView(
+                icon: "xmark.app.fill",
+                tint: DesignTokens.Color.dangerText,
+                title: "Scanning installed applications",
+                subtitle: "Reading Applications folders and app metadata"
+            )
+            Text("Admin-required apps will stay visible but disabled.")
+                .font(DesignTokens.Font.captionStrong)
+                .foregroundStyle(DesignTokens.Color.dangerText)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.xs)
+                .background(DesignTokens.Color.dangerSoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var previewingView: some View {
-        FeatureLoadingView(
-            icon: "trash",
-            tint: DesignTokens.Color.dangerText,
-            title: "Preparing uninstall preview",
-            subtitle: "Finding leftover files for the selected apps"
-        )
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            FeatureLoadingView(
+                icon: "trash",
+                tint: DesignTokens.Color.dangerText,
+                title: "Preparing uninstall preview",
+                subtitle: "Finding leftover files before the confirmation sheet opens"
+            )
+            Text("Dry-run only. Nothing moves to Trash yet.")
+                .font(DesignTokens.Font.captionStrong)
+                .foregroundStyle(DesignTokens.Color.dangerText)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.xs)
+                .background(DesignTokens.Color.dangerSoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var runningView: some View {
-        VStack(spacing: 16) {
-            ProgressView().scaleEffect(1.3)
-            Text(runningMessage).font(DesignTokens.Font.bodyStrong).foregroundStyle(DesignTokens.Color.secondary)
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            VStack(spacing: DesignTokens.Spacing.md) {
+                ProgressView()
+                    .scaleEffect(1.3)
+                Text(runningMessage)
+                    .font(DesignTokens.Font.bodyStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Mogu is streaming Mole output while selected apps move to Trash.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+            }
+            .padding(DesignTokens.Layout.cardPadding)
+            .frame(maxWidth: .infinity)
+            .background(DesignTokens.Color.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                    .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+            )
+
             if !activity.isEmpty {
                 ActivityFeed(lines: activity)
-                    .padding(.horizontal, 32)
             }
-        }.frame(maxWidth: .infinity).padding(.vertical, 60)
+        }
+        .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+        .padding(.vertical, 60)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignTokens.Spacing.md) {
             Image(systemName: "xmark.app.fill")
-                .font(.system(size: 28))
+                .font(.system(size: 30, weight: .semibold))
                 .foregroundStyle(DesignTokens.Color.tertiary)
-            Text("No apps found")
-                .font(DesignTokens.Font.bodyStrong)
-                .foregroundStyle(DesignTokens.Color.primary)
-            Text("Mole did not detect any removable applications.")
-                .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: DesignTokens.Spacing.xs) {
+                Text("No removable apps found")
+                    .font(DesignTokens.Font.section)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Mole did not detect any applications that can be removed from this list.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .padding(DesignTokens.Spacing.xxxl)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 80)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
 
     // MARK: - Selection
@@ -598,5 +796,38 @@ struct UninstallView: View {
         if path == home { return "~" }
         if path.hasPrefix(home + "/") { return "~" + path.dropFirst(home.count) }
         return path
+    }
+}
+
+private struct UninstallSummaryMetric: View {
+    let title: String
+    let value: String
+    let systemName: String
+    let tint: SwiftUI.Color
+
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.sm) {
+            Image(systemName: systemName)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 26, height: 26)
+                .background(tint.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                Text(title)
+                    .font(DesignTokens.Font.labelUppercase)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+                Text(value)
+                    .font(DesignTokens.Font.captionStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.insetBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
     }
 }

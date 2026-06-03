@@ -736,6 +736,48 @@
         }
       ],
       "evidence": "Clean screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-clean-feat027-loading.png and /tmp/mogu-clean-feat027-preview.png."
+    },
+    {
+      "id": "feat-028",
+      "name": "Uninstall Screen Design System Redesign",
+      "description": "Redesign UninstallView as a safer batch-selection and preview-before-uninstall surface using the Mogu-native design system, without changing uninstall behavior.",
+      "dependencies": [
+        "feat-026",
+        "feat-027"
+      ],
+      "doneCriteria": [
+        "UninstallView keeps uninstall preview-before-delete behavior unchanged and runs uninstall --dry-run before confirmation",
+        "Uninstall screen presents installed app count, total size, selected count, and selected size clearly",
+        "Admin-required apps remain disabled with an Admin badge and Terminal guidance",
+        "Confirmation sheet remains the only place to start the actual uninstall after dry-run preview",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the Uninstall list renders with the redesigned list and selection states without clicking final Move to Trash"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Add Uninstall page design guidance",
+          "status": "done",
+          "evidence": "Added design-system/mogu/pages/uninstall.md with Uninstall-specific batch selection, Trash recovery, admin deferral, and confirmation-sheet copy rules."
+        },
+        {
+          "name": "Redesign Uninstall header, summary, and selection state",
+          "status": "done",
+          "evidence": "Sources/Views/UninstallView.swift now shows installed/selected summary cards, installed total, selected count/size pill, Clear, and Preview Uninstall action while preserving existing action wiring."
+        },
+        {
+          "name": "Polish app table, safety note, confirmation sheet, and loading/running states",
+          "status": "done",
+          "evidence": "UninstallView app rows, Admin badges, Trash recovery note, receipt-style confirmation sheet, loading/previewing/running/empty states, and result banner were updated with Mogu design-system tokens. Admin-required rows remain disabled."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open --env MOGU_SCREEN=uninstall /Applications/Mogu.app; list screenshot /tmp/mogu-uninstall-feat028-list.png and selected-row screenshot /tmp/mogu-uninstall-feat028-selected.png captured. Did not click Preview Uninstall or final Move to Trash."
+        }
+      ],
+      "evidence": "Uninstall screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-uninstall-feat028-list.png and /tmp/mogu-uninstall-feat028-selected.png. No final uninstall action clicked."
     }
   ]
 }
