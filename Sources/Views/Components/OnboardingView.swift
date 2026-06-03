@@ -83,7 +83,7 @@ struct OnboardingView: View {
         case 2: onboardingCard(
             icon: "lock.shield",
             title: "No Permissions Required",
-            body: "Mogu needs no permission to start. Your administrator password is only requested when you choose to clean system-level items. Full Disk Access is optional."
+            body: "Mogu needs no permission to start. Your administrator password is only requested when you choose system-level cleanup or protected app uninstall. Full Disk Access is optional."
         )
         default: EmptyView()
         }

@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:mogu}",
+            "name": "Debug Mogu",
+            "target": "Mogu",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Mogu"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:mogu}",
+            "name": "Release Mogu",
+            "target": "Mogu",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Mogu"
+        }
+    ]
+}

@@ -16,9 +16,151 @@ extension Notification.Name {
     static let showAbout = Notification.Name("co.greenpassport.mogu.showAbout")
 }
 
-// MARK: - AppDelegate (Dock menu)
+// MARK: - Menu Bar Status Widget
+
+/// Lightweight NSStatusItem in the menu bar showing CPU/memory status.
+/// Polls `mo status --json` every 30 s, builds a menu with system stats,
+/// Quick Clean, and an Open Mogu action.
+@MainActor
+class MenuBarController: NSObject {
+    private let statusItem: NSStatusItem
+    private var pollingTask: Task<Void, Never>?
+    private var lastStatus: SystemStatus?
+
+    override init() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        super.init()
+
+        statusItem.button?.title = ""
+        statusItem.button?.image = NSImage(systemSymbolName: "gauge.medium", accessibilityDescription: "Mogu")
+        statusItem.button?.image?.isTemplate = true
+        statusItem.menu = buildMenu()
+        statusItem.button?.target = self
+        statusItem.button?.action = #selector(statusItemClicked)
+
+        // Start polling on a background thread
+        pollingTask = Task.detached { [weak self] in
+            guard let self else { return }
+            let service = MoService()
+            while !Task.isCancelled {
+                if let status = try? await service.getStatus() {
+                    await self.updateMenu(with: status)
+                }
+                try? await Task.sleep(nanoseconds: 30_000_000_000)  // 30s
+            }
+        }
+    }
+
+    deinit {
+        pollingTask?.cancel()
+    }
+
+    @objc private func statusItemClicked() {
+        Task { await refreshStatus() }
+    }
+
+    private func buildMenu() -> NSMenu {
+        let menu = NSMenu()
+
+        let openItem = NSMenuItem(title: "Open Mogu", action: #selector(openMogu), keyEquivalent: "")
+        openItem.target = self
+        menu.addItem(openItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let cpuItem = NSMenuItem(title: "CPU: —", action: nil, keyEquivalent: "")
+        cpuItem.tag = 1
+        menu.addItem(cpuItem)
+
+        let memItem = NSMenuItem(title: "Memory: —", action: nil, keyEquivalent: "")
+        memItem.tag = 2
+        menu.addItem(memItem)
+
+        let diskItem = NSMenuItem(title: "Disk: —", action: nil, keyEquivalent: "")
+        diskItem.tag = 3
+        menu.addItem(diskItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let cleanItem = NSMenuItem(title: "Quick Clean", action: #selector(quickClean), keyEquivalent: "")
+        cleanItem.target = self
+        menu.addItem(cleanItem)
+
+        let statusItem = NSMenuItem(title: "Refresh Status", action: #selector(refreshStatus), keyEquivalent: "")
+        statusItem.target = self
+        menu.addItem(statusItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        let quitItem = NSMenuItem(title: "Quit Mogu", action: #selector(quitMogu), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        return menu
+    }
+
+    @objc private func openMogu() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.windows.first?.makeKeyAndOrderFront(nil)
+        NotificationCenter.default.post(name: .dockRefreshStatus, object: nil)
+    }
+
+    @objc private func quickClean() {
+        NSApp.activate(ignoringOtherApps: true)
+        NotificationCenter.default.post(name: .dockQuickClean, object: nil)
+    }
+
+    @objc private func refreshStatus() {
+        Task {
+            let service = MoService()
+            if let status = try? await service.getStatus() {
+                updateMenu(with: status)
+            }
+        }
+    }
+
+    @objc private func quitMogu() {
+        NSApp.terminate(nil)
+    }
+
+    private func updateMenu(with status: SystemStatus) {
+        guard let menu = statusItem.menu else { return }
+
+        for item in menu.items {
+            switch item.tag {
+            case 1:
+                item.title = "CPU: \(String(format: "%.0f%%", status.cpu.usage))"
+            case 2:
+                let used = Double(status.memory.used) / Double(status.memory.total) * 100
+                item.title = "Memory: \(String(format: "%.0f%%", used))"
+            case 3:
+                if let disk = status.disks.first {
+                    item.title = "Disk: \(String(format: "%.0f%%", disk.usedPercent)) used"
+                }
+            default: break
+            }
+        }
+
+        let image: String
+        switch status.healthScore {
+        case 80...100: image = "gauge.medium"
+        case 60..<80: image = "gauge.medium.badge.exclamationmark"
+        default: image = "gauge.low"
+        }
+        statusItem.button?.image = NSImage(systemSymbolName: image, accessibilityDescription: "Mogu")
+        statusItem.button?.image?.isTemplate = true
+    }
+}
+
+// MARK: - AppDelegate (Dock menu + Menu Bar controller)
 
 class MoguAppDelegate: NSObject, NSApplicationDelegate {
+    private var menuBar: MenuBarController?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        menuBar = MenuBarController()
+    }
+
     func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
         let menu = NSMenu()
         let refreshItem = NSMenuItem(title: "Refresh Status", action: #selector(refreshStatus), keyEquivalent: "")
@@ -122,7 +264,9 @@ struct MoguApp: App {
                 tabCommand(.optimize, "5")
                 Divider()
                 tabCommand(.purge, "6")
-                tabCommand(.permissions, "7")
+                tabCommand(.installer, "7")
+                tabCommand(.history, "8")
+                tabCommand(.permissions, "9")
             }
 
             // ── Help menu ─────────────────────────────────

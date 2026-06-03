@@ -272,4 +272,37 @@ enum MoOutputParser {
         default: return "Other"
         }
     }
+
+    // Installer preview format (from `mo installer --dry-run` TUI output):
+    // After stripping ANSI/CR, each installer line looks like:
+    //   "  ○ Arc-1.148.0.dmg                     431.4MB | Downloads"
+    //   "➤ ○ Brave-Browser.dmg                   246.2MB | Downloads"
+    // Pattern: optional bullet prefix, name, whitespace, size, " | ", location
+    static func parseInstallerList(text: String) -> InstallerResult {
+        var files: [InstallerFile] = []
+        // Match lines with: optional leading chars, name, whitespace, size, " | ", location
+        let pattern = #"[○●]\s+(.+?)\s+([0-9.]+\s*(?:TB|GB|MB|KB|B))\s*\|\s*(.+)"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+            return InstallerResult(files: [])
+        }
+
+        let lines = text.split(separator: "\n")
+        for line in lines {
+            let stripped = stripControlSequences(String(line)).trimmingCharacters(in: .whitespaces)
+            let range = NSRange(stripped.startIndex..<stripped.endIndex, in: stripped)
+            guard let match = regex.firstMatch(in: stripped, options: [], range: range),
+                  let nameRange = Range(match.range(at: 1), in: stripped),
+                  let sizeRange = Range(match.range(at: 2), in: stripped),
+                  let locRange = Range(match.range(at: 3), in: stripped) else { continue }
+
+            let name = String(stripped[nameRange]).trimmingCharacters(in: .whitespaces)
+            let sizeText = String(stripped[sizeRange]).trimmingCharacters(in: .whitespaces)
+            let location = String(stripped[locRange]).trimmingCharacters(in: .whitespaces)
+            guard let size = parseByteSize(sizeText), !name.isEmpty else { continue }
+
+            let path = location.contains("/") ? "\(location)/\(name)" : "~/\(location)/\(name)"
+            files.append(InstallerFile(name: name, path: path, size: size, location: location))
+        }
+        return InstallerResult(files: files)
+    }
 }

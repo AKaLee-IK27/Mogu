@@ -92,7 +92,7 @@ struct PermissionsView: View {
                 adminBadge
             }
 
-            Text("Administrator access is optional. Mogu asks for your password only when you choose to preview and clean system-level items. Nothing is stored; nothing runs in the background.")
+            Text("Administrator access is optional. Mogu asks for your password only when you choose to preview system-level cleanup or uninstall a protected app. Nothing is stored; nothing runs in the background.")
                 .font(DesignTokens.Font.body)
                 .foregroundStyle(DesignTokens.Color.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -231,7 +231,7 @@ struct PreflightBanner: View {
                     Text("No permissions required to start")
                         .font(DesignTokens.Font.captionStrong)
                         .foregroundStyle(DesignTokens.Color.primary)
-                    Text("Admin password is only requested for system-level items.")
+                    Text("Admin password is only requested for system-level cleanup or protected app uninstall.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
                 }

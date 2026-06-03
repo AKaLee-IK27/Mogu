@@ -14,6 +14,7 @@ struct StatusView: View {
     @State private var stableProcessIDs: [Int] = []
     @State private var requestInFlight = false
     @State private var appear = false
+    @State private var spaceSaved: String?
 
     private var pollingEnabled: Bool {
         isActive && appIsActive
@@ -48,6 +49,7 @@ struct StatusView: View {
         .onAppear {
             appIsActive = NSApplication.shared.isActive
             withAnimation(DesignTokens.spring) { appear = true }
+            Task { await loadSpaceSaved() }
         }
         .onChange(of: refreshTrigger) { oldValue, newValue in
             guard oldValue != newValue, pollingEnabled else { return }
@@ -198,6 +200,9 @@ struct StatusView: View {
                 liveBadge
                 proxyBadge(status.proxy)
             }
+            if spaceSaved != nil {
+                spaceSavedBadge
+            }
 
             Spacer()
 
@@ -243,6 +248,36 @@ struct StatusView: View {
             .padding(.vertical, 4)
             .background(proxy.enabled ? DesignTokens.Color.accentSoft : DesignTokens.Color.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+        }
+    }
+
+    // MARK: - Space Saved badge
+
+    private var spaceSavedBadge: some View {
+        HStack(spacing: 5) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 10, weight: .semibold))
+            Text(spaceSaved ?? "")
+                .font(DesignTokens.Font.label)
+        }
+        .foregroundStyle(DesignTokens.Color.successText)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(DesignTokens.Color.successSoft)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+    }
+
+    private func loadSpaceSaved() async {
+        do {
+            let history = try await service.getHistory(limit: 100)
+            let bytes = history.totalFreedBytes
+            if bytes > 0 {
+                let formatter = ByteCountFormatter()
+                formatter.countStyle = .file
+                spaceSaved = formatter.string(fromByteCount: Int64(bytes)) + " freed"
+            }
+        } catch {
+            // Silently ignore — space saved is non-critical
         }
     }
 

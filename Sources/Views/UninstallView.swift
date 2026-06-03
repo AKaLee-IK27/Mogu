@@ -25,6 +25,7 @@ struct UninstallView: View {
     @State private var showConfirm = false
     @State private var preview: UninstallPreview?
     @State private var pendingNames: [String] = []
+    @State private var pendingRequiresAdmin = false
     @State private var activity: [String] = []
     @State private var runningMessage = "Uninstalling…"
     @State private var resultMessage: String?
@@ -99,8 +100,9 @@ struct UninstallView: View {
                     .buttonStyle(.plain)
                     .font(DesignTokens.Font.captionStrong)
                     .foregroundStyle(DesignTokens.Color.accent)
-                HeaderActionButton(label: "Preview Uninstall", systemName: "trash",
-                                   tint: DesignTokens.Color.dangerText,
+                HeaderActionButton(label: selectedRequiresAdmin ? "Preview Admin Uninstall" : "Preview Uninstall",
+                                   systemName: selectedRequiresAdmin ? "lock.shield" : "trash",
+                                   tint: selectedRequiresAdmin ? DesignTokens.Color.warningText : DesignTokens.Color.dangerText,
                                    disabled: isPreviewing || isRunning) {
                     Task { await startPreview() }
                 }
@@ -138,10 +140,11 @@ struct UninstallView: View {
         }
     }
 
-    // Selectable apps in the current filter (admin-required ones are excluded —
-    // see requiresAdmin). Drives the "select all" header toggle.
+    // Standard user-owned apps in the current filter. Admin-required apps are
+    // selectable manually, but select-all keeps the normal non-admin batch flow
+    // unchanged and never pulls a password prompt into a mixed batch.
     private var eligibleKeys: [String] {
-        filteredApps.filter { !$0.requiresAdmin }.map(rowKey)
+        filteredApps.filter { !$0.requiresAdmin && isSelectable($0) }.map(rowKey)
     }
     private var allEligibleSelected: Bool {
         !eligibleKeys.isEmpty && eligibleKeys.allSatisfy { selected.contains($0) }
@@ -153,7 +156,23 @@ struct UninstallView: View {
         selectedApps.reduce(0) { $0 + $1.size }
     }
 
+    private var selectedRequiresAdmin: Bool {
+        selectedApps.contains { $0.requiresAdmin }
+    }
+
     private func rowKey(_ app: AppInfo) -> String { app.path ?? app.name }
+
+    private func isHomebrewApp(_ app: AppInfo) -> Bool {
+        app.source?.caseInsensitiveCompare("Homebrew") == .orderedSame
+    }
+
+    private func isSelectable(_ app: AppInfo) -> Bool {
+        !isHomebrewApp(app)
+    }
+
+    private func liveRequiresAdmin(_ app: AppInfo) -> Bool {
+        MoService.bundleRequiresAdmin(path: app.path, source: app.source)
+    }
 
     // A sortable column header: label + a direction chevron shown only on the
     // active column. Tap to sort by this field; tap the active one to flip.
@@ -310,7 +329,7 @@ struct UninstallView: View {
                 Text("Trash recovery")
                     .font(DesignTokens.Font.captionStrong)
                     .foregroundStyle(DesignTokens.Color.primary)
-                Text("Selected apps and leftover files move to the Trash, so you can restore them. Apps marked Admin are disabled here; remove those from Terminal with `mo uninstall`.")
+                Text("Selected apps and leftover files move to the Trash, so you can restore them. Apps marked Admin require your administrator password after preview; Homebrew casks stay locked and should be removed with `brew uninstall --cask --zap`.")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -329,18 +348,20 @@ struct UninstallView: View {
     private func appRow(_ app: AppInfo) -> some View {
         let key = rowKey(app)
         let isSelected = selected.contains(key)
+        let selectable = isSelectable(app)
         return HStack(spacing: DesignTokens.Spacing.md) {
-            // Selection control, or a lock for admin-required apps.
+            // Selection control. Homebrew casks stay locked because running brew
+            // through a root/admin GUI path can leave package-manager state worse.
             Group {
-                if app.requiresAdmin {
+                if !selectable {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(DesignTokens.Color.warningText)
-                        .help("Requires administrator — remove from Terminal: mo uninstall \"\(app.name)\"")
+                        .help("Homebrew cask — remove from Terminal: brew uninstall --cask --zap \"\(app.name)\"")
                 } else {
                     Image(systemName: isSelected ? "checkmark.square.fill" : "square")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(isSelected ? DesignTokens.Color.dangerText : DesignTokens.Color.tertiary)
+                        .foregroundStyle(isSelected ? DesignTokens.Color.dangerText : (app.requiresAdmin ? DesignTokens.Color.warningText : DesignTokens.Color.tertiary))
                 }
             }
             .frame(width: 22)
@@ -358,6 +379,7 @@ struct UninstallView: View {
                         .font(DesignTokens.Font.bodyStrong)
                         .foregroundStyle(DesignTokens.Color.primary)
                     if app.requiresAdmin { adminBadge }
+                    if isHomebrewApp(app) { brewBadge }
                 }
                 if let bid = app.bundleID {
                     Text(bid)
@@ -366,7 +388,7 @@ struct UninstallView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                 } else if app.requiresAdmin {
-                    Text("Admin-required app, remove from Terminal")
+                    Text(isHomebrewApp(app) ? "Homebrew cask, remove from Terminal" : "Admin password required after preview")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.tertiary)
                 }
@@ -384,13 +406,23 @@ struct UninstallView: View {
         .padding(.vertical, DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .opacity(app.requiresAdmin ? 0.72 : 1)
+        .opacity(selectable ? 1 : 0.72)
         .background(isSelected ? DesignTokens.Color.dangerSoft : Color.clear)
-        .onTapGesture { if !app.requiresAdmin { toggle(key) } }
+        .onTapGesture { if selectable { toggle(app) } }
     }
 
     private var adminBadge: some View {
         Text("Admin")
+            .font(DesignTokens.Font.labelUppercase)
+            .foregroundStyle(DesignTokens.Color.warningText)
+            .padding(.horizontal, DesignTokens.Spacing.xs)
+            .padding(.vertical, 2)
+            .background(DesignTokens.Color.warningSoft)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+    }
+
+    private var brewBadge: some View {
+        Text("Brew")
             .font(DesignTokens.Font.labelUppercase)
             .foregroundStyle(DesignTokens.Color.warningText)
             .padding(.horizontal, DesignTokens.Spacing.xs)
@@ -431,13 +463,14 @@ struct UninstallView: View {
     }
 
     private var selectableAppsCount: Int {
-        apps.count - adminRequiredCount
+        apps.filter(isSelectable).count
     }
 
     // MARK: - Confirmation sheet
 
     private var confirmSheet: some View {
         let preview = preview ?? UninstallPreview(apps: [], totalSize: 0)
+        let needsAdmin = pendingRequiresAdmin
         return VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
                 Image(systemName: "trash.fill")
@@ -447,10 +480,14 @@ struct UninstallView: View {
                     .background(DesignTokens.Color.dangerSoft)
                     .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                    Text(preview.apps.count == 1 ? "Move 1 app to Trash?" : "Move \(preview.apps.count) apps to Trash?")
+                    Text(needsAdmin
+                         ? (preview.apps.count == 1 ? "Move 1 admin app to Trash?" : "Move \(preview.apps.count) admin apps to Trash?")
+                         : (preview.apps.count == 1 ? "Move 1 app to Trash?" : "Move \(preview.apps.count) apps to Trash?"))
                         .font(DesignTokens.Font.section)
                         .foregroundStyle(DesignTokens.Color.primary)
-                    Text("The dry-run preview found selected apps and leftovers totaling \(preview.totalSize.humanReadable). You can restore them from Trash.")
+                    Text(needsAdmin
+                         ? "The dry-run preview found selected apps and leftovers totaling \(preview.totalSize.humanReadable). Mogu will ask for your administrator password after this confirmation; you can restore moved items from Trash."
+                         : "The dry-run preview found selected apps and leftovers totaling \(preview.totalSize.humanReadable). You can restore them from Trash.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -485,7 +522,7 @@ struct UninstallView: View {
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
 
             HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
-                Text("Final action: move the previewed apps and leftovers to Trash.")
+                Text(needsAdmin ? "Final action: enter your administrator password, then move the previewed apps and leftovers to Trash." : "Final action: move the previewed apps and leftovers to Trash.")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.secondary)
                 Spacer()
@@ -495,7 +532,7 @@ struct UninstallView: View {
                     showConfirm = false
                     Task { await runUninstall() }
                 } label: {
-                    Label("Move to Trash", systemImage: "trash")
+                    Label(needsAdmin ? "Enter Password & Move to Trash" : "Move to Trash", systemImage: needsAdmin ? "lock.shield" : "trash")
                         .font(DesignTokens.Font.bodyStrong)
                 }
                 .buttonStyle(.borderedProminent)
@@ -558,7 +595,7 @@ struct UninstallView: View {
                 title: "Scanning installed applications",
                 subtitle: "Reading Applications folders and app metadata"
             )
-            Text("Admin-required apps will stay visible but disabled.")
+            Text("Admin apps need a password after preview. Homebrew casks stay locked.")
                 .font(DesignTokens.Font.captionStrong)
                 .foregroundStyle(DesignTokens.Color.dangerText)
                 .padding(.horizontal, DesignTokens.Spacing.md)
@@ -575,7 +612,7 @@ struct UninstallView: View {
                 icon: "trash",
                 tint: DesignTokens.Color.dangerText,
                 title: "Preparing uninstall preview",
-                subtitle: "Finding leftover files before the confirmation sheet opens"
+                subtitle: selectedRequiresAdmin ? "Finding leftovers first. Your password is only requested after the preview." : "Finding leftover files before the confirmation sheet opens"
             )
             Text("Dry-run only. Nothing moves to Trash yet.")
                 .font(DesignTokens.Font.captionStrong)
@@ -596,7 +633,7 @@ struct UninstallView: View {
                 Text(runningMessage)
                     .font(DesignTokens.Font.bodyStrong)
                     .foregroundStyle(DesignTokens.Color.primary)
-                Text("Mogu is streaming Mole output while selected apps move to Trash.")
+                Text(pendingRequiresAdmin ? "A macOS administrator password prompt may appear while Mole moves protected apps to Trash." : "Mogu is streaming Mole output while selected apps move to Trash.")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.secondary)
             }
@@ -646,14 +683,32 @@ struct UninstallView: View {
 
     // MARK: - Selection
 
-    private func toggle(_ key: String) {
-        if selected.contains(key) { selected.remove(key) } else { selected.insert(key) }
+    private func toggle(_ app: AppInfo) {
+        let key = rowKey(app)
+        if selected.contains(key) {
+            selected.remove(key)
+            return
+        }
+
+        if app.requiresAdmin {
+            selected = Set(selected.filter { existingKey in
+                apps.first(where: { rowKey($0) == existingKey })?.requiresAdmin == true
+            })
+        } else {
+            selected = Set(selected.filter { existingKey in
+                apps.first(where: { rowKey($0) == existingKey })?.requiresAdmin != true
+            })
+        }
+        selected.insert(key)
     }
 
     private func toggleSelectAll() {
         if allEligibleSelected {
             eligibleKeys.forEach { selected.remove($0) }
         } else {
+            selected = Set(selected.filter { existingKey in
+                apps.first(where: { rowKey($0) == existingKey })?.requiresAdmin != true
+            })
             eligibleKeys.forEach { selected.insert($0) }
         }
     }
@@ -671,6 +726,7 @@ struct UninstallView: View {
         apps.removeAll()
         selected.removeAll()
         preview = nil
+        pendingRequiresAdmin = false
         resultMessage = nil
         await service.resetUninstallPreview()
         do {
@@ -691,16 +747,34 @@ struct UninstallView: View {
     private func startPreview() async {
         let targets = selectedApps
         guard !targets.isEmpty else { return }
-        // Defense-in-depth: re-check admin status against the live filesystem in
-        // case a bundle's ownership/source changed since the list was built. An
-        // admin-required app would make Mole abort the whole batch, so refuse to
-        // preview it rather than reach that dead end.
-        if targets.contains(where: { MoService.bundleRequiresAdmin(path: $0.path, source: $0.source) }) {
-            error = "One of the selected apps now needs administrator access. Re-scan and try again, or remove it from Terminal."
+        let adminTargets = targets.filter { $0.requiresAdmin }
+        let standardTargets = targets.filter { !$0.requiresAdmin }
+        if !adminTargets.isEmpty && !standardTargets.isEmpty {
+            error = "Preview administrator apps separately from normal apps."
             return
         }
+        if targets.contains(where: isHomebrewApp) {
+            error = "Homebrew casks should be removed from Terminal with brew uninstall --cask --zap."
+            return
+        }
+
+        // Defense-in-depth: re-check admin status against the live filesystem in
+        // case a bundle's ownership/source changed since the list was built.
+        let requiresAdmin = !adminTargets.isEmpty
+        let liveAdminTargets = targets.filter(liveRequiresAdmin)
+        if requiresAdmin {
+            guard liveAdminTargets.count == targets.count else {
+                error = "One selected app no longer needs administrator access. Re-scan and preview it again."
+                return
+            }
+        } else if !liveAdminTargets.isEmpty {
+            error = "One selected app now needs administrator access. Re-scan and preview it separately."
+            return
+        }
+
         let names = targets.map(\.name)
         pendingNames = names
+        pendingRequiresAdmin = requiresAdmin
         preview = nil
         isPreviewing = true
         error = nil
@@ -751,10 +825,38 @@ struct UninstallView: View {
             error = "Your selection changed after the preview. Click Uninstall again to re-check what will be removed."
             return
         }
+        let currentTargets = selectedApps
+        guard pendingRequiresAdmin == currentTargets.contains(where: { $0.requiresAdmin }) else {
+            showConfirm = false
+            await service.resetUninstallPreview()
+            error = "Your selection's administrator requirement changed after the preview. Re-scan and preview again."
+            return
+        }
+        if currentTargets.contains(where: isHomebrewApp) {
+            showConfirm = false
+            await service.resetUninstallPreview()
+            error = "Homebrew casks should be removed from Terminal with brew uninstall --cask --zap."
+            return
+        }
+        if pendingRequiresAdmin {
+            guard currentTargets.allSatisfy(liveRequiresAdmin) else {
+                showConfirm = false
+                await service.resetUninstallPreview()
+                error = "One selected app no longer needs administrator access. Re-scan and preview it again."
+                return
+            }
+        } else if currentTargets.contains(where: liveRequiresAdmin) {
+            showConfirm = false
+            await service.resetUninstallPreview()
+            error = "One selected app now needs administrator access. Re-scan and preview it separately."
+            return
+        }
         isRunning = true
         let count = pendingNames.count
         let freed = preview?.totalSize ?? 0
-        runningMessage = count == 1 ? "Uninstalling \(pendingNames[0])…" : "Uninstalling \(count) apps…"
+        runningMessage = pendingRequiresAdmin
+            ? (count == 1 ? "Waiting for administrator password to uninstall \(pendingNames[0])…" : "Waiting for administrator password to uninstall \(count) apps…")
+            : (count == 1 ? "Uninstalling \(pendingNames[0])…" : "Uninstalling \(count) apps…")
         error = nil
         resultMessage = nil
         activity.removeAll()

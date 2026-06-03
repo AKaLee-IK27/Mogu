@@ -5,4 +5,5 @@
 Package.resolved
 .DS_Store
 .remember/
+.agents/
 .claude/settings.local.json

@@ -114,11 +114,12 @@ actor MoService {
 
     // Mirror of Mole's `needs_sudo` check (bin/uninstall.sh): an app needs admin
     // if its bundle is root-owned, owned by another user, or sits in a directory
-    // the user can't write — plus Homebrew casks (their sudo session can't be
-    // satisfied through our non-interactive piped stdin). In-app uninstall runs
-    // unprivileged, and one admin-required app aborts Mole's whole batch, so the
-    // UI flags these non-selectable. Unknown path → false (let the run attempt;
-    // it aborts harmlessly removing nothing if admin turns out to be required).
+    // the user can't write — plus Homebrew casks. In-app uninstall runs
+    // unprivileged so Mole can keep the user's HOME/Trash context; root-owned
+    // app batches may prompt for the admin password during execute, while
+    // Homebrew casks stay locked to avoid corrupting package-manager state.
+    // Unknown path → false (let the run attempt; it aborts harmlessly removing
+    // nothing if admin turns out to be required).
     nonisolated static func bundleRequiresAdmin(path: String?, source: String?) -> Bool {
         if source?.caseInsensitiveCompare("Homebrew") == .orderedSame { return true }
         guard let path, !path.isEmpty else { return false }
@@ -148,6 +149,12 @@ actor MoService {
         return preview
     }
 
+    // Get cleanup history (JSON from `mo history --json`)
+    func getHistory(limit: Int = 50) async throws -> HistoryResult {
+        let output = try await runCommandOrThrow(args: ["history", "--json", "--limit", "\(limit)"])
+        return try decode(HistoryResult.self, from: output)
+    }
+
     // Get disk analysis
     func getAnalysis(path: String = NSHomeDirectory()) async throws -> AnalysisResult {
         let output = try await runCommandOrThrow(args: ["analyze", "--json", path])
@@ -174,6 +181,11 @@ actor MoService {
     // Build purge projects from accumulated streamed stdout text.
     func purgeResult(fromText text: String) -> PurgeResult {
         parsePurgePreview(stdout: Data(text.utf8))
+    }
+
+    // Parse installer list from accumulated streamed stdout text.
+    func installerResult(fromText text: String) -> InstallerResult {
+        MoOutputParser.parseInstallerList(text: text)
     }
 
     // MARK: - Private

@@ -238,8 +238,8 @@ struct AppInfo: Codable, Identifiable {
     var path: String?
     // Computed at list time (MoService.getUninstallList) from the bundle's owner
     // and parent-dir writability + Homebrew source — mirrors Mole's own
-    // `needs_sudo` check. In-app uninstall is unprivileged, and an admin-required
-    // app aborts the whole batch in Mole, so these are flagged non-selectable.
+    // `needs_sudo` check. Root-owned/non-writable apps can be previewed and
+    // uninstalled in an admin-only batch; Homebrew casks remain locked.
     var requiresAdmin: Bool = false
 }
 
@@ -354,5 +354,75 @@ extension UInt64 {
 extension Double {
     var pctString: String {
         String(format: "%.1f", self)
+    }
+}
+
+// MARK: - Installer
+
+struct InstallerFile: Identifiable, Equatable {
+    var id: String { path }
+    let name: String
+    let path: String
+    let size: UInt64
+    let location: String  // e.g. "Downloads"
+}
+
+struct InstallerResult: Equatable {
+    let files: [InstallerFile]
+    var totalSize: UInt64 { files.reduce(UInt64(0)) { $0 + $1.size } }
+}
+
+// MARK: - History
+
+struct HistoryActions: Codable {
+    let removed: Int
+    let trashed: Int
+    let skipped: Int
+    let failed: Int
+    let rebuilt: Int
+    let other: Int
+
+    var freedItemCount: Int { removed + trashed }
+}
+
+struct HistorySession: Codable, Identifiable {
+    var id: String { startedAt }
+    let command: String
+    let startedAt: String
+    let endedAt: String
+    let items: Int
+    let size: String  // human-readable like "7.75GB"
+    let operationCount: Int
+    let actions: HistoryActions
+
+    enum CodingKeys: String, CodingKey {
+        case command
+        case startedAt = "started_at"
+        case endedAt = "ended_at"
+        case items
+        case size
+        case operationCount = "operation_count"
+        case actions
+    }
+}
+
+struct HistoryLogs: Codable {
+    let operations: String
+    let deletions: String
+}
+
+struct HistoryResult: Codable {
+    let logs: HistoryLogs
+    let limit: Int
+    let sessions: [HistorySession]
+
+    // Total bytes actually freed across destructive sessions. Mole logs dry-run
+    // previews as sessions with a size estimate but zero removed/trashed actions;
+    // do not count those as recovered space.
+    var totalFreedBytes: UInt64 {
+        sessions.reduce(UInt64(0)) { total, session in
+            guard session.actions.freedItemCount > 0 else { return total }
+            return total + (MoOutputParser.parseHumanSize(session.size) ?? 0)
+        }
     }
 }

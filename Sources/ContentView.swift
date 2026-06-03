@@ -8,6 +8,8 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case analyze = "Analyze"
     case optimize = "Optimize"
     case purge = "Purge"
+    case installer = "Installer"
+    case history = "History"
     case permissions = "Permissions"
 
     var id: String { rawValue }
@@ -21,6 +23,8 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .analyze: return "chart.bar.fill"
         case .optimize: return "bolt.horizontal.circle.fill"
         case .purge: return "trash.fill"
+        case .installer: return "shippingbox.fill"
+        case .history: return "clock.arrow.circlepath"
         case .permissions: return "lock.shield"
         }
     }
@@ -33,6 +37,8 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .optimize: return DesignTokens.Color.warning
         case .analyze: return SwiftUI.Color(hex: "5856d6")
         case .purge: return DesignTokens.Color.purgeAccent
+        case .installer: return DesignTokens.Color.warning
+        case .history: return DesignTokens.Color.accent
         case .permissions: return DesignTokens.Color.accent
         }
     }
@@ -67,6 +73,8 @@ struct ContentView: View {
     @State private var optimizePreview = UUID()
     @State private var optimizeRun = UUID()
     @State private var purgeRefresh = UUID()
+    @State private var historyRefresh = UUID()
+    @State private var installerRefresh = UUID()
 
     // Loading/running state bindings
     @State private var statusLoading = true
@@ -78,6 +86,8 @@ struct ContentView: View {
     @State private var optimizeRunning = false
     @State private var optimizeComplete = false
     @State private var purgeLoading = true
+    @State private var historyLoading = true
+    @State private var installerLoading = true
 
     init() {
         let requestedScreen = Foundation.ProcessInfo.processInfo.environment["MOGU_SCREEN"]?.lowercased()
@@ -243,6 +253,22 @@ struct ContentView: View {
                     service: moService,
                     refreshTrigger: $purgeRefresh,
                     isLoading: $purgeLoading
+                )
+            }
+        case .installer:
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
+                InstallerView(
+                    service: moService,
+                    refreshTrigger: $installerRefresh,
+                    isLoading: $installerLoading
+                )
+            }
+        case .history:
+            StickyTab(key: item.id, isActive: selectedItem == item, loadedTabs: $loadedTabs) {
+                HistoryView(
+                    service: moService,
+                    refreshTrigger: $historyRefresh,
+                    isLoading: $historyLoading
                 )
             }
         case .permissions:

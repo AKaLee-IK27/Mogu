@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 # Mogu
 
@@ -247,7 +247,7 @@ Before ending:
 
 Before writing code:
 1. Run `./init.sh` to verify environment is healthy
-2. Read `CLAUDE.md` completely
+2. Read `AGENTS.md` completely
 3. Read `feature_list.json` to see current feature state
 4. Pick exactly one unfinished feature to work on
 

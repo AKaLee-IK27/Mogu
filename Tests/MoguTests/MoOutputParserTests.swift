@@ -122,6 +122,51 @@ final class MoOutputParserTests: XCTestCase {
         XCTAssertNil(MoOutputParser.parseByteSize("no size here"))
     }
 
+    // MARK: - History totals
+
+    func testHistoryTotalFreedBytesIgnoresDryRunSessions() {
+        let result = HistoryResult(
+            logs: HistoryLogs(operations: "", deletions: ""),
+            limit: 10,
+            sessions: [
+                HistorySession(
+                    command: "uninstall",
+                    startedAt: "2026-06-03 21:33:08",
+                    endedAt: "2026-06-03 21:33:10",
+                    items: 1,
+                    size: "12.30GB",
+                    operationCount: 0,
+                    actions: HistoryActions(removed: 0, trashed: 0, skipped: 0, failed: 0, rebuilt: 0, other: 0)
+                ),
+                HistorySession(
+                    command: "uninstall",
+                    startedAt: "2026-06-03 21:40:00",
+                    endedAt: "2026-06-03 21:40:05",
+                    items: 1,
+                    size: "102KB",
+                    operationCount: 1,
+                    actions: HistoryActions(removed: 0, trashed: 1, skipped: 0, failed: 0, rebuilt: 0, other: 0)
+                )
+            ]
+        )
+
+        XCTAssertEqual(result.totalFreedBytes, MoOutputParser.parseHumanSize("102KB"))
+    }
+
+    // MARK: - Installer preview
+
+    func testInstallerListParsesTUIRows() {
+        let text = """
+        \u{1B}[0;36m➤ ○ Arc-1.148.0-81146.dmg                     431.4MB | Downloads \u{1B}[0m
+          ○ ClickUp Mac Installer.zip                   634KB | Downloads
+        """
+        let result = MoOutputParser.parseInstallerList(text: text)
+        XCTAssertEqual(result.files.map(\.name), ["Arc-1.148.0-81146.dmg", "ClickUp Mac Installer.zip"])
+        XCTAssertEqual(result.files.first?.size, MoOutputParser.parseByteSize("431.4MB"))
+        XCTAssertEqual(result.files.first?.path, "~/Downloads/Arc-1.148.0-81146.dmg")
+        XCTAssertEqual(result.totalSize, (MoOutputParser.parseByteSize("431.4MB") ?? 0) + (MoOutputParser.parseByteSize("634KB") ?? 0))
+    }
+
     // MARK: - System-skip literal (cross-component dependency on clean.sh)
 
     func testSystemCleanupSkipMarkerLiteral() {

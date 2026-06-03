@@ -6,6 +6,7 @@ struct AnalyzeView: View {
     @Environment(\.openURL) private var openURL
     @Binding var refreshTrigger: UUID
     @Binding var isLoading: Bool
+    @State private var scanPath: String = NSHomeDirectory()
     @State private var result: AnalysisResult?
     @State private var error: String?
     @State private var appear = false
@@ -220,7 +221,7 @@ struct AnalyzeView: View {
                     Text("Scanned path")
                         .font(DesignTokens.Font.labelUppercase)
                         .foregroundStyle(DesignTokens.Color.tertiary)
-                    Text(NSHomeDirectory())
+                    Text(scanPath)
                         .font(DesignTokens.Font.mono)
                         .foregroundStyle(DesignTokens.Color.primary)
                         .lineLimit(1)

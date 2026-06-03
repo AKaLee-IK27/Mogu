@@ -1,7 +1,7 @@
 import Foundation
 
 // Administrator elevation has no preflight permission grant. macOS prompts only
-// when the user chooses an elevated system-level operation. Full Disk Access is
+// when the user chooses elevated cleanup or protected app uninstall. Full Disk Access is
 // optional and detected by probing the system TCC database, which is readable
 // only after FDA is granted.
 @MainActor
@@ -24,8 +24,8 @@ final class PermissionsService: ObservableObject {
     // Permissions each screen's operations may optionally require.
     static func requirements(for item: SidebarItem) -> [PermissionKind] {
         switch item {
-        case .clean, .optimize: return [.administrator]
-        case .analyze, .uninstall, .status, .purge, .permissions: return []
+        case .clean, .optimize, .uninstall: return [.administrator]
+        case .analyze, .status, .purge, .installer, .history, .permissions: return []
         }
     }
 

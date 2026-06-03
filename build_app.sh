@@ -217,5 +217,5 @@ if [[ -d "$INSTALL_DIR" ]]; then
     echo "Installed to $INSTALL_DIR/$APP"
     echo ""
     echo "Mogu needs no permissions to start. It asks for your administrator"
-    echo "password only when you choose to clean or optimize system-level items."
+    echo "password only for system cleanup or protected app uninstall."
 fi
