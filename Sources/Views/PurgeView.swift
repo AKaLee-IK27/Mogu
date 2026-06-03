@@ -31,12 +31,12 @@ struct PurgeView: View {
     }
 
     private var headerBar: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Project Artifacts")
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.lg) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                Text("Purge")
                     .font(DesignTokens.Font.page)
                     .foregroundStyle(DesignTokens.Color.primary)
-                Text("Find node_modules, target, .build, and dist directories")
+                Text("Scan for node_modules, target, .build, and dist directories")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.tertiary)
             }
@@ -44,15 +44,16 @@ struct PurgeView: View {
             if !projects.isEmpty {
                 InlineSearchField(text: $searchText, prompt: "Search projects")
                     .frame(width: 200)
-                HStack(spacing: 6) {
-                    Image(systemName: "folder.fill.badge.minus").font(.system(size: 10))
+                HStack(spacing: DesignTokens.Spacing.xs) {
+                    Image(systemName: "folder.fill.badge.minus")
+                        .font(.system(size: 11, weight: .semibold))
                     Text(totalArtifactsSize)
-                        .font(DesignTokens.Font.monoLarge)
-                        .foregroundStyle(DesignTokens.Color.accentTint)
+                        .font(DesignTokens.Font.monoBold)
                         .monospacedDigit()
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .foregroundStyle(DesignTokens.Color.accentTint)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.xs)
                 .background(DesignTokens.Color.accentSoft)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
@@ -60,8 +61,8 @@ struct PurgeView: View {
                 Task { await loadProjects() }
             }
         }
-        .padding(.horizontal, 32)
-        .padding(.vertical, 20)
+        .padding(.horizontal, DesignTokens.Layout.headerHorizontalPadding)
+        .padding(.vertical, DesignTokens.Layout.headerVerticalPadding)
     }
 
     private var filteredProjects: [PurgeProject] {
@@ -73,72 +74,168 @@ struct PurgeView: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Projects", subtitle: "\(filteredProjects.count) found")
-                .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 12)
-
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            purgeSummaryCard
             purgeNote
-                .padding(.horizontal, 32)
-                .padding(.bottom, 12)
 
-            VStack(spacing: 0) {
-                ForEach(Array(filteredProjects.enumerated()), id: \.element.id) { i, project in
-                    projectRow(project)
-                        .opacity(appear ? 1 : 0)
-                        .offset(x: appear ? 0 : -8)
-                        .animation(DesignTokens.stagger(i), value: appear)
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                sectionHeader("Projects", subtitle: "\(filteredProjects.count) found")
 
-                    if i < filteredProjects.count - 1 {
-                        Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 52)
+                VStack(spacing: 0) {
+                    ForEach(Array(filteredProjects.enumerated()), id: \.element.id) { i, project in
+                        projectRow(project)
+                            .opacity(appear ? 1 : 0)
+                            .offset(x: appear ? 0 : -8)
+                            .animation(DesignTokens.stagger(i), value: appear)
+
+                        if i < filteredProjects.count - 1 {
+                            Rectangle()
+                                .fill(DesignTokens.Color.separatorLight)
+                                .frame(height: 1)
+                                .padding(.leading, 52)
+                        }
                     }
                 }
+                .background(DesignTokens.Color.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                        .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+                )
+                .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
             }
-            .padding(.horizontal, 16)
         }
-        .padding(.bottom, 32)
+        .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+        .padding(.vertical, DesignTokens.Spacing.xxl)
         .onAppear { withAnimation(DesignTokens.spring) { appear = true } }
     }
 
+    private var purgeSummaryCard: some View {
+        guard !projects.isEmpty else { return AnyView(EmptyView()) }
+        return AnyView(
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+                HStack(alignment: .center, spacing: DesignTokens.Spacing.xl) {
+                    HStack(spacing: DesignTokens.Spacing.md) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                                .fill(DesignTokens.Color.purgeAccent.opacity(0.12))
+                                .frame(width: 56, height: 56)
+                            Image(systemName: "folder.fill.badge.minus")
+                                .font(.system(size: 24, weight: .semibold))
+                                .foregroundStyle(DesignTokens.Color.purgeAccent)
+                        }
+
+                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                            Text("Read-only artifact scan")
+                                .font(DesignTokens.Font.section)
+                                .foregroundStyle(DesignTokens.Color.primary)
+                            Text("Found \(projects.count) projects with build caches and dependency folders.")
+                                .font(DesignTokens.Font.caption)
+                                .foregroundStyle(DesignTokens.Color.secondary)
+                        }
+                    }
+
+                    Spacer(minLength: DesignTokens.Spacing.lg)
+
+                    VStack(alignment: .trailing, spacing: DesignTokens.Spacing.xxs) {
+                        Text(totalArtifactsSize)
+                            .font(DesignTokens.Font.displayNumberLarge)
+                            .foregroundStyle(DesignTokens.Color.primary)
+                            .monospacedDigit()
+                        Text("total artifacts")
+                            .font(DesignTokens.Font.labelUppercase)
+                            .foregroundStyle(DesignTokens.Color.tertiary)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                    Text("Scanned paths")
+                        .font(DesignTokens.Font.labelUppercase)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                    Text("~/Repos, ~/dev, ~/Code, ~/Projects, and other common directories")
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(DesignTokens.Spacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(DesignTokens.Color.insetBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+            }
+            .padding(DesignTokens.Layout.cardPadding)
+            .background(DesignTokens.Color.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                    .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+            )
+            .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+        )
+    }
+
     private var purgeNote: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "info.circle")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(DesignTokens.Color.accent)
-                .padding(.top, 1)
-            Text("Purge scans ~/Repos, ~/dev, ~/Code, and other common project directories. Interactive cleanup requires Terminal.")
-                .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "terminal.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.purgeAccent)
+                .frame(width: 28, height: 28)
+                .background(DesignTokens.Color.purgeAccent.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                Text("Terminal required for cleanup")
+                    .font(DesignTokens.Font.captionStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Purge is a read-only scan. For interactive cleanup, run `mo purge` in Terminal with the flags you need.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Spacer(minLength: 0)
         }
-        .padding(12)
-        .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .padding(DesignTokens.Spacing.md)
+        .background(DesignTokens.Color.insetBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 
     private func projectRow(_ project: PurgeProject) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: DesignTokens.Spacing.md) {
             Image(systemName: "folder.fill")
-                .font(.system(size: 14))
-                .foregroundStyle(DesignTokens.Color.tertiary)
-                .frame(width: 22)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.purgeAccent)
+                .frame(width: 34, height: 34)
+                .background(DesignTokens.Color.purgeAccent.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
                 Text(project.name)
                     .font(DesignTokens.Font.bodyStrong)
                     .foregroundStyle(DesignTokens.Color.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
                 Text(project.type)
-                    .font(DesignTokens.Font.mono)
+                    .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.tertiary)
+                    .padding(.horizontal, DesignTokens.Spacing.xs)
+                    .padding(.vertical, 2)
+                    .background(DesignTokens.Color.codeBg)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
 
-            Spacer()
+            Spacer(minLength: DesignTokens.Spacing.md)
 
             Text(project.size.humanReadable)
-                .font(DesignTokens.Font.mono)
-                .foregroundStyle(DesignTokens.Color.tertiary)
+                .font(DesignTokens.Font.monoBold)
+                .foregroundStyle(DesignTokens.Color.secondary)
+                .monospacedDigit()
+                .frame(width: 64, alignment: .trailing)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
     }
@@ -148,35 +245,47 @@ struct PurgeView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checkmark.seal")
-                .font(.system(size: 28))
+        VStack(spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 30, weight: .semibold))
                 .foregroundStyle(DesignTokens.Color.successText)
-            Text("No artifacts found")
-                .font(DesignTokens.Font.bodyStrong)
-                .foregroundStyle(DesignTokens.Color.primary)
-            Text("Mole did not find any project build artifacts in the scanned directories.")
-                .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: DesignTokens.Spacing.xs) {
+                Text("No build artifacts found")
+                    .font(DesignTokens.Font.section)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Mole did not find any project build caches or dependency folders in the scanned directories.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .padding(DesignTokens.Spacing.xxxl)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 80)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
 
     private var loadingView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: DesignTokens.Spacing.xl) {
             FeatureLoadingView(
-                icon: "trash.fill",
+                icon: "folder.fill.badge.minus",
                 tint: DesignTokens.Color.purgeAccent,
                 title: "Scanning project directories",
                 subtitle: "Finding build caches and dependency folders"
             )
             if !activity.isEmpty {
-                ActivityFeed(lines: activity)
-                    .padding(.horizontal, 32)
+                ActivityFeed(lines: activity, visible: 8)
+                    .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
             }
-        }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.vertical, 40)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 40)
     }
 
     private func loadProjects() async {

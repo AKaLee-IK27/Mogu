@@ -4,24 +4,23 @@
 
 **Date:** 2026-06-03
 **Branch:** `main`
-**Work:** feat-030, Optimize screen design-system redesign.
+**Work:** feat-031, Purge screen design-system redesign.
 
 ## What changed
 
-- Redesigned `Sources/Views/OptimizeView.swift` as a clearer step-by-step optimization dashboard.
-- Added `phaseCard` component for adaptive status banners (previewing/ready/running/complete/error).
-- Polished system-level optimization confirmation card with warning tint.
-- Updated `StepListView` (shared component) with better step rows, state icons, admin badges, and card background.
-- Updated loading state with safety hint.
-- Added `design-system/mogu/pages/optimize.md` with Optimize-specific layout and copy rules.
-- Updated `feature_list.json` and `progress.md` for feat-030.
+- Redesigned `Sources/Views/PurgeView.swift` as a clearer developer-artifact dashboard.
+- Added a read-only artifact scan summary card with total artifact size, project count, and scanned paths.
+- Polished project rows with teal-accented folder icons, type badges, and monospaced sizes.
+- Updated purge note to make terminal-required guidance obvious.
+- Improved loading state with terminal-style activity feed.
+- Added `design-system/mogu/pages/purge.md` with Purge-specific layout and copy rules.
+- Updated `feature_list.json` and `progress.md` for feat-031.
 
 ## Behavior boundaries
 
-- Optimize command behavior is unchanged.
-- Still runs `stream(args: ["optimize", "--dry-run"])` and `streamElevated`.
-- Admin-first escalation model unchanged.
-- `StepStreamParser` behavior unchanged.
+- Purge command behavior is unchanged.
+- Still runs `stream(args: ["purge", "--dry-run", "--include-empty"])`.
+- Remains read-only; no delete action in the GUI.
 
 ## Verification
 
@@ -36,24 +35,18 @@ make app
 
 Runtime verification:
 
-- Launched with `open --env MOGU_SCREEN=optimize /Applications/Mogu.app`.
-- Captured preview-state evidence at `/tmp/mogu-optimize-feat030-preview.png`.
+- Launched with `open --env MOGU_SCREEN=purge /Applications/Mogu.app`.
+- Captured completed-state evidence at `/tmp/mogu-purge-feat031-complete.png`.
 - Grep found no active `.toolbar`, `ToolbarItem`, `ToolbarItemGroup`, or `.searchable` usage in `Sources`.
 
 ## Current State
 
-- `main` is ahead of `origin/main` by 6 committed changes:
-  - `86f4630 feat: polish status dashboard`
-  - `dcdea40 chore: install ui-ux pro max skills`
-  - `e580c14 feat: add Mogu design system foundation`
-  - `882daaa feat: redesign clean screen`
-  - `40d3ca9 feat: redesign uninstall screen`
-  - `6f52dff feat: redesign analyze screen`
-- feat-030 is implemented but not committed yet.
+- `main` is ahead of `origin/main` by 7 committed changes.
+- feat-031 is implemented but not committed yet.
 - Installed `/Applications/Mogu.app` was rebuilt from the current source.
 
 ## Next Step / Open items
 
-- Commit feat-030.
-- Next screen-by-screen redesign candidate: Purge.
+- Commit feat-031.
+- Remaining screens: Permissions, Settings (lower priority).
 - Unrelated known issue: first-run onboarding dismissal does not appear to persist `hasSeenOnboarding`; still out of scope.

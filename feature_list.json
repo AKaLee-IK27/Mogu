@@ -862,6 +862,48 @@
         }
       ],
       "evidence": "Optimize screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-optimize-feat030-preview.png."
+    },
+    {
+      "id": "feat-031",
+      "name": "Purge Screen Design System Redesign",
+      "description": "Redesign PurgeView as a clearer developer-artifact dashboard using the Mogu-native design system, without changing purge behavior.",
+      "dependencies": [
+        "feat-026",
+        "feat-030"
+      ],
+      "doneCriteria": [
+        "PurgeView keeps mo purge behavior unchanged and runs purge --dry-run --include-empty",
+        "Purge screen presents total artifact size, project count, and scan scope clearly",
+        "Project rows use type badges and size columns with design-system tokens",
+        "Purge note makes read-only terminal guidance obvious",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the Purge completed state renders with redesigned surfaces"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Add Purge page design guidance",
+          "status": "done",
+          "evidence": "Added design-system/mogu/pages/purge.md with Purge-specific read-only scan layout, copy, and terminal guidance rules."
+        },
+        {
+          "name": "Redesign Purge header and summary",
+          "status": "done",
+          "evidence": "Sources/Views/PurgeView.swift now presents a read-only artifact scan summary card with total artifact size, project count, and scanned paths."
+        },
+        {
+          "name": "Polish project rows, purge note, loading, and empty states",
+          "status": "done",
+          "evidence": "PurgeView project rows, purge note, loading state, and empty state were updated with Mogu design-system tokens. purgeAccent (teal) identity used consistently. Behavior unchanged."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open --env MOGU_SCREEN=purge /Applications/Mogu.app; completed-state screenshot /tmp/mogu-purge-feat031-complete.png captured."
+        }
+      ],
+      "evidence": "Purge screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-purge-feat031-complete.png."
     }
   ]
 }

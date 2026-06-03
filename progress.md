@@ -3,7 +3,19 @@
 ## Current State
 
 **Last Updated:** 2026-06-03
-**Status:** feat-030 completed locally — Optimize screen redesign implemented and runtime-verified.
+**Status:** feat-031 completed locally — Purge screen redesign implemented and runtime-verified.
+
+## Session 2026-06-03: Purge Screen Design System Redesign (feat-031)
+
+Redesigned PurgeView as a clearer developer-artifact dashboard using the Mogu design system, without changing purge behavior.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-031 | Purge Screen Design System Redesign | `make build`, `make test`, `make parser-test`, `make app`; runtime screenshot `/tmp/mogu-purge-feat031-complete.png` |
+
+**Files changed:** 5 files
+- Modified: `Sources/Views/PurgeView.swift`, `feature_list.json`, `progress.md`, `session-handoff.md`
+- New: `design-system/mogu/pages/purge.md`
 
 ## Session 2026-06-03: Optimize Screen Design System Redesign (feat-030)
 
@@ -134,3 +146,4 @@ Nine features across 3 tiers, all verified at runtime.
 | feat-028 | Uninstall Screen Design System Redesign | done | Runtime-verified Uninstall list + selected-row state |
 | feat-029 | Analyze Screen Design System Redesign | done | Runtime-verified Analyze completed dashboard |
 | feat-030 | Optimize Screen Design System Redesign | done | Runtime-verified Optimize preview dashboard |
+| feat-031 | Purge Screen Design System Redesign | done | Runtime-verified Purge completed dashboard |
