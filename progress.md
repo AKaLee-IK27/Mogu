@@ -2,10 +2,22 @@
 
 ## Current State
 
-**Last Updated:** 2026-06-03
-**Status:** feat-033 completed locally — Settings screen redesign implemented and runtime-verified.
+**Last Updated:** 2026-06-04
+**Status:** feat-035 completed locally — static landing page and public roadmap implemented and browser-verified.
 
-All 7 main screens now use the Mogu design system: Status, Clean, Uninstall, Analyze, Optimize, Purge, Permissions, and Settings.
+All 7 main screens now use the Mogu design system: Status, Clean, Uninstall, Analyze, Optimize, Purge, Permissions, and Settings. The repo now also has a root `index.html` landing page and `ROADMAP.md` for public product direction.
+
+## Session 2026-06-04: Landing Page and Public Roadmap (feat-035)
+
+Added a static public landing page and roadmap for Mogu, focused on Mac-first preview-before-delete positioning and GitHub Releases download.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-035 | Landing Page and Public Roadmap | `make build`, `make test`, `make parser-test`; browser rendered `file:///Users/rowlet/Repos/mogu/index.html`; desktop/mobile overflow checks passed; screenshots `/tmp/mogu-landing-feat035-desktop.png`, `/tmp/mogu-landing-feat035-mobile.png`, `/tmp/mogu-landing-feat035-light.png` |
+
+**Files changed:** 5 files
+- New: `index.html`, `ROADMAP.md`
+- Modified: `feature_list.json`, `progress.md`, `session-handoff.md`
 
 ## Session 2026-06-03: Settings Screen Design System Redesign (feat-033)
 

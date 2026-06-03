@@ -1,0 +1,945 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#34489e">
+  <meta name="description" content="Mogu is a native macOS GUI for Mole that previews Mac cleanup, app uninstall, optimization, and disk analysis before destructive actions run.">
+  <meta property="og:title" content="Mogu — Preview-first Mac cleanup">
+  <meta property="og:description" content="A friendly native macOS app for Mole. Clean caches, uninstall apps, analyze disk usage, and optimize your Mac with preview-before-delete safety.">
+  <meta property="og:image" content="icon.png">
+  <meta property="og:type" content="website">
+  <title>Mogu — Preview-first Mac cleanup</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f5fa;
+      --bg-soft: #e9ebf3;
+      --card: #ffffff;
+      --card-strong: #f9faff;
+      --inset: #edf0f7;
+      --text: #1b1d27;
+      --muted: #51586a;
+      --muted-2: #737a8a;
+      --line: #cfd3df;
+      --line-soft: #e1e4ed;
+      --accent: #34489e;
+      --accent-strong: #2b3d8e;
+      --accent-soft: #e7eaf8;
+      --success: #147a4c;
+      --success-soft: #dff5e8;
+      --warning: #9a5b00;
+      --warning-soft: #fff1cf;
+      --danger: #b42318;
+      --shadow: 0 22px 60px rgba(35, 43, 70, 0.16);
+      --shadow-soft: 0 12px 30px rgba(35, 43, 70, 0.10);
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --container: 1160px;
+      --focus: 0 0 0 4px rgba(52, 72, 158, 0.24);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0f1117;
+        --bg-soft: #171922;
+        --card: #1a1d27;
+        --card-strong: #222636;
+        --inset: #121520;
+        --text: #f4f6fb;
+        --muted: #a9afbd;
+        --muted-2: #737a8a;
+        --line: #373c4d;
+        --line-soft: #2a2f3e;
+        --accent: #7185ef;
+        --accent-strong: #8fa1ff;
+        --accent-soft: #22284d;
+        --success: #70d59d;
+        --success-soft: #143625;
+        --warning: #ffd166;
+        --warning-soft: #3a2a0d;
+        --danger: #ff8b7f;
+        --shadow: 0 26px 70px rgba(0, 0, 0, 0.38);
+        --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.26);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 12% 4%, rgba(113, 133, 239, 0.24), transparent 34rem),
+        radial-gradient(circle at 82% 16%, rgba(20, 122, 76, 0.12), transparent 28rem),
+        linear-gradient(180deg, var(--bg-soft) 0%, var(--bg) 34%, var(--bg) 100%);
+      font-size: 16px;
+      line-height: 1.6;
+      min-width: 320px;
+    }
+
+    img, svg { display: block; }
+
+    a { color: inherit; }
+
+    .skip-link {
+      position: absolute;
+      left: 1rem;
+      top: 1rem;
+      z-index: 20;
+      transform: translateY(-150%);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--text);
+      padding: 0.75rem 1rem;
+      box-shadow: var(--shadow-soft);
+      transition: transform 180ms ease;
+    }
+
+    .skip-link:focus { transform: translateY(0); }
+
+    .page-shell {
+      width: min(100% - 32px, var(--container));
+      margin: 0 auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 16px;
+      z-index: 10;
+      margin-top: 16px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--card) 88%, transparent);
+      box-shadow: var(--shadow-soft);
+      padding: 0.55rem;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-height: 44px;
+      border-radius: 999px;
+      padding: 0.35rem 0.8rem 0.35rem 0.45rem;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      box-shadow: 0 8px 18px rgba(52, 72, 158, 0.22);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+
+    .nav-links a {
+      min-height: 44px;
+      border-radius: 999px;
+      padding: 0.7rem 0.95rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 650;
+      transition: color 180ms ease, background 180ms ease;
+    }
+
+    .nav-links a:hover {
+      background: var(--inset);
+      color: var(--text);
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 0.8rem 1.08rem;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 750;
+      letter-spacing: -0.01em;
+      transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease, border-color 180ms ease;
+    }
+
+    .button:hover { transform: translateY(-1px); }
+
+    .button-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 14px 28px rgba(52, 72, 158, 0.30);
+    }
+
+    .button-primary:hover { background: var(--accent-strong); }
+
+    .button-secondary {
+      border-color: var(--line);
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .button-secondary:hover { border-color: var(--accent); }
+
+    .button svg {
+      width: 18px;
+      height: 18px;
+      flex: 0 0 auto;
+    }
+
+    a:focus-visible, button:focus-visible {
+      outline: none;
+      box-shadow: var(--focus), var(--shadow-soft);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(420px, 1.05fr);
+      gap: 3rem;
+      align-items: center;
+      padding: clamp(4.5rem, 9vw, 7.5rem) 0 clamp(2.5rem, 6vw, 5rem);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      width: fit-content;
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--card) 86%, transparent);
+      color: var(--accent-strong);
+      padding: 0.44rem 0.72rem;
+      font-size: 0.84rem;
+      font-weight: 750;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .eyebrow svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 1.15rem;
+      font-size: clamp(3rem, 8vw, 6.8rem);
+      line-height: 0.88;
+      letter-spacing: -0.075em;
+      font-weight: 900;
+      max-width: 10ch;
+    }
+
+    .hero-copy {
+      max-width: 40rem;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 1.4vw, 1.28rem);
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin: 1.7rem 0 1.15rem;
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      color: var(--muted-2);
+      font-size: 0.92rem;
+      font-weight: 650;
+    }
+
+    .meta-row span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .meta-row svg {
+      width: 16px;
+      height: 16px;
+      color: var(--success);
+    }
+
+    .hero-visual {
+      position: relative;
+      min-width: 0;
+    }
+
+    .app-frame {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+      border-radius: 26px;
+      background: linear-gradient(135deg, var(--card-strong), var(--card));
+      box-shadow: var(--shadow);
+      padding: 0.8rem;
+    }
+
+    .frame-dots {
+      display: flex;
+      gap: 0.45rem;
+      padding: 0.35rem 0.35rem 0.8rem;
+    }
+
+    .frame-dots span {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--line);
+    }
+
+    .app-frame img {
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+      border: 1px solid var(--line-soft);
+      background: var(--inset);
+    }
+
+    .float-card {
+      position: absolute;
+      right: -18px;
+      bottom: -28px;
+      width: min(245px, 48%);
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      box-shadow: var(--shadow-soft);
+      padding: 1rem;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .float-card strong {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.94rem;
+    }
+
+    .float-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .section {
+      padding: clamp(3.2rem, 7vw, 5.7rem) 0;
+    }
+
+    .section-header {
+      max-width: 720px;
+      margin-bottom: 1.6rem;
+    }
+
+    .section-kicker {
+      margin-bottom: 0.6rem;
+      color: var(--accent-strong);
+      font-size: 0.82rem;
+      font-weight: 850;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin-bottom: 0.85rem;
+      font-size: clamp(2rem, 4.4vw, 4.4rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+      font-weight: 880;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 62ch;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .card {
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-lg);
+      background: color-mix(in srgb, var(--card) 94%, transparent);
+      box-shadow: var(--shadow-soft);
+      padding: 1.25rem;
+    }
+
+    .icon-box {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      margin-bottom: 1rem;
+      border-radius: 14px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+
+    .icon-box svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .card h3 {
+      margin-bottom: 0.5rem;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .screenshot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .shot {
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-lg);
+      background: var(--card);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .shot img {
+      width: 100%;
+      height: auto;
+      border-bottom: 1px solid var(--line-soft);
+      background: var(--inset);
+    }
+
+    .shot figcaption {
+      margin: 0;
+      padding: 1rem;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .shot strong {
+      display: block;
+      margin-bottom: 0.18rem;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .split-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .safety-panel {
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 72%, transparent), transparent 70%),
+        var(--card);
+      border: 1px solid var(--line-soft);
+      box-shadow: var(--shadow-soft);
+      padding: clamp(1.25rem, 3vw, 2rem);
+    }
+
+    .flow-list {
+      display: grid;
+      gap: 0.8rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .flow-list li {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 0.85rem;
+      align-items: start;
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--card) 82%, transparent);
+      padding: 0.95rem;
+    }
+
+    .step-number {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      background: var(--inset);
+      color: var(--accent-strong);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-weight: 850;
+    }
+
+    .flow-list strong { display: block; }
+    .flow-list p { margin: 0; color: var(--muted); font-size: 0.94rem; }
+
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .roadmap-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .roadmap-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: var(--accent);
+    }
+
+    .roadmap-card ul {
+      display: grid;
+      gap: 0.65rem;
+      margin: 0.8rem 0 0;
+      padding-left: 1.15rem;
+      color: var(--muted);
+    }
+
+    .support-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.2rem;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius-lg);
+      background: var(--card);
+      box-shadow: var(--shadow-soft);
+      padding: clamp(1.25rem, 3vw, 2rem);
+    }
+
+    .support-box p {
+      margin: 0.35rem 0 0;
+      color: var(--muted);
+      max-width: 70ch;
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .faq-card p { margin-bottom: 0; }
+
+    .final-cta {
+      text-align: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 18% 0%, rgba(113, 133, 239, 0.22), transparent 22rem),
+        radial-gradient(circle at 80% 12%, rgba(112, 213, 157, 0.16), transparent 20rem),
+        var(--card);
+      box-shadow: var(--shadow);
+      padding: clamp(2rem, 7vw, 4.5rem) 1.2rem;
+    }
+
+    .final-cta p {
+      max-width: 56ch;
+      margin: 0 auto 1.4rem;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .site-footer {
+      padding: 2.5rem 0 3rem;
+      color: var(--muted-2);
+      font-size: 0.92rem;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      border-top: 1px solid var(--line-soft);
+      padding-top: 1.2rem;
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 980px) {
+      .hero,
+      .split-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        gap: 2rem;
+        padding-top: 4rem;
+      }
+
+      h1 { max-width: 12ch; }
+
+      .float-card {
+        right: 16px;
+        bottom: 16px;
+      }
+
+      .card-grid,
+      .roadmap-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page-shell { width: min(100% - 24px, var(--container)); }
+
+      .site-header {
+        position: static;
+        margin-top: 12px;
+      }
+
+      .nav {
+        align-items: stretch;
+        border-radius: 24px;
+        flex-direction: column;
+      }
+
+      .nav-links {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        width: 100%;
+      }
+
+      .nav-links a { text-align: center; }
+
+      .nav .button { width: 100%; }
+
+      .hero-actions .button { width: 100%; }
+
+      .screenshot-grid,
+      .faq-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .support-box,
+      .footer-row {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body { font-size: 16px; }
+      h1 { font-size: clamp(2.65rem, 17vw, 4rem); }
+      h2 { font-size: clamp(2rem, 11vw, 3rem); }
+      .card, .safety-panel { padding: 1rem; }
+      .float-card { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+
+      .button:hover { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header page-shell" aria-label="Primary navigation">
+    <nav class="nav">
+      <a class="brand" href="#top" aria-label="Mogu home">
+        <img src="icon.png" width="36" height="36" alt="Mogu app icon">
+        <span>Mogu</span>
+      </a>
+      <div class="nav-links" aria-label="Page sections">
+        <a href="#features">Features</a>
+        <a href="#screenshots">Screenshots</a>
+        <a href="#safety">Safety</a>
+        <a href="#roadmap">Roadmap</a>
+      </div>
+      <a class="button button-primary" href="https://github.com/AKaLee-IK27/Mogu/releases/latest">
+        Download
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>
+        </svg>
+      </a>
+    </nav>
+  </header>
+
+  <main id="main" class="page-shell">
+    <section id="top" class="hero" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 13c0 5-3.5 7.5-8 8.5C7.5 20.5 4 18 4 13V5l8-3 8 3v8Z"></path><path d="m9 12 2 2 4-5"></path>
+          </svg>
+          macOS 14+ native utility
+        </p>
+        <h1 id="hero-title">Preview-first Mac cleanup.</h1>
+        <p class="hero-copy">Mogu is a friendly SwiftUI GUI for Mole. It helps you review caches, app leftovers, disk usage, and optimization steps before anything destructive runs.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="https://github.com/AKaLee-IK27/Mogu/releases/latest">
+            Download for macOS
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path>
+            </svg>
+          </a>
+          <a class="button button-secondary" href="https://github.com/AKaLee-IK27/Mogu/blob/main/ROADMAP.md">View roadmap</a>
+        </div>
+        <div class="meta-row" aria-label="Product highlights">
+          <span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"></path></svg>
+            Dry-run previews
+          </span>
+          <span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"></path></svg>
+            Bundled Mole runtime
+          </span>
+          <span>
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m20 6-11 11-5-5"></path></svg>
+            MIT licensed
+          </span>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-label="Mogu app preview">
+        <div class="app-frame">
+          <div class="frame-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+          <img src="screenshots/status.png" width="2200" height="1600" alt="Mogu Status screen with live CPU, memory, disk, battery, and process metrics" fetchpriority="high" decoding="async">
+        </div>
+        <div class="float-card" aria-label="Safety highlight">
+          <strong>Nothing runs blind.</strong>
+          <p>Clean, uninstall, optimize, and purge flows show a preview or confirmation before deletion.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section" aria-labelledby="features-title">
+      <div class="section-header">
+        <p class="section-kicker">Why Mogu</p>
+        <h2 id="features-title">A Mac cleaner that behaves like a careful tool.</h2>
+        <p>Use the power of Mole without memorizing CLI commands. Mogu keeps the safety model visible and the interface native.</p>
+      </div>
+      <div class="card-grid">
+        <article class="card">
+          <div class="icon-box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-8 8.5C7.5 20.5 4 18 4 13V5l8-3 8 3v8Z"></path><path d="m9 12 2 2 4-5"></path></svg>
+          </div>
+          <h3>Preview before delete</h3>
+          <p>Destructive actions are gated by dry-run previews or explicit confirmation, so cleanup stays reviewable.</p>
+        </article>
+        <article class="card">
+          <div class="icon-box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="14" rx="2"></rect><path d="M8 21h8"></path><path d="M12 18v3"></path></svg>
+          </div>
+          <h3>Native macOS shell</h3>
+          <p>SwiftUI screens, system colors, Sparkle updates, and a compact dashboard built for desktop workflows.</p>
+        </article>
+        <article class="card">
+          <div class="icon-box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"></path></svg>
+          </div>
+          <h3>Built on Mole</h3>
+          <p>Mogu bundles a pinned Mole runtime from source, so the app behavior stays tied to the shipped version.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="screenshots" class="section" aria-labelledby="screenshots-title">
+      <div class="section-header">
+        <p class="section-kicker">Screenshots</p>
+        <h2 id="screenshots-title">Seven practical surfaces, one safety model.</h2>
+        <p>Status, Clean, Uninstall, Analyze, Optimize, Purge, and Permissions are designed as scan-first Mac utility screens.</p>
+      </div>
+      <div class="screenshot-grid">
+        <figure class="shot">
+          <img src="screenshots/clean.png" width="2200" height="1600" alt="Mogu Clean screen showing categorized cleanup preview" loading="lazy" decoding="async">
+          <figcaption><strong>Clean</strong>Review caches, logs, and orphaned app data before running cleanup.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="screenshots/uninstall.png" width="2200" height="1600" alt="Mogu Uninstall screen showing selectable installed apps and safety badges" loading="lazy" decoding="async">
+          <figcaption><strong>Uninstall</strong>Select apps, preview leftovers, and move recoverable removals to Trash.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="screenshots/analyze.png" width="2200" height="1600" alt="Mogu Analyze screen showing disk usage breakdown and large files" loading="lazy" decoding="async">
+          <figcaption><strong>Analyze</strong>See disk usage, large files, and scanned paths in one dashboard.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="screenshots/optimize.png" width="2200" height="1600" alt="Mogu Optimize screen showing maintenance steps and preview state" loading="lazy" decoding="async">
+          <figcaption><strong>Optimize</strong>Review maintenance tasks before running system optimization.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="safety" class="section" aria-labelledby="safety-title">
+      <div class="split-panel">
+        <div class="section-header">
+          <p class="section-kicker">Safety</p>
+          <h2 id="safety-title">The product invariant is simple: preview first.</h2>
+          <p>Mogu is intentionally Mac-first. It works on the machine being inspected, does not require permission at launch, and asks for elevated access only when the user chooses a flow that needs it.</p>
+        </div>
+        <div class="safety-panel">
+          <ol class="flow-list">
+            <li>
+              <span class="step-number">01</span>
+              <div><strong>Scan</strong><p>Mogu calls the bundled Mole runtime and keeps long-running previews visibly loading.</p></div>
+            </li>
+            <li>
+              <span class="step-number">02</span>
+              <div><strong>Review</strong><p>The app surfaces categories, paths, app leftovers, and admin-only work before execution.</p></div>
+            </li>
+            <li>
+              <span class="step-number">03</span>
+              <div><strong>Confirm</strong><p>Clean, optimize, purge, and uninstall actions require preview or confirmation before deleting.</p></div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section" aria-labelledby="roadmap-title">
+      <div class="section-header">
+        <p class="section-kicker">Roadmap</p>
+        <h2 id="roadmap-title">Mac-first now. Mobile only if the use case proves itself.</h2>
+        <p>The next work is distribution trust, first-run polish, and release hygiene before any remote or mobile companion.</p>
+      </div>
+      <div class="roadmap-grid">
+        <article class="card roadmap-card">
+          <h3>Now</h3>
+          <ul>
+            <li>Public landing page and clearer download path</li>
+            <li>Stable v1.0 release surface</li>
+            <li>Preview-first behavior kept visible</li>
+          </ul>
+        </article>
+        <article class="card roadmap-card">
+          <h3>Next</h3>
+          <ul>
+            <li>Fix first-run onboarding persistence</li>
+            <li>Improve signing, release, and appcast flow</li>
+            <li>Better cleanup history and receipts</li>
+          </ul>
+        </article>
+        <article class="card roadmap-card">
+          <h3>Later</h3>
+          <ul>
+            <li>Release automation and fixture refresh workflow</li>
+            <li>Localization if real users ask for it</li>
+            <li>Read-only companion only with proven demand</li>
+          </ul>
+        </article>
+      </div>
+      <p style="margin-top: 1.2rem;"><a class="button button-secondary" href="https://github.com/AKaLee-IK27/Mogu/blob/main/ROADMAP.md">Read the full roadmap</a></p>
+    </section>
+
+    <section class="section" aria-labelledby="support-title">
+      <div class="support-box">
+        <div>
+          <p class="section-kicker">Upstream credit</p>
+          <h2 id="support-title" style="font-size: clamp(1.8rem, 3.5vw, 3.2rem);">Mogu is powered by Mole.</h2>
+          <p>Mogu is an independent, unofficial GUI. If you want the polished official paid app, support the Mole author by buying Mole for Mac.</p>
+        </div>
+        <a class="button button-secondary" href="https://mole.fit">Visit Mole for Mac</a>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="faq-title">
+      <div class="section-header">
+        <p class="section-kicker">FAQ</p>
+        <h2 id="faq-title">Before you install.</h2>
+      </div>
+      <div class="faq-grid">
+        <article class="card faq-card">
+          <h3>Is Mogu official?</h3>
+          <p>No. Mogu is an independent open-source GUI built on Mole, and it credits the upstream project clearly.</p>
+        </article>
+        <article class="card faq-card">
+          <h3>Does it need Full Disk Access?</h3>
+          <p>No permission is required to launch. Full Disk Access is optional and mainly reduces macOS folder prompts during scans.</p>
+        </article>
+        <article class="card faq-card">
+          <h3>Does Mogu delete immediately?</h3>
+          <p>No. The app follows preview-before-delete for destructive flows, and uninstalls move recoverable items to Trash.</p>
+        </article>
+        <article class="card faq-card">
+          <h3>Is a mobile app planned?</h3>
+          <p>Not as a cleaner. iOS cannot inspect and clean your Mac. A read-only companion is only worth considering if users ask for remote multi-Mac monitoring.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="final-title">
+      <div class="final-cta">
+        <h2 id="final-title">Give your Mac a careful cleanup pass.</h2>
+        <p>Download Mogu from GitHub Releases, run it on macOS 14 or later, and review every destructive action before it runs.</p>
+        <a class="button button-primary" href="https://github.com/AKaLee-IK27/Mogu/releases/latest">
+          Download for macOS 14+
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 10 5 5 5-5"></path><path d="M5 21h14"></path></svg>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer page-shell">
+    <div class="footer-row">
+      <span>© 2026 Mogu. MIT licensed.</span>
+      <div class="footer-links">
+        <a href="https://github.com/AKaLee-IK27/Mogu">GitHub</a>
+        <a href="https://github.com/AKaLee-IK27/Mogu#readme">README</a>
+        <a href="https://github.com/AKaLee-IK27/Mogu/blob/main/ROADMAP.md">Roadmap</a>
+        <a href="https://github.com/tw93/Mole">Mole CLI</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1010,6 +1010,41 @@
         }
       ],
       "evidence": "Collapsible sidebar implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-sidebar-feat034-expanded.png."
+    },
+    {
+      "id": "feat-035",
+      "name": "Landing Page and Public Roadmap",
+      "description": "Add a static public landing page and roadmap for Mogu, focused on Mac-first preview-before-delete positioning and GitHub Releases download.",
+      "dependencies": [
+        "feat-033"
+      ],
+      "doneCriteria": [
+        "Root index.html presents Mogu positioning, features, screenshots, safety model, upstream Mole credit, FAQ, and download CTA",
+        "ROADMAP.md documents Now / Next / Later priorities and explicit non-goals",
+        "No new web framework, package manager, analytics, payment provider, or runtime dependency introduced",
+        "Landing page uses existing assets and accessible responsive HTML/CSS",
+        "make build, make test, and make parser-test pass",
+        "Browser runtime verification confirms landing page renders and has no horizontal overflow at desktop and mobile widths"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Create static landing page",
+          "status": "done",
+          "evidence": "index.html added with responsive native-Mogu styling, existing screenshots, GitHub Releases CTA, preview-before-delete safety copy, Mole credit, and FAQ."
+        },
+        {
+          "name": "Create public roadmap",
+          "status": "done",
+          "evidence": "ROADMAP.md added with product principles, Now / Next / Later priorities, non-goals, and issue guidance."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, and make parser-test pass. Browser rendered file:///Users/rowlet/Repos/mogu/index.html; desktop and mobile overflow checks returned scrollWidth <= innerWidth; screenshots captured at /tmp/mogu-landing-feat035-desktop.png, /tmp/mogu-landing-feat035-mobile.png, and /tmp/mogu-landing-feat035-light.png. Console and page errors were empty."
+        }
+      ],
+      "evidence": "Landing page and roadmap implemented and verified. Commands passed: make build, make test, make parser-test. Browser evidence: /tmp/mogu-landing-feat035-desktop.png, /tmp/mogu-landing-feat035-mobile.png, /tmp/mogu-landing-feat035-light.png; no horizontal overflow at 1280px or 375px."
     }
   ]
 }
