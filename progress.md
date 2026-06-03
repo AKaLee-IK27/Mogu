@@ -3,7 +3,19 @@
 ## Current State
 
 **Last Updated:** 2026-06-03
-**Status:** feat-028 completed locally — Uninstall screen redesign implemented and runtime-verified.
+**Status:** feat-029 completed locally — Analyze screen redesign implemented and runtime-verified.
+
+## Session 2026-06-03: Analyze Screen Design System Redesign (feat-029)
+
+Redesigned AnalyzeView as a clearer disk-usage dashboard using the Mogu design system, without changing analyze behavior.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-029 | Analyze Screen Design System Redesign | `make build`, `make test`, `make parser-test`, `make app`; runtime screenshot `/tmp/mogu-analyze-feat029-complete.png` |
+
+**Files changed:** 4 files
+- Modified: `Sources/Views/AnalyzeView.swift`, `feature_list.json`, `progress.md`, `session-handoff.md`
+- New: `design-system/mogu/pages/analyze.md`
 
 ## Session 2026-06-03: Uninstall Screen Design System Redesign (feat-028)
 
@@ -108,3 +120,4 @@ Nine features across 3 tiers, all verified at runtime.
 | feat-026 | Mogu Design System Foundation | done | Curated design-system/mogu/MASTER.md + shared tokens/primitives |
 | feat-027 | Clean Screen Design System Redesign | done | Runtime-verified Clean loading + preview dashboard |
 | feat-028 | Uninstall Screen Design System Redesign | done | Runtime-verified Uninstall list + selected-row state |
+| feat-029 | Analyze Screen Design System Redesign | done | Runtime-verified Analyze completed dashboard |

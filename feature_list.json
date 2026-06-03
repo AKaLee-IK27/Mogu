@@ -778,6 +778,48 @@
         }
       ],
       "evidence": "Uninstall screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-uninstall-feat028-list.png and /tmp/mogu-uninstall-feat028-selected.png. No final uninstall action clicked."
+    },
+    {
+      "id": "feat-029",
+      "name": "Analyze Screen Design System Redesign",
+      "description": "Redesign AnalyzeView as a clearer disk-usage dashboard using the Mogu-native design system, without changing analyze behavior.",
+      "dependencies": [
+        "feat-026",
+        "feat-028"
+      ],
+      "doneCriteria": [
+        "AnalyzeView keeps service.getAnalysis behavior unchanged and runs mo analyze on launch",
+        "Analyze screen presents total size, file count, and scanned path clearly",
+        "Full Disk Access preflight banner remains visible when not granted",
+        "Top entries list and large files section use design-system card and row tokens",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the Analyze completed state renders with redesigned surfaces"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Add Analyze page design guidance",
+          "status": "done",
+          "evidence": "Added design-system/mogu/pages/analyze.md with Analyze-specific disk-usage layout, copy, and FDA status rules."
+        },
+        {
+          "name": "Redesign Analyze header and summary",
+          "status": "done",
+          "evidence": "Sources/Views/AnalyzeView.swift now presents a scan-complete summary card with total analyzed size, file count, entry count, and scanned path."
+        },
+        {
+          "name": "Polish top-entries list, large-files section, FDA banner, and states",
+          "status": "done",
+          "evidence": "AnalyzeView top-entries list, large-files card, Full Disk Access banner, loading state, and entry/large-file rows were updated with Mogu design-system tokens. Behavior unchanged."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open --env MOGU_SCREEN=analyze /Applications/Mogu.app; completed-state screenshot /tmp/mogu-analyze-feat029-complete.png captured."
+        }
+      ],
+      "evidence": "Analyze screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-analyze-feat029-complete.png."
     }
   ]
 }
