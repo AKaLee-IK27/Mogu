@@ -19,9 +19,9 @@ struct OptimizeView: View {
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
 
             PreflightBanner(item: .optimize, permissions: permissions)
-                .padding(.horizontal, 32)
-                .padding(.top, 12)
-                .padding(.bottom, 16)
+                .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+                .padding(.top, DesignTokens.Spacing.md)
+                .padding(.bottom, DesignTokens.Spacing.lg)
 
             ScrollView {
                 VStack(spacing: 20) {
@@ -29,12 +29,22 @@ struct OptimizeView: View {
                     // steps stream in. The streaming banner takes over once the
                     // run begins or steps are ready.
                     if isPreviewing && steps.isEmpty {
-                        FeatureLoadingView(
-                            icon: "bolt.horizontal.circle.fill",
-                            tint: DesignTokens.Color.warning,
-                            title: "Analyzing optimization tasks",
-                            subtitle: "Previewing what will run"
-                        )
+                        VStack(spacing: DesignTokens.Spacing.xl) {
+                            FeatureLoadingView(
+                                icon: "bolt.horizontal.circle.fill",
+                                tint: DesignTokens.Color.warningText,
+                                title: "Analyzing optimization tasks",
+                                subtitle: "Previewing what will run before any changes are made"
+                            )
+                            Text("Preview-only. Nothing changes until you click Run.")
+                                .font(DesignTokens.Font.captionStrong)
+                                .foregroundStyle(DesignTokens.Color.warningText)
+                                .padding(.horizontal, DesignTokens.Spacing.md)
+                                .padding(.vertical, DesignTokens.Spacing.xs)
+                                .background(DesignTokens.Color.warningSoft)
+                                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+                        }
+                        .frame(maxWidth: .infinity)
                         .padding(.top, 40)
                     } else {
                         statusBanner
@@ -54,7 +64,8 @@ struct OptimizeView: View {
                             Task { await runOptimizePreview() }
                         }
                         .buttonStyle(.bordered)
-                        .tint(DesignTokens.Color.accent)
+                        .tint(DesignTokens.Color.warning)
+                        .frame(maxWidth: .infinity)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -75,12 +86,12 @@ struct OptimizeView: View {
     }
 
     private var headerBar: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("System Optimization")
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.lg) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                Text("Optimize")
                     .font(DesignTokens.Font.page)
                     .foregroundStyle(DesignTokens.Color.primary)
-                Text("Rebuild caches, refresh services, optimize performance")
+                Text("Rebuild caches, refresh services, and tune system performance")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.tertiary)
             }
@@ -98,27 +109,27 @@ struct OptimizeView: View {
                 Task { await optimizeAllAdminFirst() }
             }
         }
-        .padding(.horizontal, 32)
-        .padding(.vertical, 20)
+        .padding(.horizontal, DesignTokens.Layout.headerHorizontalPadding)
+        .padding(.vertical, DesignTokens.Layout.headerVerticalPadding)
     }
 
     // Adapts to the current phase. The live step list renders below it.
     @ViewBuilder
     private var statusBanner: some View {
         if let error {
-            bannerRow(icon: "exclamationmark.circle", tint: DesignTokens.Color.danger,
+            phaseCard(icon: "exclamationmark.circle.fill", tint: DesignTokens.Color.dangerText, bg: DesignTokens.Color.dangerSoft,
                       title: "Optimization failed", subtitle: error)
         } else if isComplete {
-            bannerRow(icon: "checkmark.seal.fill", tint: DesignTokens.Color.successText,
-                      title: "Optimization Complete", subtitle: "\(steps.count) steps")
+            phaseCard(icon: "checkmark.seal.fill", tint: DesignTokens.Color.successText, bg: DesignTokens.Color.successSoft,
+                      title: "Optimization complete", subtitle: "\(steps.count) tasks completed")
         } else if isRunning {
-            bannerRow(icon: nil, tint: DesignTokens.Color.warning,
+            phaseCard(icon: nil, tint: DesignTokens.Color.warningText, bg: DesignTokens.Color.warningSoft,
                       title: "Optimizing system…", subtitle: "Running each task in order")
         } else if isPreviewing {
-            bannerRow(icon: nil, tint: DesignTokens.Color.accent,
+            phaseCard(icon: nil, tint: DesignTokens.Color.accentTint, bg: DesignTokens.Color.accentSoft,
                       title: "Analyzing tasks…", subtitle: "Previewing what will run")
         } else if !steps.isEmpty {
-            bannerRow(icon: "bolt.horizontal.circle.fill", tint: DesignTokens.Color.warning,
+            phaseCard(icon: "bolt.horizontal.circle.fill", tint: DesignTokens.Color.warningText, bg: DesignTokens.Color.warningSoft,
                       title: "Ready to optimize", subtitle: "Review the steps below, then Run")
         }
     }
@@ -126,24 +137,40 @@ struct OptimizeView: View {
     // Shown after admin is granted up front: the system-level dry-run preview
     // streams into the step list below; this card confirms a combined run.
     private var systemOptimizeCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                Image(systemName: "lock.shield")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(DesignTokens.Color.warning)
-                    .frame(width: 22)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("System-level optimization ready")
-                        .font(DesignTokens.Font.bodyStrong)
-                        .foregroundStyle(DesignTokens.Color.primary)
-                    Text("Administrator access granted. Review the steps below, then run user-safe and system-level steps together.")
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DesignTokens.Color.warningText)
+                    .frame(width: 36, height: 36)
+                    .background(DesignTokens.Color.warningSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    HStack(spacing: DesignTokens.Spacing.xs) {
+                        Text("System-level optimization ready")
+                            .font(DesignTokens.Font.section)
+                            .foregroundStyle(DesignTokens.Color.primary)
+                        Text("Admin previewed")
+                            .font(DesignTokens.Font.labelUppercase)
+                            .foregroundStyle(DesignTokens.Color.warningText)
+                            .padding(.horizontal, DesignTokens.Spacing.xs)
+                            .padding(.vertical, 2)
+                            .background(DesignTokens.Color.warningSoft)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+                    }
+                    Text("Administrator access was granted for the elevated dry-run. Review the steps below, then confirm the combined user-safe and system-level run.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer()
+                Spacer(minLength: 0)
             }
 
-            HStack {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
+                Text("Runs user-safe steps first, then elevated system steps.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
                 Spacer()
                 Button {
                     Task { await runFullOptimize() }
@@ -156,25 +183,49 @@ struct OptimizeView: View {
                 .disabled(isRunning || isPreviewing)
             }
         }
-        .padding(14)
+        .padding(DesignTokens.Layout.cardPadding)
         .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.warningText.opacity(0.22), lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
 
-    private func bannerRow(icon: String?, tint: SwiftUI.Color, title: String, subtitle: String) -> some View {
-        HStack(spacing: 12) {
+    private func phaseCard(icon: String?, tint: SwiftUI.Color, bg: SwiftUI.Color, title: String, subtitle: String) -> some View {
+        HStack(spacing: DesignTokens.Spacing.md) {
             if let icon {
-                Image(systemName: icon).font(.system(size: 22)).foregroundStyle(tint)
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .frame(width: 36, height: 36)
+                    .background(bg)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
             } else {
-                ProgressView().scaleEffect(0.8).frame(width: 22)
+                ProgressView()
+                    .scaleEffect(0.8)
+                    .frame(width: 36, height: 36)
+                    .background(bg)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(DesignTokens.Font.section).foregroundStyle(DesignTokens.Color.primary)
-                Text(subtitle).font(DesignTokens.Font.caption).foregroundStyle(DesignTokens.Color.tertiary)
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                Text(title)
+                    .font(DesignTokens.Font.bodyStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text(subtitle)
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
             }
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 32)
+        .padding(DesignTokens.Spacing.md)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(tint.opacity(0.18), lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 
     private func resetSystemOptimizeEscalation() {
@@ -338,61 +389,83 @@ struct StepListView: View {
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(steps.enumerated()), id: \.element.id) { i, step in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    HStack(spacing: DesignTokens.Spacing.md) {
                         stepIcon(step.state)
-                            .frame(width: 18, height: 18)
+                            .frame(width: 22, height: 22)
                         Text(step.name)
                             .font(DesignTokens.Font.bodyStrong)
                             .foregroundStyle(DesignTokens.Color.primary)
                         if step.requiresAdmin {
-                            Text("admin")
-                                .font(DesignTokens.Font.label)
+                            Text("Admin")
+                                .font(DesignTokens.Font.labelUppercase)
                                 .foregroundStyle(DesignTokens.Color.warningText)
-                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .padding(.horizontal, DesignTokens.Spacing.xs)
+                                .padding(.vertical, 2)
                                 .background(DesignTokens.Color.warningSoft)
-                                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
+                                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
                         }
                         Spacer()
                         if step.state == .skipped {
                             Text("needs admin")
-                                .font(DesignTokens.Font.caption)
+                                .font(DesignTokens.Font.captionStrong)
                                 .foregroundStyle(DesignTokens.Color.warningText)
                         }
                     }
-                    ForEach(Array(step.details.enumerated()), id: \.offset) { _, d in
-                        Text(d)
-                            .font(DesignTokens.Font.caption)
-                            .foregroundStyle(DesignTokens.Color.tertiary)
-                            .padding(.leading, 28)
+                    if !step.details.isEmpty {
+                        ForEach(Array(step.details.enumerated()), id: \.offset) { _, d in
+                            Text(d)
+                                .font(DesignTokens.Font.mono)
+                                .foregroundStyle(DesignTokens.Color.tertiary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                        .padding(.leading, 34)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 if i < steps.count - 1 {
-                    Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 44)
+                    Rectangle()
+                        .fill(DesignTokens.Color.separatorLight)
+                        .frame(height: 1)
+                        .padding(.leading, 56)
                 }
             }
         }
         .background(DesignTokens.Color.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
 
     @ViewBuilder
     private func stepIcon(_ state: StepState) -> some View {
         switch state {
         case .pending:
-            Image(systemName: "circle").font(.system(size: 14)).foregroundStyle(DesignTokens.Color.tertiary.opacity(0.5))
+            Image(systemName: "circle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(DesignTokens.Color.tertiary.opacity(0.35))
         case .running:
-            ProgressView().scaleEffect(0.6)
+            ProgressView()
+                .scaleEffect(0.7)
         case .done:
-            Image(systemName: "checkmark.circle.fill").font(.system(size: 16)).foregroundStyle(DesignTokens.Color.successText)
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.successText)
         case .failed:
-            Image(systemName: "xmark.circle.fill").font(.system(size: 16)).foregroundStyle(DesignTokens.Color.danger)
+            Image(systemName: "xmark.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.dangerText)
         case .skipped:
-            Image(systemName: "minus.circle.fill").font(.system(size: 16)).foregroundStyle(DesignTokens.Color.warning)
+            Image(systemName: "minus.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.warningText)
         }
     }
 }

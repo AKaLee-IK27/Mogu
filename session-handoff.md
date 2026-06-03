@@ -4,24 +4,24 @@
 
 **Date:** 2026-06-03
 **Branch:** `main`
-**Work:** feat-029, Analyze screen design-system redesign.
+**Work:** feat-030, Optimize screen design-system redesign.
 
 ## What changed
 
-- Redesigned `Sources/Views/AnalyzeView.swift` as a clearer disk-usage dashboard.
-- Added a scan-complete summary card showing total analyzed size, file count, entry count, and scanned path.
-- Polished top-entries list with icon backgrounds, proportional size bars, percentage, and size columns.
-- Added large-files card with doc icons and monospaced sizes.
-- Redesign Full Disk Access banner with clearer status and Settings button.
-- Updated loading state with progress hint.
-- Added `design-system/mogu/pages/analyze.md` with Analyze-specific layout and copy rules.
-- Updated `feature_list.json` and `progress.md` for feat-029.
+- Redesigned `Sources/Views/OptimizeView.swift` as a clearer step-by-step optimization dashboard.
+- Added `phaseCard` component for adaptive status banners (previewing/ready/running/complete/error).
+- Polished system-level optimization confirmation card with warning tint.
+- Updated `StepListView` (shared component) with better step rows, state icons, admin badges, and card background.
+- Updated loading state with safety hint.
+- Added `design-system/mogu/pages/optimize.md` with Optimize-specific layout and copy rules.
+- Updated `feature_list.json` and `progress.md` for feat-030.
 
 ## Behavior boundaries
 
-- Analyze command behavior is unchanged.
-- Still runs `service.getAnalysis(path: NSHomeDirectory())`.
-- FDA preflight banner remains visible when not granted.
+- Optimize command behavior is unchanged.
+- Still runs `stream(args: ["optimize", "--dry-run"])` and `streamElevated`.
+- Admin-first escalation model unchanged.
+- `StepStreamParser` behavior unchanged.
 
 ## Verification
 
@@ -36,23 +36,24 @@ make app
 
 Runtime verification:
 
-- Launched with `open --env MOGU_SCREEN=analyze /Applications/Mogu.app`.
-- Captured completed-state evidence at `/tmp/mogu-analyze-feat029-complete.png`.
+- Launched with `open --env MOGU_SCREEN=optimize /Applications/Mogu.app`.
+- Captured preview-state evidence at `/tmp/mogu-optimize-feat030-preview.png`.
 - Grep found no active `.toolbar`, `ToolbarItem`, `ToolbarItemGroup`, or `.searchable` usage in `Sources`.
 
 ## Current State
 
-- `main` is ahead of `origin/main` by 5 committed changes from earlier work:
+- `main` is ahead of `origin/main` by 6 committed changes:
   - `86f4630 feat: polish status dashboard`
   - `dcdea40 chore: install ui-ux pro max skills`
   - `e580c14 feat: add Mogu design system foundation`
   - `882daaa feat: redesign clean screen`
   - `40d3ca9 feat: redesign uninstall screen`
-- feat-029 is implemented but not committed yet.
+  - `6f52dff feat: redesign analyze screen`
+- feat-030 is implemented but not committed yet.
 - Installed `/Applications/Mogu.app` was rebuilt from the current source.
 
 ## Next Step / Open items
 
-- Commit feat-029.
-- Next screen-by-screen redesign candidate: Optimize.
+- Commit feat-030.
+- Next screen-by-screen redesign candidate: Purge.
 - Unrelated known issue: first-run onboarding dismissal does not appear to persist `hasSeenOnboarding`; still out of scope.

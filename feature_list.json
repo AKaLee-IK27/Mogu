@@ -820,6 +820,48 @@
         }
       ],
       "evidence": "Analyze screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-analyze-feat029-complete.png."
+    },
+    {
+      "id": "feat-030",
+      "name": "Optimize Screen Design System Redesign",
+      "description": "Redesign OptimizeView as a clearer step-by-step optimization dashboard using the Mogu-native design system, without changing optimize behavior.",
+      "dependencies": [
+        "feat-026",
+        "feat-029"
+      ],
+      "doneCriteria": [
+        "OptimizeView keeps mo optimize behavior unchanged and runs optimize --dry-run on preview",
+        "Optimize screen presents step count, ready/running/complete state clearly",
+        "StepListView uses design-system tokens for step rows, state icons, and admin badges",
+        "System-level optimization confirmation card remains separate after elevated dry-run preview",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the Optimize preview/ready state renders with redesigned surfaces"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Add Optimize page design guidance",
+          "status": "done",
+          "evidence": "Added design-system/mogu/pages/optimize.md with Optimize-specific step-by-step layout, copy, and admin escalation rules."
+        },
+        {
+          "name": "Redesign Optimize header and summary",
+          "status": "done",
+          "evidence": "Sources/Views/OptimizeView.swift header updated with design-system tokens and padding."
+        },
+        {
+          "name": "Polish status banner, step list, system confirmation card, and states",
+          "status": "done",
+          "evidence": "OptimizeView status banners (phaseCard), system optimization card, loading state, Optimize Again button, and shared StepListView were updated with Mogu design-system tokens. Admin escalation behavior unchanged."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open --env MOGU_SCREEN=optimize /Applications/Mogu.app; preview screenshot /tmp/mogu-optimize-feat030-preview.png captured. Did not click Run or final confirmation."
+        }
+      ],
+      "evidence": "Optimize screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-optimize-feat030-preview.png."
     }
   ]
 }
