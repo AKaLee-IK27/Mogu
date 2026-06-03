@@ -3,7 +3,18 @@
 ## Current State
 
 **Last Updated:** 2026-06-03
-**Status:** feat-031 completed locally — Purge screen redesign implemented and runtime-verified.
+**Status:** feat-032 completed locally — Permissions screen redesign implemented and runtime-verified.
+
+## Session 2026-06-03: Permissions Screen Design System Redesign (feat-032)
+
+Redesigned PermissionsView as a clearer progressive-permissions explanation page using the Mogu design system, without changing permission behavior.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-032 | Permissions Screen Design System Redesign | `make build`, `make test`, `make parser-test`, `make app`; runtime screenshot `/tmp/mogu-permissions-feat032-complete.png` |
+
+**Files changed:** 4 files
+- Modified: `Sources/Views/PermissionsView.swift`, `feature_list.json`, `progress.md`, `session-handoff.md`
 
 ## Session 2026-06-03: Purge Screen Design System Redesign (feat-031)
 
@@ -147,3 +158,4 @@ Nine features across 3 tiers, all verified at runtime.
 | feat-029 | Analyze Screen Design System Redesign | done | Runtime-verified Analyze completed dashboard |
 | feat-030 | Optimize Screen Design System Redesign | done | Runtime-verified Optimize preview dashboard |
 | feat-031 | Purge Screen Design System Redesign | done | Runtime-verified Purge completed dashboard |
+| feat-032 | Permissions Screen Design System Redesign | done | Runtime-verified Permissions explanation page |

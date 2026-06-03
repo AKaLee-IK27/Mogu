@@ -904,6 +904,42 @@
         }
       ],
       "evidence": "Purge screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-purge-feat031-complete.png."
+    },
+    {
+      "id": "feat-032",
+      "name": "Permissions Screen Design System Redesign",
+      "description": "Redesign PermissionsView as a clearer progressive-permissions explanation page using the Mogu-native design system, without changing permission behavior.",
+      "dependencies": [
+        "feat-026",
+        "feat-031"
+      ],
+      "doneCriteria": [
+        "PermissionsView keeps PermissionsService and FDA probe behavior unchanged",
+        "Permission cards use design-system icon treatments, badges, and spacing tokens",
+        "PreflightBanner shared component updated with design-system tokens",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the Permissions page renders with redesigned cards"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Redesign PermissionsView cards and header",
+          "status": "done",
+          "evidence": "Sources/Views/PermissionsView.swift header and both permission cards updated with design-system icon treatments, status badges, spacing, and card shadows."
+        },
+        {
+          "name": "Update PreflightBanner shared component",
+          "status": "done",
+          "evidence": "PreflightBanner updated with design-system tokens, icon background, structured subtitle, and pill badge."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open --env MOGU_SCREEN=permissions /Applications/Mogu.app; completed-state screenshot /tmp/mogu-permissions-feat032-complete.png captured."
+        }
+      ],
+      "evidence": "Permissions screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-permissions-feat032-complete.png."
     }
   ]
 }

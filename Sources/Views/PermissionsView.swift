@@ -12,7 +12,7 @@ struct PermissionsView: View {
             Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1)
 
             ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
                     permissionCard
                         .opacity(appear ? 1 : 0)
                         .offset(y: appear ? 0 : 8)
@@ -23,9 +23,9 @@ struct PermissionsView: View {
                         .offset(y: appear ? 0 : 8)
                         .animation(DesignTokens.spring.delay(0.04), value: appear)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .padding(.bottom, 32)
+                .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+                .padding(.top, DesignTokens.Spacing.xl)
+                .padding(.bottom, DesignTokens.Spacing.xxxl)
             }
             .background(DesignTokens.Color.pageBackground)
         }
@@ -36,8 +36,8 @@ struct PermissionsView: View {
     }
 
     private var headerBar: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.lg) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                 Text("Permissions")
                     .font(DesignTokens.Font.page)
                     .foregroundStyle(DesignTokens.Color.primary)
@@ -46,27 +46,49 @@ struct PermissionsView: View {
                     .foregroundStyle(DesignTokens.Color.tertiary)
             }
             Spacer()
+            HStack(spacing: DesignTokens.Spacing.xs) {
+                Image(systemName: "shield.lefthalf.filled")
+                    .font(.system(size: 11, weight: .semibold))
+                Text("Minimal grants")
+                    .font(DesignTokens.Font.captionStrong)
+            }
+            .foregroundStyle(DesignTokens.Color.successText)
+            .padding(.horizontal, DesignTokens.Spacing.md)
+            .padding(.vertical, DesignTokens.Spacing.xs)
+            .background(DesignTokens.Color.successSoft)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
         }
-        .padding(.horizontal, 32)
-        .padding(.vertical, 20)
+        .padding(.horizontal, DesignTokens.Layout.headerHorizontalPadding)
+        .padding(.vertical, DesignTokens.Layout.headerVerticalPadding)
     }
 
     private var permissionCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
-                Image(systemName: "lock.open")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(DesignTokens.Color.accent)
-                    .frame(width: 28)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("No permissions required to start")
-                        .font(DesignTokens.Font.section)
-                        .foregroundStyle(DesignTokens.Color.primary)
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
+                Image(systemName: "lock.open.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DesignTokens.Color.successText)
+                    .frame(width: 40, height: 40)
+                    .background(DesignTokens.Color.successSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    HStack(spacing: DesignTokens.Spacing.xs) {
+                        Text("No permissions required to start")
+                            .font(DesignTokens.Font.section)
+                            .foregroundStyle(DesignTokens.Color.primary)
+                        Text("Starts safe")
+                            .font(DesignTokens.Font.labelUppercase)
+                            .foregroundStyle(DesignTokens.Color.successText)
+                            .padding(.horizontal, DesignTokens.Spacing.xs)
+                            .padding(.vertical, 2)
+                            .background(DesignTokens.Color.successSoft)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+                    }
                     Text("Clean, optimize, analyze, uninstall, and purge start unprivileged.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
                 }
-                Spacer()
+                Spacer(minLength: DesignTokens.Spacing.md)
                 adminBadge
             }
 
@@ -75,40 +97,47 @@ struct PermissionsView: View {
                 .foregroundStyle(DesignTokens.Color.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(18)
+        .padding(DesignTokens.Layout.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
 
     private var fullDiskAccessCard: some View {
         let permission = PermissionKind.fullDiskAccess
         let status = permissions.status(for: permission)
 
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 12) {
+        return VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
                 Image(systemName: permission.icon)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(DesignTokens.Color.accent)
-                    .frame(width: 28)
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 8) {
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DesignTokens.Color.accentTint)
+                    .frame(width: 40, height: 40)
+                    .background(DesignTokens.Color.accentSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    HStack(spacing: DesignTokens.Spacing.xs) {
                         Text(permission.title)
                             .font(DesignTokens.Font.section)
                             .foregroundStyle(DesignTokens.Color.primary)
                         Text("Optional")
-                            .font(DesignTokens.Font.label)
+                            .font(DesignTokens.Font.labelUppercase)
                             .foregroundStyle(DesignTokens.Color.accentTint)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, DesignTokens.Spacing.xs)
+                            .padding(.vertical, 2)
                             .background(DesignTokens.Color.accentSoft)
-                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
+                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
                     }
                     Text("Scan quietly without macOS asking per protected folder.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
                 }
-                Spacer()
+                Spacer(minLength: DesignTokens.Spacing.md)
                 statusBadge(status)
             }
 
@@ -128,20 +157,28 @@ struct PermissionsView: View {
                 .tint(DesignTokens.Color.accent)
             }
         }
-        .padding(18)
+        .padding(DesignTokens.Layout.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
 
     private func statusBadge(_ status: PermissionStatus) -> some View {
         let style = statusStyle(for: status)
-        return HStack(spacing: 5) {
-            Image(systemName: style.icon).font(.system(size: 11))
-            Text(status.label).font(DesignTokens.Font.label)
+        return HStack(spacing: DesignTokens.Spacing.xs) {
+            Image(systemName: style.icon)
+                .font(.system(size: 10, weight: .semibold))
+            Text(status.label)
+                .font(DesignTokens.Font.labelUppercase)
         }
         .foregroundStyle(style.foreground)
-        .padding(.horizontal, 10).padding(.vertical, 5)
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.xs)
         .background(style.background)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
     }
@@ -160,12 +197,15 @@ struct PermissionsView: View {
     }
 
     private var adminBadge: some View {
-        HStack(spacing: 5) {
-            Image(systemName: "key.fill").font(.system(size: 11))
-            Text("Admin optional").font(DesignTokens.Font.label)
+        HStack(spacing: DesignTokens.Spacing.xs) {
+            Image(systemName: "key.fill")
+                .font(.system(size: 10, weight: .semibold))
+            Text("Admin optional")
+                .font(DesignTokens.Font.labelUppercase)
         }
         .foregroundStyle(DesignTokens.Color.warningText)
-        .padding(.horizontal, 10).padding(.vertical, 5)
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.xs)
         .background(DesignTokens.Color.warningSoft)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
     }
@@ -180,30 +220,41 @@ struct PreflightBanner: View {
     var body: some View {
         let required = PermissionsService.requirements(for: item)
         if required.contains(.administrator) {
-            HStack(spacing: 8) {
-                Image(systemName: "lock.shield")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(DesignTokens.Color.tertiary)
-                Text("No permissions required to start")
-                    .font(DesignTokens.Font.captionStrong)
-                    .foregroundStyle(DesignTokens.Color.secondary)
-                Text("Admin password is optional for system-level items.")
-                    .font(DesignTokens.Font.caption)
-                    .foregroundStyle(DesignTokens.Color.tertiary)
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(DesignTokens.Color.accentTint)
+                    .frame(width: 28, height: 28)
+                    .background(DesignTokens.Color.accentSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                    Text("No permissions required to start")
+                        .font(DesignTokens.Font.captionStrong)
+                        .foregroundStyle(DesignTokens.Color.primary)
+                    Text("Admin password is only requested for system-level items.")
+                        .font(DesignTokens.Font.caption)
+                        .foregroundStyle(DesignTokens.Color.secondary)
+                }
                 Spacer(minLength: 0)
-                HStack(spacing: 5) {
-                    Image(systemName: "key.fill").font(.system(size: 10))
-                    Text("Optional admin").font(DesignTokens.Font.label)
+                HStack(spacing: DesignTokens.Spacing.xs) {
+                    Image(systemName: "key.fill")
+                        .font(.system(size: 10, weight: .semibold))
+                    Text("Optional admin")
+                        .font(DesignTokens.Font.labelUppercase)
                 }
                 .foregroundStyle(DesignTokens.Color.warningText)
-                .padding(.horizontal, 8).padding(.vertical, 4)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.xs)
                 .background(DesignTokens.Color.warningSoft)
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.small))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(DesignTokens.Spacing.md)
             .background(DesignTokens.Color.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                    .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+            )
         }
     }
 }
