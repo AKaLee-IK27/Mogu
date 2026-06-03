@@ -940,6 +940,38 @@
         }
       ],
       "evidence": "Permissions screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-permissions-feat032-complete.png."
+    },
+    {
+      "id": "feat-033",
+      "name": "Settings Screen Design System Redesign",
+      "description": "Redesign SettingsView as a native Mogu-styled preferences page using the design system, replacing the native Form with custom card-based layout.",
+      "dependencies": [
+        "feat-026",
+        "feat-032"
+      ],
+      "doneCriteria": [
+        "SettingsView keeps @AppStorage and SMAppService behavior unchanged",
+        "Native Form replaced with custom card sections using design-system tokens",
+        "Toggle rows have descriptive subtitles and better hit areas",
+        "Version display in a compact info card with monospaced values",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the Settings window renders with redesigned cards"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Redesign SettingsView cards",
+          "status": "done",
+          "evidence": "Sources/Views/SettingsView.swift now presents Updates, Startup, and About sections as custom cards with icon headers, toggle rows with subtitles, and version info rows."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open /Applications/Mogu.app, opened Settings via ⌘,, captured /tmp/mogu-settings-feat033-complete.png."
+        }
+      ],
+      "evidence": "Settings screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-settings-feat033-complete.png."
     }
   ]
 }
