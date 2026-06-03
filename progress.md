@@ -3,7 +3,19 @@
 ## Current State
 
 **Last Updated:** 2026-06-03
-**Status:** feat-026 completed locally — Mogu design-system foundation implemented and runtime-verified.
+**Status:** feat-027 completed locally — Clean screen redesign implemented and runtime-verified.
+
+## Session 2026-06-03: Clean Screen Design System Redesign (feat-027)
+
+Redesigned CleanView as a preview-first cleanup dashboard using the Mogu design system, without changing cleanup command behavior.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-027 | Clean Screen Design System Redesign | `make build`, `make test`, `make parser-test`, `make app`; runtime loading screenshot `/tmp/mogu-clean-feat027-loading.png`; runtime preview screenshot `/tmp/mogu-clean-feat027-preview.png`; no destructive Clean All action clicked |
+
+**Files changed:** 5 files
+- Modified: `Sources/Views/CleanView.swift`, `feature_list.json`, `progress.md`, `session-handoff.md`
+- New: `design-system/mogu/pages/clean.md`
 
 ## Session 2026-06-03: Mogu Design System Foundation (feat-026)
 
@@ -82,3 +94,4 @@ Nine features across 3 tiers, all verified at runtime.
 | feat-024 | Release Notes | done | CHANGELOG bundled, version detection |
 | feat-025 | Status Dashboard Visual Polish | done | Runtime-verified live dashboard + foreground-gated polling |
 | feat-026 | Mogu Design System Foundation | done | Curated design-system/mogu/MASTER.md + shared tokens/primitives |
+| feat-027 | Clean Screen Design System Redesign | done | Runtime-verified Clean loading + preview dashboard |

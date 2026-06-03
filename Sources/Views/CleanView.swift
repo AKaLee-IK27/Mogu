@@ -54,26 +54,29 @@ struct CleanView: View {
     }
 
     private var headerBar: some View {
-        HStack(alignment: .center, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Deep Cleanup")
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.lg) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                Text("Clean")
                     .font(DesignTokens.Font.page)
                     .foregroundStyle(DesignTokens.Color.primary)
-                Text("Preview caches, logs, and orphaned app data before cleaning")
+                Text("Preview cache, log, and leftover data before anything is removed")
                     .font(DesignTokens.Font.caption)
                     .foregroundStyle(DesignTokens.Color.tertiary)
             }
             Spacer()
-            if !categories.isEmpty {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles").font(.system(size: 10))
+            if hasData {
+                HStack(spacing: DesignTokens.Spacing.xs) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text("Previewed")
+                        .font(DesignTokens.Font.captionStrong)
                     Text(totalCleanableSize)
-                        .font(DesignTokens.Font.monoLarge)
-                        .foregroundStyle(DesignTokens.Color.accentTint)
+                        .font(DesignTokens.Font.monoBold)
                         .monospacedDigit()
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .foregroundStyle(DesignTokens.Color.accentTint)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.xs)
                 .background(DesignTokens.Color.accentSoft)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
             }
@@ -88,72 +91,140 @@ struct CleanView: View {
                 Task { await cleanAllAdminFirst() }
             }
         }
-        .padding(.horizontal, 32)
-        .padding(.vertical, 20)
+        .padding(.horizontal, DesignTokens.Layout.headerHorizontalPadding)
+        .padding(.vertical, DesignTokens.Layout.headerVerticalPadding)
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
             if categories.isEmpty && resultMessage == nil {
                 emptyState
             } else {
                 if !categories.isEmpty {
-                    sectionHeader("Previewed cleanup", subtitle: "\(categories.count) categories")
-                        .padding(.horizontal, 32).padding(.top, 24).padding(.bottom, 8)
-
+                    previewSummaryCard
                     previewNote
-                        .padding(.horizontal, 32)
-                        .padding(.bottom, 12)
 
-                    VStack(spacing: 0) {
-                        ForEach(Array(categories.enumerated()), id: \.element.id) { i, category in
-                            CleanCategoryRow(category: category, maxSize: maxCategorySize)
-                                .opacity(appear ? 1 : 0)
-                                .offset(x: appear ? 0 : -8)
-                                .animation(DesignTokens.stagger(i), value: appear)
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+                        sectionHeader("Read-only cleanup preview", subtitle: "\(categories.count) categories")
 
-                            if i < categories.count - 1 {
-                                Rectangle().fill(DesignTokens.Color.separatorLight).frame(height: 1).padding(.leading, 48)
+                        VStack(spacing: 0) {
+                            ForEach(Array(categories.enumerated()), id: \.element.id) { i, category in
+                                CleanCategoryRow(category: category, maxSize: maxCategorySize)
+                                    .opacity(appear ? 1 : 0)
+                                    .offset(x: appear ? 0 : -8)
+                                    .animation(DesignTokens.stagger(i), value: appear)
+
+                                if i < categories.count - 1 {
+                                    Rectangle()
+                                        .fill(DesignTokens.Color.separatorLight)
+                                        .frame(height: 1)
+                                        .padding(.leading, 64)
+                                }
                             }
                         }
+                        .padding(.vertical, DesignTokens.Spacing.xs)
+                        .background(DesignTokens.Color.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+                        )
+                        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
                     }
-                    .padding(.vertical, 4)
-                    .background(DesignTokens.Color.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
-                    .padding(.horizontal, 16)
                 }
 
                 if resultMessage != nil {
                     resultBanner
-                        .padding(.horizontal, 32)
-                        .padding(.top, 20)
                 }
 
                 if systemCleanAvailable {
                     systemCleanCard
-                        .padding(.horizontal, 32)
-                        .padding(.top, 12)
                 }
             }
         }
-        .padding(.bottom, 32)
+        .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+        .padding(.vertical, DesignTokens.Spacing.xxl)
         .onAppear { withAnimation(DesignTokens.spring) { appear = true } }
     }
 
+    private var previewSummaryCard: some View {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.xl) {
+                HStack(spacing: DesignTokens.Spacing.md) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                            .fill(DesignTokens.Color.accentSoft)
+                            .frame(width: 56, height: 56)
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(DesignTokens.Color.accentTint)
+                    }
+
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                        Text("Cleanup preview ready")
+                            .font(DesignTokens.Font.section)
+                            .foregroundStyle(DesignTokens.Color.primary)
+                        Text("Mole found data that can be removed after confirmation.")
+                            .font(DesignTokens.Font.caption)
+                            .foregroundStyle(DesignTokens.Color.secondary)
+                    }
+                }
+
+                Spacer(minLength: DesignTokens.Spacing.lg)
+
+                VStack(alignment: .trailing, spacing: DesignTokens.Spacing.xxs) {
+                    Text(totalCleanableSize)
+                        .font(DesignTokens.Font.displayNumberLarge)
+                        .foregroundStyle(DesignTokens.Color.primary)
+                        .monospacedDigit()
+                    Text("previewed cleanable data")
+                        .font(DesignTokens.Font.labelUppercase)
+                        .foregroundStyle(DesignTokens.Color.tertiary)
+                }
+            }
+
+            HStack(spacing: DesignTokens.Spacing.md) {
+                CleanSummaryMetric(title: "Categories", value: "\(categories.count)", systemName: "square.grid.2x2.fill", tint: DesignTokens.Color.accent)
+                CleanSummaryMetric(title: "Locations", value: "\(previewedLocationCount)", systemName: "folder.fill", tint: DesignTokens.Color.successText)
+                CleanSummaryMetric(title: "Largest", value: largestCategory?.name ?? "None", systemName: "arrow.up.right.square.fill", tint: DesignTokens.Color.warningText)
+            }
+        }
+        .padding(DesignTokens.Layout.cardPadding)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+    }
+
     private var previewNote: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "info.circle")
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(DesignTokens.Color.accent)
-                .padding(.top, 1)
-            Text("Cleaning runs across the full preview shown below. Category-level cleaning is not supported by this bundled Mole runtime.")
-                .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
+        HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "checkmark.shield")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.accentTint)
+                .frame(width: 28, height: 28)
+                .background(DesignTokens.Color.accentSoft)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                Text("Safety contract")
+                    .font(DesignTokens.Font.captionStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Cleaning runs across the full preview shown below. Category rows are inspection-only because this Mole runtime does not support category-level cleaning.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Spacer(minLength: 0)
         }
-        .padding(12)
-        .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .padding(DesignTokens.Spacing.md)
+        .background(DesignTokens.Color.insetBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 
     private var maxCategorySize: UInt64 {
@@ -161,52 +232,94 @@ struct CleanView: View {
     }
 
     private var runningView: some View {
-        VStack(spacing: 16) {
-            ProgressView().scaleEffect(1.3)
-            Text(runningMessage).font(DesignTokens.Font.bodyStrong).foregroundStyle(DesignTokens.Color.secondary)
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            VStack(spacing: DesignTokens.Spacing.md) {
+                ProgressView()
+                    .scaleEffect(1.3)
+                Text(runningMessage)
+                    .font(DesignTokens.Font.bodyStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Mogu is streaming Mole output so you can see the cleanup progress.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+            }
+            .padding(DesignTokens.Layout.cardPadding)
+            .frame(maxWidth: .infinity)
+            .background(DesignTokens.Color.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                    .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+            )
+
             if !activity.isEmpty {
                 ActivityFeed(lines: activity)
-                    .padding(.horizontal, 32)
             }
-        }.frame(maxWidth: .infinity).padding(.vertical, 60)
+        }
+        .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+        .padding(.vertical, 60)
     }
 
     private var resultBanner: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(DesignTokens.Color.successText)
-            Text(resultMessage ?? "Cleanup completed").font(DesignTokens.Font.bodyStrong)
+        HStack(spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.successText)
+            Text(resultMessage ?? "Cleanup completed")
+                .font(DesignTokens.Font.bodyStrong)
+                .foregroundStyle(DesignTokens.Color.primary)
             Spacer()
         }
-        .padding(12)
+        .padding(DesignTokens.Spacing.md)
         .background(DesignTokens.Color.successSoft)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.large)
+                .stroke(DesignTokens.Color.successText.opacity(0.18), lineWidth: DesignTokens.Stroke.hairline)
+        )
     }
 
     // Shown after admin is granted up front: the system-level dry-run preview,
     // with one confirm that cleans user-owned and system items together.
     private var systemCleanCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                Image(systemName: "lock.shield")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(DesignTokens.Color.warning)
-                    .frame(width: 22)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("System-level cleanup ready")
-                        .font(DesignTokens.Font.bodyStrong)
-                        .foregroundStyle(DesignTokens.Color.primary)
-                    Text("Administrator access granted. Review the system items below, then clean user-owned and system items together.")
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
+            HStack(alignment: .top, spacing: DesignTokens.Spacing.md) {
+                Image(systemName: "lock.shield.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(DesignTokens.Color.warningText)
+                    .frame(width: 36, height: 36)
+                    .background(DesignTokens.Color.warningSoft)
+                    .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+
+                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    HStack(spacing: DesignTokens.Spacing.xs) {
+                        Text("System-level cleanup ready")
+                            .font(DesignTokens.Font.section)
+                            .foregroundStyle(DesignTokens.Color.primary)
+                        Text("Admin previewed")
+                            .font(DesignTokens.Font.labelUppercase)
+                            .foregroundStyle(DesignTokens.Color.warningText)
+                            .padding(.horizontal, DesignTokens.Spacing.xs)
+                            .padding(.vertical, 2)
+                            .background(DesignTokens.Color.warningSoft)
+                            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+                    }
+                    Text("Administrator access was granted for the elevated dry-run. Review the system output, then confirm the combined user-owned and system cleanup.")
                         .font(DesignTokens.Font.caption)
                         .foregroundStyle(DesignTokens.Color.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer()
+                Spacer(minLength: 0)
             }
 
             if !systemCleanPreviewLines.isEmpty {
                 ActivityFeed(lines: systemCleanPreviewLines, visible: 10)
             }
 
-            HStack {
+            HStack(alignment: .center, spacing: DesignTokens.Spacing.md) {
+                Text("Runs user-owned cleanup first, then elevated system cleanup.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
                 Spacer()
                 Button {
                     Task { await runFullClean() }
@@ -219,47 +332,89 @@ struct CleanView: View {
                 .disabled(isRunning)
             }
         }
-        .padding(14)
+        .padding(DesignTokens.Layout.cardPadding)
         .background(DesignTokens.Color.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.warningText.opacity(0.22), lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
     }
 
     private var loadingView: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: DesignTokens.Spacing.xl) {
             FeatureLoadingView(
                 icon: "sparkles",
                 tint: DesignTokens.Color.successText,
-                title: "Scanning for cleanable data",
-                subtitle: "Looking through caches, logs, and leftover app data"
+                title: "Building cleanup preview",
+                subtitle: "Scanning caches, logs, and leftover app data before cleanup is enabled"
             )
-            Text(foundCount > 0 ? "Found \(foundCount) location\(foundCount == 1 ? "" : "s")…" : "Starting scan…")
-                .font(DesignTokens.Font.captionStrong)
-                .foregroundStyle(DesignTokens.Color.successText)
-                .monospacedDigit()
-                .contentTransition(.numericText())
-                .animation(DesignTokens.ease, value: foundCount)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(.vertical, 40)
+            HStack(spacing: DesignTokens.Spacing.xs) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12, weight: .semibold))
+                Text(foundCount > 0 ? "Found \(foundCount) location\(foundCount == 1 ? "" : "s")…" : "Starting dry-run scan…")
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+            }
+            .font(DesignTokens.Font.captionStrong)
+            .foregroundStyle(DesignTokens.Color.successText)
+            .padding(.horizontal, DesignTokens.Spacing.md)
+            .padding(.vertical, DesignTokens.Spacing.xs)
+            .background(DesignTokens.Color.successSoft)
+            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+            .animation(DesignTokens.ease, value: foundCount)
+
+            if !activity.isEmpty {
+                ActivityFeed(lines: activity, visible: 8)
+                    .padding(.horizontal, DesignTokens.Layout.contentHorizontalPadding)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 40)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "checkmark.seal")
-                .font(.system(size: 28))
+        VStack(spacing: DesignTokens.Spacing.md) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 30, weight: .semibold))
                 .foregroundStyle(DesignTokens.Color.successText)
-            Text("Nothing to clean")
-                .font(DesignTokens.Font.bodyStrong)
-                .foregroundStyle(DesignTokens.Color.primary)
-            Text("Mole did not find any cleanable cache or log data in the latest preview.")
-                .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
-                .multilineTextAlignment(.center)
+            VStack(spacing: DesignTokens.Spacing.xs) {
+                Text("Preview complete, nothing to clean")
+                    .font(DesignTokens.Font.section)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                Text("Mole did not find cleanable cache, log, or leftover app data in the latest dry-run preview.")
+                    .font(DesignTokens.Font.caption)
+                    .foregroundStyle(DesignTokens.Color.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .padding(DesignTokens.Spacing.xxxl)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 80)
+        .background(DesignTokens.Color.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge))
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.Radius.xLarge)
+                .stroke(DesignTokens.Color.separatorLight, lineWidth: DesignTokens.Stroke.hairline)
+        )
+        .shadow(color: DesignTokens.Shadow.card, radius: DesignTokens.Shadow.cardRadius, y: DesignTokens.Shadow.cardY)
+    }
+
+    private var totalCleanableBytes: UInt64 {
+        categories.reduce(0) { $0 + $1.size }
+    }
+
+    private var previewedLocationCount: Int {
+        categories.reduce(0) { $0 + $1.items.count }
+    }
+
+    private var largestCategory: CleanCategory? {
+        categories.max { $0.size < $1.size }
     }
 
     private var totalCleanableSize: String {
-        categories.reduce(0) { $0 + $1.size }.humanReadable
+        totalCleanableBytes.humanReadable
     }
 
     private func loadPreview() async {
@@ -439,6 +594,39 @@ struct CleanView: View {
     }
 }
 
+private struct CleanSummaryMetric: View {
+    let title: String
+    let value: String
+    let systemName: String
+    let tint: SwiftUI.Color
+
+    var body: some View {
+        HStack(spacing: DesignTokens.Spacing.sm) {
+            Image(systemName: systemName)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 26, height: 26)
+                .background(tint.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.xxs) {
+                Text(title)
+                    .font(DesignTokens.Font.labelUppercase)
+                    .foregroundStyle(DesignTokens.Color.tertiary)
+                Text(value)
+                    .font(DesignTokens.Font.captionStrong)
+                    .foregroundStyle(DesignTokens.Color.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(DesignTokens.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignTokens.Color.insetBackground)
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
+    }
+}
+
 // One top-level cleanup category: a tappable header (icon, name, size, a
 // relative size bar) that expands to reveal the real locations Mole found
 // inside it. Read-only by design — Mole cleans the whole preview, so this is
@@ -457,7 +645,7 @@ private struct CleanCategoryRow: View {
             Button {
                 withAnimation(DesignTokens.spring) { expanded.toggle() }
             } label: {
-                HStack(spacing: 12) {
+                HStack(spacing: DesignTokens.Spacing.md) {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(DesignTokens.Color.tertiary)
@@ -465,34 +653,36 @@ private struct CleanCategoryRow: View {
                         .rotationEffect(.degrees(expanded ? 90 : 0))
 
                     Image(systemName: Self.icon(for: category.name))
-                        .font(.system(size: 15))
-                        .foregroundStyle(DesignTokens.Color.accent)
-                        .frame(width: 24)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(DesignTokens.Color.accentTint)
+                        .frame(width: 34, height: 34)
+                        .background(DesignTokens.Color.accentSoft)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.large))
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                        HStack(spacing: DesignTokens.Spacing.sm) {
                             Text(category.name)
                                 .font(DesignTokens.Font.bodyStrong)
                                 .foregroundStyle(DesignTokens.Color.primary)
-                            Text("\(category.items.count)")
+                            Text("\(category.items.count) location\(category.items.count == 1 ? "" : "s")")
                                 .font(DesignTokens.Font.caption)
                                 .foregroundStyle(DesignTokens.Color.tertiary)
                                 .monospacedDigit()
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 1)
+                                .padding(.horizontal, DesignTokens.Spacing.xs)
+                                .padding(.vertical, 2)
                                 .background(DesignTokens.Color.codeBg)
-                                .clipShape(Capsule())
-                            Spacer(minLength: 8)
+                                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.pill))
+                            Spacer(minLength: DesignTokens.Spacing.sm)
                             Text(category.size.humanReadable)
                                 .font(DesignTokens.Font.monoBold)
-                                .foregroundStyle(DesignTokens.Color.secondary)
+                                .foregroundStyle(DesignTokens.Color.primary)
                                 .monospacedDigit()
                         }
                         sizeBar
                     }
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 12)
+                .padding(.horizontal, DesignTokens.Spacing.md)
+                .padding(.vertical, DesignTokens.Spacing.md)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -505,7 +695,8 @@ private struct CleanCategoryRow: View {
                         itemRow(item)
                     }
                 }
-                .padding(.bottom, 6)
+                .padding(.bottom, DesignTokens.Spacing.sm)
+                .background(DesignTokens.Color.insetBackground.opacity(0.55))
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
@@ -524,16 +715,16 @@ private struct CleanCategoryRow: View {
     }
 
     private func itemRow(_ item: CleanItem) -> some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignTokens.Spacing.sm) {
             Image(systemName: "circle.fill")
                 .font(.system(size: 3))
                 .foregroundStyle(DesignTokens.Color.placeholder)
             Text(Self.friendlyPath(item.path))
                 .font(DesignTokens.Font.mono)
-                .foregroundStyle(DesignTokens.Color.tertiary)
+                .foregroundStyle(DesignTokens.Color.secondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Spacer(minLength: 12)
+            Spacer(minLength: DesignTokens.Spacing.md)
             if let count = item.itemCount {
                 Text("\(count) item\(count == 1 ? "" : "s")")
                     .font(DesignTokens.Font.caption)
@@ -541,14 +732,14 @@ private struct CleanCategoryRow: View {
                     .monospacedDigit()
             }
             Text(item.size.humanReadable)
-                .font(DesignTokens.Font.mono)
+                .font(DesignTokens.Font.monoBold)
                 .foregroundStyle(DesignTokens.Color.tertiary)
                 .monospacedDigit()
-                .frame(minWidth: 56, alignment: .trailing)
+                .frame(minWidth: 64, alignment: .trailing)
         }
-        .padding(.leading, 50)
-        .padding(.trailing, 16)
-        .padding(.vertical, 5)
+        .padding(.leading, 70)
+        .padding(.trailing, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.xs)
     }
 
     // Replace the home prefix with ~ so paths read short and don't leak the
@@ -573,14 +764,14 @@ private struct CleanCategoryRow: View {
 }
 
 func sectionHeader(_ title: String, subtitle: String? = nil) -> some View {
-    HStack(spacing: 8) {
+    HStack(spacing: DesignTokens.Spacing.sm) {
         Text(title)
             .font(DesignTokens.Font.labelUppercase)
             .foregroundStyle(DesignTokens.Color.secondary)
         if let subtitle {
             Text(subtitle)
                 .font(DesignTokens.Font.caption)
-                .foregroundStyle(DesignTokens.Color.secondary)
+                .foregroundStyle(DesignTokens.Color.tertiary)
         }
         Spacer()
     }

@@ -695,6 +695,47 @@
         }
       ],
       "evidence": "Curated design-system/mogu/MASTER.md created; DesignTokens and shared controls updated; make build + make test + make parser-test + make app pass; runtime screenshot /tmp/mogu-design-system-feat026-status.png confirms the app renders after global token changes."
+    },
+    {
+      "id": "feat-027",
+      "name": "Clean Screen Design System Redesign",
+      "description": "Redesign CleanView as a safer preview-first cleanup dashboard using the Mogu-native design system, without changing mo cleanup behavior.",
+      "dependencies": [
+        "feat-026"
+      ],
+      "doneCriteria": [
+        "CleanView keeps preview-before-delete behavior unchanged and runs clean --dry-run for preview",
+        "Clean screen presents a clear summary of previewed cleanable size, category count, and preview safety state",
+        "Category rows remain read-only and explain that Mole cleans the whole preview",
+        "System/admin cleanup remains a separate explicit confirmation card after elevated dry-run preview",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies the Clean tab renders with the redesigned loading/preview states"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Add Clean page design guidance",
+          "status": "done",
+          "evidence": "Added design-system/mogu/pages/clean.md with Clean-specific preview-first layout, copy, and safety rules."
+        },
+        {
+          "name": "Redesign Clean preview summary and layout",
+          "status": "done",
+          "evidence": "Sources/Views/CleanView.swift now presents a cleanup summary card with total previewed size, category count, inspected locations, and largest category before the read-only category list."
+        },
+        {
+          "name": "Polish category rows, notes, loading, result, and system confirmation states",
+          "status": "done",
+          "evidence": "CleanView loading, safety note, result banner, category rows, expanded path rows, and admin/system confirmation card were updated with Mogu design-system tokens while preserving existing mo command flow."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime launched with open --env MOGU_SCREEN=clean /Applications/Mogu.app; loading screenshot /tmp/mogu-clean-feat027-loading.png and preview screenshot /tmp/mogu-clean-feat027-preview.png captured. No destructive Clean All action was clicked."
+        }
+      ],
+      "evidence": "Clean screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-clean-feat027-loading.png and /tmp/mogu-clean-feat027-preview.png."
     }
   ]
 }
