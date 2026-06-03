@@ -5,5 +5,19 @@
         <link>https://raw.githubusercontent.com/AKaLee-IK27/Mogu/main/appcast.xml</link>
         <description>Most recent changes with links to updates for Mogu.</description>
         <language>en</language>
+        <item>
+            <title>Version 1.0.0</title>
+            <pubDate>Wed, 03 Jun 2026 20:21:33 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:releaseNotesLink>https://github.com/AKaLee-IK27/Mogu/releases/tag/v1.0.0</sparkle:releaseNotesLink>
+            <enclosure
+                url="https://github.com/AKaLee-IK27/Mogu/releases/download/v1.0.0/Mogu-1.0.0.zip"
+                sparkle:edSignature="jV3X45RDS1tUCeC3MMQSHuJsOdKrHSH8c5U4af5LcDafYefpZ2tLFJciiKlCvBkCnls1o1B0my4uQsuLRORzAA=="
+                length="7448718"
+                type="application/octet-stream"
+            />
+        </item>
     </channel>
 </rss>
