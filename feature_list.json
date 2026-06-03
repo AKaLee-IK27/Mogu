@@ -972,6 +972,44 @@
         }
       ],
       "evidence": "Settings screen redesign implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-settings-feat033-complete.png."
+    },
+    {
+      "id": "feat-034",
+      "name": "Collapsible Sidebar Redesign",
+      "description": "Redesign sidebar with collapse toggle icon-only mode using the Mogu design system. Collapsed state persists via AppStorage.",
+      "dependencies": [
+        "feat-026",
+        "feat-033"
+      ],
+      "doneCriteria": [
+        "Sidebar collapses to icon-only mode (~68px) with chevron toggle",
+        "Collapse state persists across launches via AppStorage(\"sidebarCollapsed\")",
+        "SidebarRow adapts to collapsed state with centered icons and hover tooltips",
+        "Smooth spring animation on collapse/expand",
+        "All tabs remain functional in both states",
+        "No .toolbar, ToolbarItem, ToolbarItemGroup, or .searchable introduced",
+        "make build, make test, make parser-test, and make app pass",
+        "Runtime launch verifies sidebar renders expanded with collapse toggle visible"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Implement collapsible sidebar",
+          "status": "done",
+          "evidence": "Sources/ContentView.swift adds isSidebarCollapsed state, sidebarHeader, sidebarNavigation, sidebarFooter subviews, and SidebarRow collapsed/expanded modes."
+        },
+        {
+          "name": "Add DesignTokens for sidebar animation and collapsed width",
+          "status": "done",
+          "evidence": "Sources/Theme/DesignTokens.swift adds Layout.sidebarCollapsedWidth (68) and sidebarAnimation spring."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "make build, make test, make parser-test, and make app pass. Runtime screenshot /tmp/mogu-sidebar-feat034-expanded.png captured."
+        }
+      ],
+      "evidence": "Collapsible sidebar implemented and runtime-verified. Commands passed: make build, make test, make parser-test, make app. Runtime evidence: /tmp/mogu-sidebar-feat034-expanded.png."
     }
   ]
 }

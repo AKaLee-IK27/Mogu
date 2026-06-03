@@ -46,6 +46,9 @@ struct ContentView: View {
     @State private var sidebarHover: SidebarItem?
     @State private var loadedTabs: Set<String> = []
 
+    // ── Sidebar collapse state ─────────────────────────
+    @AppStorage("sidebarCollapsed") private var isSidebarCollapsed = false
+
     // ── Feature flags (AppStorage) ──────────────────────
     @AppStorage("hasSeenOnboarding")  private var hasSeenOnboarding  = false
     @AppStorage("lastSelectedTab")    private var lastSelectedTab    = SidebarItem.status.rawValue
@@ -148,7 +151,8 @@ struct ContentView: View {
     private var mainContent: some View {
         HStack(spacing: 0) {
             sidebar
-                .frame(width: DesignTokens.Layout.sidebarWidth)
+                .frame(width: isSidebarCollapsed ? DesignTokens.Layout.sidebarCollapsedWidth : DesignTokens.Layout.sidebarWidth)
+                .animation(DesignTokens.sidebarAnimation, value: isSidebarCollapsed)
 
             Rectangle()
                 .fill(DesignTokens.Color.separator)
@@ -278,44 +282,87 @@ struct ContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 4) {
+            sidebarHeader
+
+            if !isSidebarCollapsed {
+                Rectangle()
+                    .fill(DesignTokens.Color.separator)
+                    .frame(height: 1)
+                    .padding(.horizontal, 16)
+                    .transition(.opacity)
+            }
+
+            sidebarNavigation
+
+            Spacer()
+
+            if !isSidebarCollapsed {
+                sidebarFooter
+                    .transition(.opacity)
+            }
+        }
+        .background(DesignTokens.Color.sidebar)
+    }
+
+    private var sidebarHeader: some View {
+        HStack(spacing: DesignTokens.Spacing.sm) {
+            if !isSidebarCollapsed {
                 HStack(spacing: 10) {
                     brandMark
                     Text("Mogu")
                         .font(DesignTokens.Font.sidebarTitle)
                         .foregroundStyle(DesignTokens.Color.primary)
-                    Spacer()
                 }
-                Text("System Cleaner")
-                    .font(DesignTokens.Font.sidebarSubtitle)
-                    .foregroundStyle(DesignTokens.Color.tertiary)
+                Spacer()
+            } else {
+                brandMark
+                    .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 24)
-            .padding(.bottom, 18)
 
-            Rectangle()
-                .fill(DesignTokens.Color.separator)
-                .frame(height: 1)
-                .padding(.horizontal, 16)
+            collapseToggle
+        }
+        .padding(.horizontal, isSidebarCollapsed ? 15 : 20)
+        .padding(.top, 16)
+        .padding(.bottom, isSidebarCollapsed ? 16 : 18)
+    }
 
-            VStack(spacing: 2) {
-                ForEach(SidebarItem.allCases) { item in
-                    SidebarRow(
-                        item: item,
-                        isSelected: selectedItem == item,
-                        isHovered: sidebarHover == item && selectedItem != item
-                    ) {
-                        withAnimation(DesignTokens.spring) { selectedItem = item }
-                    }
-                    .onHover { hovering in sidebarHover = hovering ? item : nil }
+    private var collapseToggle: some View {
+        Button {
+            withAnimation(DesignTokens.sidebarAnimation) {
+                isSidebarCollapsed.toggle()
+            }
+        } label: {
+            Image(systemName: isSidebarCollapsed ? "chevron.right" : "chevron.left")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(DesignTokens.Color.tertiary)
+                .frame(width: 28, height: 28)
+                .background(DesignTokens.Color.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        }
+        .buttonStyle(.plain)
+        .help(isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar")
+    }
+
+    private var sidebarNavigation: some View {
+        VStack(spacing: DesignTokens.Spacing.xs) {
+            ForEach(SidebarItem.allCases) { item in
+                SidebarRow(
+                    item: item,
+                    isSelected: selectedItem == item,
+                    isHovered: sidebarHover == item && selectedItem != item,
+                    isCollapsed: isSidebarCollapsed
+                ) {
+                    withAnimation(DesignTokens.spring) { selectedItem = item }
                 }
+                .onHover { hovering in sidebarHover = hovering ? item : nil }
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 10)
+        }
+        .padding(.horizontal, isSidebarCollapsed ? 10 : 12)
+        .padding(.top, isSidebarCollapsed ? 16 : 10)
+    }
 
-            Spacer()
-
+    private var sidebarFooter: some View {
+        VStack(spacing: 0) {
             Rectangle()
                 .fill(DesignTokens.Color.separator)
                 .frame(height: 1)
@@ -328,7 +375,6 @@ struct ContentView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 14)
         }
-        .background(DesignTokens.Color.sidebar)
     }
 }
 
@@ -477,45 +523,68 @@ struct SidebarRow: View {
     let item: SidebarItem
     let isSelected: Bool
     let isHovered: Bool
+    let isCollapsed: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: item.icon)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(isSelected ? item.iconColor : (isHovered ? DesignTokens.Color.primary : DesignTokens.Color.tertiary))
-                    .frame(width: 20, alignment: .center)
-
-                Text(item.label)
-                    .font(isSelected ? DesignTokens.Font.sidebarItemActive : DesignTokens.Font.sidebarItem)
-                    .foregroundStyle(isSelected ? DesignTokens.Color.primary : (isHovered ? DesignTokens.Color.primary : DesignTokens.Color.secondary))
-
-                Spacer()
-
-                if isSelected {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(item.iconColor)
-                        .frame(width: 3, height: 18)
-                }
+            if isCollapsed {
+                collapsedRow
+            } else {
+                expandedRow
             }
-            .padding(.horizontal, DesignTokens.Spacing.md)
-            .padding(.vertical, DesignTokens.Spacing.sm)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background {
-                if isSelected {
-                    RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
-                        .fill(DesignTokens.Color.selectedOverlay)
-                        .shadow(color: DesignTokens.Shadow.control, radius: DesignTokens.Shadow.controlRadius, y: DesignTokens.Shadow.controlY)
-                } else if isHovered {
-                    RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
-                        .fill(DesignTokens.Color.hoverOverlay)
-                }
-            }
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .focusable(false)
+        .help(isCollapsed ? item.label : "")
+    }
+
+    private var collapsedRow: some View {
+        VStack(spacing: 0) {
+            Image(systemName: item.icon)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(isSelected ? item.iconColor : (isHovered ? DesignTokens.Color.primary : DesignTokens.Color.tertiary))
+                .frame(width: 44, height: 44)
+                .background(isSelected ? DesignTokens.Color.selectedOverlay : (isHovered ? DesignTokens.Color.hoverOverlay : Color.clear))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.medium))
+        }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+    }
+
+    private var expandedRow: some View {
+        HStack(spacing: 10) {
+            Image(systemName: item.icon)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(isSelected ? item.iconColor : (isHovered ? DesignTokens.Color.primary : DesignTokens.Color.tertiary))
+                .frame(width: 20, alignment: .center)
+
+            Text(item.label)
+                .font(isSelected ? DesignTokens.Font.sidebarItemActive : DesignTokens.Font.sidebarItem)
+                .foregroundStyle(isSelected ? DesignTokens.Color.primary : (isHovered ? DesignTokens.Color.primary : DesignTokens.Color.secondary))
+
+            Spacer()
+
+            if isSelected {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(item.iconColor)
+                    .frame(width: 3, height: 18)
+            }
+        }
+        .padding(.horizontal, DesignTokens.Spacing.md)
+        .padding(.vertical, DesignTokens.Spacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            if isSelected {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
+                    .fill(DesignTokens.Color.selectedOverlay)
+                    .shadow(color: DesignTokens.Shadow.control, radius: DesignTokens.Shadow.controlRadius, y: DesignTokens.Shadow.controlY)
+            } else if isHovered {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.medium)
+                    .fill(DesignTokens.Color.hoverOverlay)
+            }
+        }
+        .contentShape(Rectangle())
     }
 }
 

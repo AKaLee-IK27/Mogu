@@ -27,6 +27,7 @@ enum DesignTokens {
 
     enum Layout {
         static let sidebarWidth: CGFloat = 230
+        static let sidebarCollapsedWidth: CGFloat = 68
         static let headerHorizontalPadding: CGFloat = 32
         static let headerVerticalPadding: CGFloat = 18
         static let contentHorizontalPadding: CGFloat = 32
@@ -140,6 +141,7 @@ enum DesignTokens {
 
     @MainActor static let spring = Animation.spring(response: 0.25, dampingFraction: 0.75)
     @MainActor static let ease = Animation.easeInOut(duration: 0.25)
+    @MainActor static let sidebarAnimation = Animation.spring(response: 0.3, dampingFraction: 0.8)
     @MainActor static func stagger(_ index: Int, base: Double = 0.04) -> Animation {
         Animation.spring(response: 0.35, dampingFraction: 0.8).delay(Double(index) * base)
     }
