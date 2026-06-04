@@ -676,7 +676,7 @@
         {
           "name": "Generate and curate design system",
           "status": "done",
-          "evidence": "Ran .pi/skills/ui-ux-pro-max/scripts/search.py with --design-system --persist, then replaced the raw web/mobile-oriented output with a curated native Mogu SwiftUI design system in design-system/mogu/MASTER.md."
+          "evidence": "Generated a draft design-system source, then replaced the raw web/mobile-oriented output with a curated native Mogu SwiftUI design system in design-system/mogu/MASTER.md."
         },
         {
           "name": "Tokenize shared visual language",
@@ -1045,6 +1045,40 @@
         }
       ],
       "evidence": "Landing page and roadmap implemented and verified. Commands passed: make build, make test, make parser-test. Browser evidence: /tmp/mogu-landing-feat035-desktop.png, /tmp/mogu-landing-feat035-mobile.png, /tmp/mogu-landing-feat035-light.png; no horizontal overflow at 1280px or 375px."
+    },
+    {
+      "id": "feat-036",
+      "name": "Remove Bundled UI Design Skill Copies",
+      "description": "Remove the repo-local copies of the bundled UI design helper skill from all agent-specific directories and public prompt bundles.",
+      "dependencies": [
+        "feat-035"
+      ],
+      "doneCriteria": [
+        "All tracked copies of the removed skill bundle are deleted from agent-specific directories",
+        "Ignored local copies of the same skill bundle are deleted from the working tree",
+        "No remaining repository text references the removed skill name",
+        "feature_list.json remains valid JSON",
+        "make build, make test, and make parser-test pass"
+      ],
+      "status": "done",
+      "subTasks": [
+        {
+          "name": "Remove skill bundle directories",
+          "status": "done",
+          "evidence": "Deleted tracked skill bundle copies across repo-local agent directories and public prompt bundles; also removed the ignored local copy."
+        },
+        {
+          "name": "Remove leftover text references",
+          "status": "done",
+          "evidence": "Updated design-system/mogu/MASTER.md and historical feature evidence so repository grep no longer finds the removed skill name."
+        },
+        {
+          "name": "Verify",
+          "status": "done",
+          "evidence": "python3 -m json.tool feature_list.json passes; repository grep and directory search find no remaining removed-skill name or directories; make build, make test, and make parser-test pass."
+        }
+      ],
+      "evidence": "Repo-local UI design helper skill bundles removed across tracked agent directories and ignored local copies. Verification passed: JSON check, grep/directory absence check, make build, make test, make parser-test."
     }
   ]
 }

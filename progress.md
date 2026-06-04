@@ -3,9 +3,21 @@
 ## Current State
 
 **Last Updated:** 2026-06-04
-**Status:** feat-035 completed locally — static landing page and public roadmap implemented and browser-verified.
+**Status:** feat-036 completed locally — repo-local UI design helper skill bundles removed from tracked and ignored agent directories.
 
-All 7 main screens now use the Mogu design system: Status, Clean, Uninstall, Analyze, Optimize, Purge, Permissions, and Settings. The repo now also has a root `index.html` landing page and `ROADMAP.md` for public product direction.
+All 7 main screens now use the Mogu design system: Status, Clean, Uninstall, Analyze, Optimize, Purge, Permissions, and Settings. The repo also has a root `index.html` landing page and `ROADMAP.md` for public product direction. Repo-local copies of the removed UI design helper skill are no longer present.
+
+## Session 2026-06-04: Remove Bundled UI Design Skill Copies (feat-036)
+
+Removed repo-local copies of the bundled UI design helper skill from tracked agent-specific directories, the public prompt bundle, and the ignored local agent copy. Also reworded historical design-system notes so repository search no longer finds the removed skill name.
+
+| ID | Feature | Verification |
+|---|---|---|
+| feat-036 | Remove Bundled UI Design Skill Copies | `python3 -m json.tool feature_list.json`; repository grep/directory search found no removed skill name or directories; `make build`, `make test`, `make parser-test` |
+
+**Files changed:** many tracked deletions plus 4 modified files
+- Deleted: repo-local UI design helper skill bundles under agent-specific directories and public prompt bundle
+- Modified: `design-system/mogu/MASTER.md`, `feature_list.json`, `progress.md`, `session-handoff.md`
 
 ## Session 2026-06-04: Landing Page and Public Roadmap (feat-035)
 

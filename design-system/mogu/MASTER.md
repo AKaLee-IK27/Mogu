@@ -6,7 +6,7 @@
 
 **Project:** Mogu  
 **Platform:** SwiftUI macOS app  
-**Source seed:** UI/UX Pro Max, curated for native macOS utility use  
+**Source seed:** Curated for native macOS utility use  
 **Last updated:** 2026-06-03
 
 ## Visual thesis
@@ -70,8 +70,8 @@ Semantic states:
 ## Typography
 
 Use native San Francisco via `Font.system`. Do not add web fonts or Google Fonts.
-The UI/UX Pro Max generator suggested Fira, but that would make a native macOS
-app feel non-native and would add distribution complexity.
+A prior draft considered Fira, but that would make a native macOS app feel
+non-native and would add distribution complexity.
 
 | Role | Token | Rule |
 |---|---|---|
