@@ -7,6 +7,11 @@
     <img src="https://img.shields.io/badge/Swift-6.3-orange?style=flat-square&logo=swift" alt="Swift 6.3" />
     <img src="https://img.shields.io/badge/license-MIT-3a4ea8?style=flat-square" alt="MIT" />
   </p>
+  <p>
+    <a href="https://akalee-ik27.github.io/Mogu/">🌐 Landing page</a> ·
+    <a href="https://github.com/AKaLee-IK27/Mogu/releases/latest">⬇️ Download</a> ·
+    <a href="ROADMAP.md">🗺️ Roadmap</a>
+  </p>
 </div>
 
 > **Built on [Mole](https://github.com/tw93/Mole) by [@tw93](https://github.com/tw93).**
@@ -42,6 +47,8 @@ The Mole CLI itself is free and open source — Mogu builds on that.
 | **Analyze** | Visual disk usage breakdown with large-file detection |
 | **Purge** | Find and clean project build artifacts (`node_modules`, `target`, etc.) |
 | **Permissions** | Explains the minimal permission model; surfaces optional Full Disk Access |
+| **Settings** | Auto-update toggle (Sparkle), launch-at-login, version info |
+| **History** | View past clean and optimize runs with freed-space totals |
 
 ## Screenshots
 
@@ -106,6 +113,13 @@ open Mogu.app
 
 `make parser-test` runs the regression suite that guards the fragile text parsers
 against golden fixtures.
+
+## Downloading
+
+Grab the latest release from [GitHub Releases](https://github.com/AKaLee-IK27/Mogu/releases/latest)
+or visit the [landing page](https://akalee-ik27.github.io/Mogu/). After downloading,
+open the `.app` from Finder or `Applications`. If macOS warns about an unidentified
+developer, right-click → Open → Open to bypass Gatekeeper once.
 
 ## Architecture
 
